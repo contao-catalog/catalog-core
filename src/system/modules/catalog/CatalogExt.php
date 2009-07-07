@@ -225,6 +225,92 @@ class CatalogExt extends Frontend
 			$this->generateFeed($objCatalog->id);
 		}
 	}
+
+	/**
+	 * gets called by hook to prevent RSS feeds from deletion by cronjob
+	 */
+	public function removeOldFeeds()
+	{
+		$objCatalog = $this->Database->prepare("SELECT id, feedName FROM tl_catalog_types WHERE makeFeed=?")
+									  ->limit(1)
+									  ->execute(1);
+		if ($objCatalog->numRows < 1)
+		{
+			return array();
+		}
+		$tmp=array();
+		while ($objCatalog->next())
+		{
+			$tmp[]=$objCatalog->feedName . '.xml';
+		}
+		return $tmp;
+	}
+
+
+	/**
+	 * Get a page layout and return it as database result object.
+	 * This is a copy from PageRegular, see comments in parseFrontendTemplate() below for the reason why this is here.
+	 * @param integer
+	 * @return object
+	 */
+	protected function getPageLayout($intId)
+	{
+		$objLayout = $this->Database->prepare("SELECT * FROM tl_layout WHERE id=?")
+									->limit(1)
+									->execute($intId);
+
+		// Fallback layout
+		if ($objLayout->numRows < 1)
+		{
+			$objLayout = $this->Database->prepare("SELECT * FROM tl_layout WHERE fallback=?")
+										->limit(1)
+										->execute(1);
+		}
+		
+		// Die if there is no layout at all
+		if ($objLayout->numRows < 1)
+		{
+			$this->log('Could not find layout ID "' . $intId . '"', 'PageRegular getPageLayout()', TL_ERROR);
+
+			header('HTTP/1.1 501 Not Implemented');
+			die('No layout specified');
+		}
+
+		return $objLayout;
+	} 
+		
+	/**
+	 * get called by hook to inject all RSS feeds for the current layout into the template
+	 */
+	public function parseFrontendTemplate($strBuffer, $strTemplate) {
+		// I totally admit it. This function sucks big time. It is ugly, a hack, but non the less the only possibility to get this working.
+		// We can't even check to only parse templates starting with 'fe_', as fe_page will get parsed before(!) the hook get's called.
+		// So we will store our calculated value into the global and hope that no one will ever want to use this.
+		// We also hope, that Leo will never ever change his for each inclusion in the page rendering.
+		// And we definately hope that all of this will get more easy and Leo will add a hook.
+		if(!isset($GLOBALS['TL_HEAD']['CATALOGFEED'])) {
+			global $objPage;
+			// here we are getting dirty, we have to import the page layout as we have no other way to get the layout from it.
+			// I know it does exist already as we are being called from it but hey, we got no Hook in PageRegular::createStyleSheets
+			// and therefore have to suffer the hard way... :(
+			$objLayout=$this->getPageLayout($objPage->layout);
+
+			$catalogfeeds = deserialize($objLayout->catalogfeeds); 
+			// Add catalogfeeds
+			if (is_array($catalogfeeds) && count($catalogfeeds) > 0)
+			{
+				$objFeeds = $this->Database->execute("SELECT * FROM tl_catalog_types WHERE id IN(" . implode(',', $catalogfeeds) . ")");
+				while($objFeeds->next())
+				{
+					$base = strlen($objFeeds->feedBase) ? $objFeeds->feedBase : $this->Environment->base;
+					$GLOBALS['TL_HEAD']['CATALOGFEED']= '<link rel="alternate" href="' . $base . $objFeeds->alias . '.xml" type="application/' . $objFeeds->feedFormat . '+xml" title="' . $objFeeds->description . ' ' . $strTemplate . '" />' . "\n";
+				}
+			} 
+		}
+		// Return buffer no matter if we added something to the global array or not.
+		// We simply to not want to tamper with it.
+		return $strBuffer;
+	}
 }
 
 ?>
