@@ -66,7 +66,6 @@ class ModuleCatalogNavigation extends ModuleCatalog
 		$this->strTemplate = $this->catalog_layout;
 
 		$this->catalog_visible = deserialize($this->catalog_visible);
-
 		$strBuffer = parent::generate();
 		return strlen($this->Template->items) ? $strBuffer : '';
 	}

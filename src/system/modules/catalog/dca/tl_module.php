@@ -14,8 +14,8 @@
  * This file modifies the data container array of table tl_module.
  *
  * PHP version 5
- * @copyright  Thyon Design 2008 
- * @author     John Brand <john.brand@thyon.com>
+ * @copyright  Thyon Design, CyberSpectrum 2008, 2009
+ * @author     John Brand <john.brand@thyon.com>, Christian Schiffler <c.schiffler@cyberspectrum.de>
  * @package    Catalog
  * @license    GPL 
  * @filesource
@@ -35,7 +35,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreader']  = '{title_legend},
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfeatured']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogrelated']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;catalog_related,catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogrelated']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;catalog_related,catalog_related_tagcount,catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_match,catalog_selected,catalog_reference;jumpTo,catalog_visible,catalog_link_override;catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
@@ -493,6 +493,12 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'eval'                    => array('multiple'=> true, 'mandatory'=> true)
 	),
 
+	'catalog_related_tagcount' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_related_tagcount'],
+		'exclude'                 => true,
+		'inputType'               => 'text',
+	),
 
 	'catalog_navigation' => array
 	(
@@ -586,8 +592,6 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 			array('tl_module_catalog', 'getDefaultValue')
 		)
 	),
-
-
 )); 
 
 
@@ -607,7 +611,7 @@ class tl_module_catalog extends Backend
 	 */
 	public function getFilterFields(DataContainer $dc)
 	{
-		return $this->getCatalogFields($dc, array('number', 'decimal', 'text', 'longtext', 'date', 'select', 'tags', 'checkbox'));
+		return $this->getCatalogFields($dc, $GLOBALS['BE_MOD']['content']['catalog']['typesFilterFields']);
 	}
 
 	/**
@@ -658,7 +662,7 @@ class tl_module_catalog extends Backend
 
 	public function getCatalogMatchFields(DataContainer $dc)
 	{
-		$return = $this->getCatalogFields($dc, array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'));
+		$return = $this->getCatalogFields($dc, $GLOBALS['BE_MOD']['content']['catalog']['typesMatchFields']);
 		return array_merge(array('id'=>'ID [id:internal]'), $return);
 	}
 
@@ -669,7 +673,7 @@ class tl_module_catalog extends Backend
 	 */
 	public function getCatalogEditFields(DataContainer $dc)
 	{
-		return $this->getCatalogFields($dc, array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url')); // add file support later
+		return $this->getCatalogFields($dc, $GLOBALS['BE_MOD']['content']['catalog']['typesEditFields']); // TODO: add file support later
 	}
 
 	/**
@@ -678,7 +682,7 @@ class tl_module_catalog extends Backend
 	 */
 	public function getCatalogLinkFields(DataContainer $dc)
 	{
-		return $this->getCatalogFields($dc, array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'file'));	
+		return $this->getCatalogFields($dc, $GLOBALS['BE_MOD']['content']['catalog']['typesLinkFields']);	
 	}
 
 
@@ -687,10 +691,10 @@ class tl_module_catalog extends Backend
 	 * Get all catalog fields and return them as array
 	 * @return array
 	 */
-
-	public function getCatalogFields(DataContainer $dc, $arrTypes=array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'), $blnImage=false)
+	public function getCatalogFields(DataContainer $dc, $arrTypes=false, $blnImage=false)
 	{
-
+		if(!$arrTypes)
+			$arrTypes=$GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
 		$fields = array();
 		$chkImage = $blnImage ? " AND c.showImage=1" : "";
 		
@@ -702,7 +706,6 @@ class tl_module_catalog extends Backend
 			$value = strlen($objFields->name) ? $objFields->name.' ' : '';
 			$value .= '['.$objFields->colName.':'.$objFields->type.']';
 			$fields[$objFields->colName] = $value;
-
 		}
 
 		return $fields;
@@ -714,49 +717,36 @@ class tl_module_catalog extends Backend
 	 * Get all catalog, except the current one and return them as array
 	 * @return array
 	 */
-
 	public function getCatalogSelectList(DataContainer $dc)
 	{
-
 		$catalogs = array();
 		$objCatalog = $this->Database->prepare("SELECT c.* FROM tl_catalog_types c, tl_module m WHERE m.id=? AND c.id!=m.catalog AND c.id!=m.catalog ORDER BY name ASC")
 							->execute($this->Input->get('id'));
-
 		while ($objCatalog->next())
 		{
 			$catalogs[$objCatalog->id] = $objCatalog->name;
 		}
 
 		return $catalogs;
-
 	}
-
-
 
 	/**
 	 * Get all reference fields and return them as array
 	 * @return array
 	 */
-
 	public function getCatalogReferenceFields(DataContainer $dc, $arrTypes=array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'))
 	{
-
 		$fields = array();
 		$objFields = $this->Database->prepare("SELECT c.* FROM tl_catalog_fields c, tl_module m WHERE c.pid=m.catalog_selected AND m.id=? AND c.type IN ('" . implode("','", $arrTypes) . "') ORDER BY c.sorting ASC")
 							->execute($this->Input->get('id'));
-
 		while ($objFields->next())
 		{
 			$value = strlen($objFields->name) ? $objFields->name.' ' : '';
 			$value .= '['.$objFields->colName.':'.$objFields->type.']';
 			$fields[$objFields->colName] = $value;
-
 		}
-
 		return array_merge(array('id'=>'ID [id:internal]'), $fields);
-
 	}
-
 
 	/**
 	 * Load the default value if the text is empty
@@ -770,15 +760,8 @@ class tl_module_catalog extends Backend
 		{
 			$varValue = $GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['default'];
 		}
-
 		return $varValue;
 	}
-
-
-
-	
 }
-
-
 
 ?>

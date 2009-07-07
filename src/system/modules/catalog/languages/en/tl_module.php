@@ -122,7 +122,9 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_limit']    = array('Number of items', 
  */
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_related'] = array('Related fields to match', 'Select the related fields that must match with the currently viewed item with catalog reader.');
+$GLOBALS['TL_LANG']['tl_module']['catalog_related_tagcount'] = array('Amount of tags that must be in common', 'Please specify how many tags must be shared between any entry and this one. This is the minimum count of tags.');
 
+ 
 
 /**
  * Catalog Reference

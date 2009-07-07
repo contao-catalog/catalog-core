@@ -14,9 +14,10 @@
  * This is the catalog configuration file.
  *
  * PHP version 5
- * @copyright  Martin Komara, Thyon Design 2008
- * @author     Martin Komara, John Brand <john.brand@thyon.com> 
- * @package    CatalogModule 
+ * @copyright  Martin Komara, Thyon Design, CyberSpectrum 2008, 2009
+ * @author     Martin Komara, John Brand <john.brand@thyon.com>
+ *             Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package    Catalog 
  * @license    GPL 
  * @filesource
  */
@@ -32,8 +33,131 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
     'icon'         	=> 'system/modules/catalog/html/icon.gif',
     'import'				=> array('Catalog', 'importCSV'),
     'export'				=> array('Catalog', 'exportItems'),
-		'comments' 			=> array('CatalogComments', 'run'),
+	'comments' 				=> array('CatalogComments', 'run'),
     'upgrade'				=> array('CatalogUpgrade', 'upgrade'),
+	// Added by c.schiffler to allow custom editors to register themselves.
+	'fieldTypes' => array
+		(
+			'text' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/text.gif',
+					'fieldDef'     => array('inputType' => 'text'),
+					'sqlDefColumn' => "varchar(255) NOT NULL default ''",
+				),
+			'alias' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/alias.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'text',
+							'eval'      => array('rgxp'=>'alnum', 'unique'=>true, 'spaceToUnderscore'=>true, 'maxlength'=>64),
+						),
+					'sqlDefColumn' => "varchar(64) NOT NULL default ''",
+				),
+			'longtext' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/longtext.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'textarea'
+						),
+					'sqlDefColumn' => "text NULL",
+				),
+			'number' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/number.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'text',
+							'eval'      => array('rgxp' => 'digit')
+						),
+					'sqlDefColumn' => 'int(10) NULL default NULL',
+				),
+			'decimal' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/decimal.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'text',
+							'eval'      => array('rgxp' => 'digit')
+						),
+					'sqlDefColumn' => 'double NULL default NULL',
+				),
+			'date' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/date.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'text',
+						),
+					'sqlDefColumn' => "int(10) unsigned NOT NULL default '0'",
+				),
+			'select' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/select.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'select',
+						),
+					'sqlDefColumn' => "int(10) NOT NULL default 0",
+				),
+			'tags' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/tags.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'checkbox',
+							'eval'      => array('multiple' => true)
+						),
+					'sqlDefColumn' => "text NULL",
+				),
+			'checkbox' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/checkbox.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'checkbox',
+						),
+					'sqlDefColumn' => "char(1) NOT NULL default ''",
+				),
+			'url' => array
+				(
+					'typeimage'    => 'page.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'text',
+						),
+					'sqlDefColumn' => "varchar(255) NOT NULL default ''",
+				),
+			'file' => array
+				(
+					'typeimage'    => 'iconPLAIN.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'fileTree',
+							'eval'      => array('files' => true),
+						),
+					'sqlDefColumn' => "text NULL",
+				),
+			'taxonomy' => array
+				(
+					'typeimage'    => 'system/modules/taxonomy/html/icon.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'tableTree',
+							'eval'      => array('fieldType' => 'radio', 'tableColumn'=> 'tl_taxonomy.name'),
+						),
+					'sqlDefColumn' => "text NULL",
+				),
+		),
+	'typesFilterFields' => array('number', 'decimal', 'text', 'longtext', 'date', 'select', 'tags', 'checkbox'),
+	'typesMatchFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'),
+	'typesEditFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url'), /* TODO: add file support later */
+	'typesLinkFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'file'),
+	'typesCatalogFields' => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'),
+	'typesRSSFields' => array('text', 'alias', 'longtext'),
+		
+	// End of addition by c.schiffler to allow custom editors to register themselves.
 );
 
 if (TL_MODE == 'BE')
@@ -51,7 +175,6 @@ $GLOBALS['FE_MOD']['catalog'] = array
 		'cataloglist' 			=> 'ModuleCatalogList',
 		'catalogreader'			=> 'ModuleCatalogReader',
 		'catalogfeatured'		=> 'ModuleCatalogFeatured',
-		'catalognavigation'	=> 'ModuleCatalogNavigation',
 		'catalogrelated'		=> 'ModuleCatalogRelated',
 		'catalogreference'	=> 'ModuleCatalogReference',
 		'catalognavigation'	=> 'ModuleCatalogNavigation',
@@ -65,6 +188,10 @@ $GLOBALS['FE_MOD']['catalog'] = array
  */
 $GLOBALS['TL_HOOKS']['getSearchablePages'][] = array('CatalogExt', 'getSearchablePages');
 
+/**
+ * Cron jobs
+ */
+$GLOBALS['TL_CRON']['daily'][] = array('CatalogExt', 'generateFeeds');  
 
 /**
  * HOOK Permissions
@@ -79,6 +206,5 @@ $GLOBALS['TL_PERMISSIONS'][] = 'catalogs';
 
 $GLOBALS['TL_CONFIG']['catalog']['safeCheck']		= array('/', '\'');
 $GLOBALS['TL_CONFIG']['catalog']['safeReplace']	= array('-slash-', '-apos-');
-
 
 ?>

@@ -41,6 +41,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 				array('tl_catalog_types', 'checkUpgrade'),
 				array('tl_catalog_types', 'checkPermission'),
 				array('tl_catalog_types', 'checkRemoveTable'),
+				array('tl_catalog_types', 'generateFeed'),
 			)
 		),
 
@@ -103,12 +104,12 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 				'href'                => 'act=show',
 				'icon'                => 'show.gif'
 			),
-      'fields' => array
+			'fields' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['fields'],
 				'href'                => 'table=tl_catalog_fields',
 				'icon'                => 'tablewizard.gif',
-        'button_callback'     => array('tl_catalog_types', 'fieldsButton')
+				'button_callback'     => array('tl_catalog_types', 'fieldsButton')
 			),
 			'comments' => array
 			(
@@ -123,17 +124,18 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 	// Palettes
 	'palettes' => array
 	(
-		'__selector__'		=> array('addImage', 'import', 'searchable', 'allowComments'),
-		'default'					=> 'name,tableName;addImage;format;jumpTo,aliasField;allowComments;import;searchable',
+		'__selector__'		=> array('addImage', 'import', 'searchable', 'allowComments', 'makeFeed'),
+		'default'					=> 'name,tableName;addImage;format;jumpTo,aliasField;allowComments;import;searchable;makeFeed',
 	),
 
 	// Subpalettes
 	'subpalettes' => array
 	(
 		'addImage'				=> 'singleSRC,size',
-		'allowComments'		=> 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha',
-		'import'					=> 'importAdmin,importDelete',
+		'allowComments'			=> 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha',
+		'import'				=> 'importAdmin,importDelete',
 		'searchable'			=> 'searchCondition,titleField',
+		'makeFeed'				=> 'feedFormat,language,source,datesource,maxItems,feedBase,alias,description',
 	),
 
 	// Fields
@@ -320,7 +322,84 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'doNotCopy'               => true,
 		),
 		
-
+		'makeFeed' => array
+		(
+			'label'					=> &$GLOBALS['TL_LANG']['tl_catalog_types']['makeFeed'],
+			'exclude'				=> true,
+			'inputType'				=> 'checkbox',
+			'eval'					=> array('submitOnChange'=>true),
+			'doNotCopy'				=> true,
+		),
+		'feedFormat' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['feedFormat'],
+			'default'                 => 'rss',
+			'exclude'                 => true,
+			'filter'                  => true,
+			'inputType'               => 'select',
+			'options'                 => array('rss'=>'RSS 2.0', 'atom'=>'Atom'),
+			'eval'                    => array('tl_class'=>'w50')
+		),
+		'language' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['language'],
+			'exclude'                 => true,
+			'search'                  => true,
+			'filter'                  => true,
+			'inputType'               => 'text',
+			'eval'                    => array('mandatory'=>true, 'maxlength'=>32, 'tl_class'=>'w50')
+		),
+		'source' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['source'],
+			'exclude'                 => true,
+			'inputType'               => 'select',
+			'options_callback'        => array('tl_catalog_types', 'getRSSFields'),
+			'eval'                    => array('mandatory' => false, 'includeBlankOption' => true),
+			'doNotCopy'               => true,
+		),
+		'datesource' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['datesource'],
+			'exclude'                 => true,
+			'inputType'               => 'select',
+			'options_callback'        => array('tl_catalog_types', 'getDateFields'),
+			'eval'                    => array('mandatory' => false, 'includeBlankOption' => true),
+			'doNotCopy'               => true,
+		),
+		'maxItems' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['maxItems'],
+			'default'                 => 25,
+			'exclude'                 => true,
+			'inputType'               => 'text',
+			'eval'                    => array('mandatory'=>true, 'rgxp'=>'digit', 'tl_class'=>'w50')
+		),
+		'feedBase' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['feedBase'],
+			'default'                 => $this->Environment->base,
+			'exclude'                 => true,
+			'search'                  => true,
+			'inputType'               => 'text',
+			'eval'                    => array('trailingSlash'=>true, 'rgxp'=>'url', 'decodeEntities'=>true, 'maxlength'=>255, 'tl_class'=>'w50')
+		),
+		'alias' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['alias'],
+			'exclude'                 => true,
+			'search'                  => true,
+			'inputType'               => 'text',
+			'eval'                    => array('rgxp'=>'alnum', 'unique'=>true, 'spaceToUnderscore'=>true, 'maxlength'=>128, 'tl_class'=>'w50')
+		),
+		'description' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['description'],
+			'exclude'                 => true,
+			'search'                  => true,
+			'inputType'               => 'textarea',
+			'eval'                    => array('style'=>'height:60px;', 'tl_class'=>'clr')
+		)
 	)
 );
 
@@ -544,6 +623,31 @@ class tl_catalog_types extends Backend
 		return $result;
 	}
 
+	public function getRSSFields(DataContainer $dc)
+	{
+		$rssfieldtypes = join(',', $GLOBALS['BE_MOD']['content']['catalog']['typesRSSFields']);
+		$objFields = $this->Database->prepare('SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND (FIND_IN_SET(type,"' . $rssfieldtypes . '")>0)')
+				->execute($dc->id);
+		$result = array();
+		while ($objFields->next())
+		{
+			$result[$objFields->colName] = $objFields->name;
+		}
+		return $result;
+	}
+
+	public function getDateFields(DataContainer $dc)
+	{
+		$objFields = $this->Database->prepare('SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND type="date"')
+				->execute($dc->id);
+		$result = array();
+		while ($objFields->next())
+		{
+			$result[$objFields->colName] = $objFields->name;
+		}
+		return $result;
+	}
+
 	/**
 	 * Return the show comments button
 	 * @param array
@@ -579,8 +683,14 @@ class tl_catalog_types extends Backend
 		return $this->generateImage(str_replace('.gif', '_.gif', $icon), $label);
 	}
 
-
-
+	/**
+	 * Update the RSS-feed
+	 */
+	public function generateFeed()
+	{
+		$this->import('CatalogExt');
+		$this->CatalogExt->generateFeed(CURRENT_ID);
+	}
 }
 
 ?>

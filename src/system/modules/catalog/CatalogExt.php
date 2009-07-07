@@ -19,9 +19,9 @@
  * Software Foundation website at http://www.gnu.org/licenses/.
  *
  * PHP version 5
- * @copyright  Thyon Design 2008 
- * @author     John Brand <john.brand@thyon.com> 
- * @package    CatalogExtension
+ * @copyright  Thyon Design, CyberSpectrum 2008, 2009
+ * @author     John Brand <john.brand@thyon.com>, Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package    Catalog
  * @license    LGPL
  * @filesource
  */
@@ -31,8 +31,8 @@
  * Class CatalogExt 
  *
  * @copyright  Thyon Design 2008 
- * @author     John Brand <john.brand@thyon.com> 
- * @package    Controller
+ * @author     John Brand <john.brand@thyon.com>, Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package    Catalog
  */
 class CatalogExt extends Frontend
 {
@@ -112,13 +112,118 @@ class CatalogExt extends Frontend
 	 */
 	private function getLink($jumpTo, Database_Result $objCatalog, $strUrl, $alias)
 	{
-		$objParent = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
-									->limit(1)
-									->execute($jumpTo);
+		// TODO: Why is this here queried? does not get used at all. Removed for now. (c.schiffler)
+		//$objParent = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
+		//							->limit(1)
+		//							->execute($jumpTo);
 
 		$item = ($alias && strlen($objCatalog->$alias) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $objCatalog->$alias : $objCatalog->id;
 
 		return sprintf($strUrl, $item);
+	}
+
+
+	/**
+	 * Generate a XML file and save it to the root directory
+	 * @param object
+	 */
+	protected function generateFiles(Database_Result $arrCatalog)
+	{
+		$time = time();
+		$strType = ($arrCatalog->feedFormat == 'atom') ? 'generateAtom' : 'generateRss';
+		$strLink = strlen($arrCatalog->feedBase) ? $arrCatalog->feedBase : $this->Environment->base;
+		$strFile = $arrCatalog->feedName;
+
+		$objFeed = new Feed($strFile);
+
+		$objFeed->link = $strLink;
+		$objFeed->title = $arrCatalog->title;
+		$objFeed->description = $arrCatalog->description;
+		$objFeed->language = $arrCatalog->language;
+		$objFeed->published = $arrCatalog->tstamp;
+
+		// Get default URL
+		$objParent = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
+									->limit(1)
+									->execute($arrCatalog->jumpTo);
+
+		$strUrl = $this->generateFrontendUrl($objParent->fetchAssoc(), '/items/%s');
+
+		// Get items
+		$where = $arrCatalog->searchCondition;
+		$datefield=(strlen($arrCatalog->datesource) ? $arrCatalog->datesource : 'tstamp');
+		$objArticleStmt = $this->Database->prepare("SELECT * FROM " . $arrCatalog->tableName . " WHERE pid=? ".(strlen($where)? " AND ".$where : "")." ORDER BY " . $datefield . " DESC");
+
+		if ($arrCatalog->maxItems > 0)
+		{
+			$objArticleStmt->limit($arrArchive['maxItems']);
+		}
+
+		$objArticle = $objArticleStmt->execute($arrCatalog->id, $time, $time);
+
+		// Parse items
+		while ($objArticle->next())
+		{
+			$objItem = new FeedItem();
+			$objItem->title = $objArticle->{$arrCatalog->titleField};
+			$objItem->description = (strlen($arrCatalog->source) ? $objArticle->{$arrCatalog->source} : '');
+			$objItem->link = $strLink . $this->getLink($arrCatalog->jumpTo, $objArticle, $strUrl, $arrCatalog->aliasField);
+			$objItem->published = $objArticle->$datefield;
+			$objFeed->addItem($objItem);
+		}
+		
+		// Create file
+		$objRss = new File($strFile . '.xml');
+		$objRss->write($this->replaceInsertTags($objFeed->$strType()));
+		$objRss->close();
+	}
+ 
+	/**
+	 * Update a particular RSS feed
+	 * @param integer
+	 */
+	public function generateFeed($intId)
+	{
+		$objCatalog = $this->Database->prepare("SELECT * FROM tl_catalog_types WHERE id=? AND makeFeed=?")
+									  ->limit(1)
+									  ->execute($intId, 1);
+
+		if ($objCatalog->numRows < 1)
+		{
+			return;
+		}
+
+		$objCatalog->feedName = strlen($objCatalog->alias) ? $objCatalog->alias : 'catalog' . $objCatalog->id;
+
+		// Delete XML file
+		if ($this->Input->get('act') == 'delete')
+		{
+			$this->import('Files');
+			$this->Files->delete($objCatalog->feedName . '.xml');
+		}
+		// Update XML file
+		else
+		{
+			$this->generateFiles($objCatalog);
+			$this->log('Generated event feed "' . $objCatalog->feedName . '.xml"', 'Catalog generateFeed()', TL_CRON);
+		}
+	}
+	/**
+	 * Update all RSS feeds
+	 */
+	public function generateFeeds()
+	{
+		$objCatalog = $this->Database->prepare("SELECT id FROM tl_catalog_types WHERE makeFeed=?")
+									  ->limit(1)
+									  ->execute(1);
+		if ($objCatalog->numRows < 1)
+		{
+			return;
+		}
+		while ($objCatalog->next())
+		{
+			$this->generateFeed($objCatalog->id);
+		}
 	}
 }
 

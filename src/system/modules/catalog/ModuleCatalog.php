@@ -19,9 +19,10 @@
  * Software Foundation website at http://www.gnu.org/licenses/.
  *
  * PHP version 5
- * @copyright  Thyon Design 2008 
- * @author     John Brand <john.brand@thyon.com> 
- * @package    CatalogExtension 
+ * @copyright  Thyon Design 2008, 2009
+ * @author     John Brand <john.brand@thyon.com>, 
+ * 	           Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package    Catalog 
  * @license    LGPL 
  * @filesource
  */
@@ -117,8 +118,10 @@ abstract class ModuleCatalog extends Module
 
 
 
-	protected function getCatalogFields($arrTypes=array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'))
+	protected function getCatalogFields($arrTypes=false)
 	{
+		if(!$arrTypes)
+			$arrTypes=$GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
 		$fields = array();
 		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? AND type IN ('" . join("','", $arrTypes) . "') ORDER BY sorting")
 							->execute($this->catalog);
@@ -141,14 +144,16 @@ abstract class ModuleCatalog extends Module
 		{
 			return array();
 		}
-		$arrFilters = deserialize($this->catalog_filters, true);
 		$tree = array();
-		foreach ($arrFilters as $key=>$fieldconfig)
-		{
-			list($field, $config) = each($fieldconfig);
-			if ($config['checkbox'] == 'tree')
+		if($this->catalog_filters) {
+			$arrFilters = deserialize($this->catalog_filters, true);
+			foreach ($arrFilters as $key=>$fieldconfig)
 			{
-				$tree[] = $field;
+				list($field, $config) = each($fieldconfig);
+				if ($config['checkbox'] == 'tree')
+				{
+					$tree[] = $field;
+				}
 			}
 		}
 		return $tree;
@@ -540,7 +545,6 @@ abstract class ModuleCatalog extends Module
 				'procedure' => $procedure,
 				'values' 		=> $values,
 			);
-
 		
 		return $settings;
 	}
@@ -829,8 +833,6 @@ abstract class ModuleCatalog extends Module
 							// get all rows
 							$rows = $objFilter->fetchEach($field);
 
-print_r($id);
-print_r($rows);
 							foreach ($fieldConf['options'] as $id=>$option)
 							{
 								if (in_array($id, $rows))
@@ -892,7 +894,9 @@ print_r($rows);
 						}
 						array_push($options, $addOption);
 
-						$tmpTags = '';
+						// Changed by c.schiffler seemed like a bug to me as it threw an Exception.
+						// $tmpTags = '';
+						$tmpTags = array();
 						foreach ($fieldConf['options'] as $id=>$option)
 						{
 								$tmpTags[] = "SUM(FIND_IN_SET(".$id.",".$field.")) AS ".$field.$id;
@@ -1466,15 +1470,16 @@ print_r($rows);
 				$arrOptions = array();
 				foreach ($options as $i=>$option)
 				{
-					$arrOptions[] = sprintf('<input type="checkbox" name="%s" id="opt_%s" class="checkbox%s" value="%s"%s%s /> <label for="opt_%s">%s</label>',
-						$widget['name'] . ($widget['multiple'] ? '[]' : ''),
-						$widget['id'].'_'.$option['id'],
-						(strlen($widget['class']) ? ' ' . $widget['class'] : ''),
-						($widget['multiple'] ? specialchars($option['value']) : 1),
-						($option['selected'] ? ' checked="checked"' : ''),
-						$widget['attributes'],
-						$widget['id'].'_'.$i,
-						$option['label']);
+					$arrOptions[] = sprintf('<span><input type="checkbox" name="%s" id="opt_%s" class="checkbox%s" value="%s"%s%s /> <label for="opt_%s">%s</label></span>',
+						$widget['name'] . ($widget['multiple'] ? '[]' : ''), // name
+						$widget['id'].'_'.$option['id'], // id
+						(strlen($widget['class']) ? ' ' . $widget['class'] : ''), // class
+						($widget['multiple'] ? specialchars($option['value']) : 1), // value
+						($option['selected'] ? ' checked="checked"' : ''), // state
+						$widget['attributes'], // more attributes
+//						$widget['id'].'_'.$i, // the id again
+						$widget['id'].'_'.$option['id'], // the id again
+						$option['label']); // and the label
 				}
 	
 				// Add a "no entries found" message if there are no options
@@ -1488,7 +1493,9 @@ print_r($rows);
 						$widget['id'],
 						($widget['multiple'] ? 'checkbox_container' : 'checkbox_single_container'),
 						(strlen($widget['class']) ? ' ' . $widget['class'] : ''),
-						implode(($widget['separator'] ? $widget['separator'] : '<br />'), $arrOptions));
+//						implode(($widget['separator'] ? $widget['separator'] : '<br />'), $arrOptions));
+						// c.schiffler - removed the separator as if none specified, we do not want one. <br /> is evil IMO.
+						implode(($widget['separator'] ? $widget['separator'] : ''), $arrOptions));
 				break;
 
 
@@ -1711,7 +1718,6 @@ print_r($rows);
 		$objCatalog->reset();		
 		while ($objCatalog->next())
 		{
-
 			$arrCatalog[$i]['id'] = $objCatalog->id;
 			$arrCatalog[$i]['catalog_name'] = $objCatalog->catalog_name;
 			$arrCatalog[$i]['parentJumpTo'] = $objCatalog->parentJumpTo;
@@ -1968,8 +1974,22 @@ print_r($rows);
 				}
 				break;
 		
-			default:;
-
+			// Changed by c.schiffler to allow custom fields.
+			default:
+				if(array_key_exists($fieldConf['eval']['catalog']['type'], $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
+				{
+					// HOOK: try to format the fieldtype as it is a custom added one.
+					$fieldType=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
+					if(array_key_exists('parseValue', $fieldType) && is_array($fieldType['parseValue']))
+					{
+						foreach ($fieldType['parseValue'] as $callback)
+						{
+							$this->import($callback[0]);
+							$ret=$this->$callback[0]->$callback[1]($id, $k, $value);
+							$strHtml=$ret['html'];
+						}
+					}
+				}
 		}		
 		
 		// formatting 
@@ -2285,7 +2305,24 @@ print_r($rows);
 	
 		global $objPage;
 
-		$pageRow = $objPage->row();
+		// bugfix c.schiffler, we must handle a jumpTo if it is present.
+		if($this->jumpTo)
+		{
+			$this->getJumpTo($this->jumpTo, false);
+			// Get internal page (from parent catalog)
+			$objJump = $this->Database->prepare("SELECT * FROM tl_page WHERE id=?")
+									  ->limit(1)
+									  ->execute($this->jumpTo);
+			// TODO: shall we fallback to the current page then?
+			if ($objJump->numRows < 1)
+			{
+				return '';
+			}
+			$pageRow = $objJump->fetchAssoc();
+		} else
+			$pageRow = $objPage->row();
+		// end bugfix c.schiffler, we must handle a jumpTo if it is present.
+
 
 		if (!count($pageRow))
 		{
@@ -2506,7 +2543,7 @@ print_r($rows);
 			// setup field and value
 			$field = $objFields->colName;
 			$value = $objNodes->$valueField;
-				
+
 				
 			$href = $this->generateCatalogNavigationUrl($field, $value);
 
@@ -2569,8 +2606,6 @@ print_r($rows);
 		return count($items) ? $objTemplate->parse() : '';
 	}
 	
-
-
 	/**
 	 * List and generate comment form
 	 * @param object

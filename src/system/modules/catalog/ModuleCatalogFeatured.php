@@ -21,7 +21,7 @@
  * PHP version 5
  * @copyright  Thyon Design 2008 
  * @author     John Brand <john.brand@thyon.com> 
- * @package    CatalogExtension 
+ * @package    Catalog 
  * @license    LGPL 
  * @filesource
  */
@@ -77,7 +77,9 @@ class ModuleCatalogFeatured extends ModuleCatalog
 		$limit = is_numeric($this->catalog_limit)? $this->catalog_limit : 0;
 	
 		$strWhere = trim($this->replaceInsertTags($this->catalog_where));
-		$strOrder = ($this->catalog_random_disable) ? trim($this->list_sort) : "RAND()";
+		// Bugfix c.schiffler. The name is catalog_order not list_sort :(
+		// $strOrder = ($this->catalog_random_disable) ? trim($this->list_sort) : "RAND()";
+		$strOrder = ($this->catalog_random_disable) ? trim($this->catalog_order) : "RAND()";
 
 		// Run Query
 		$objCatalogStmt = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=?".($strWhere ? " AND ".$strWhere : "").(strlen($strOrder) ? " ORDER BY ".$strOrder : ""));

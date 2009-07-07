@@ -12,8 +12,9 @@
  * visit the project website http://www.typolight.org.
  *
  * PHP version 5
- * @copyright  Martin Komara, Thyon Design 2008
- * @author     Martin Komara, John Brand <john.brand@thyon.com> 
+ * @copyright  Martin Komara, Thyon Design, CyberSpectrum 2008, 2009
+ * @author     Martin Komara, John Brand <john.brand@thyon.com>
+ *             Christian Schiffler <c.schiffler@cyberspectrum.de>
  * @package    Catalog
  * @license    GPL 
  * @filesource
@@ -128,21 +129,6 @@ class Catalog extends Backend
  * Callbacks: tl_catalog_fields 
  */
 
-	protected $sqlDefColumn = array
-	(
-		'text'			=> "varchar(255) NOT NULL default ''",
-		'alias'			=> "varchar(64) NOT NULL default ''",
-		'longtext'	=> "text NULL",
-		'number'		=> "int(10) NULL default NULL",
-		'decimal'		=> "double NULL default NULL",
-		'date'			=> "int(10) unsigned NOT NULL default '0'",
-		'select'		=> "int(10) NOT NULL default 0",
-		'tags'			=> "text NULL",
-		'checkbox'	=> "char(1) NOT NULL default ''",
-		'url'				=> "varchar(255) NOT NULL default ''",
-		'file'			=> "text NULL",
-	);
-	
 	protected $systemColumns = array('id', 'pid', 'sorting', 'tstamp');
 	
 	protected $renameColumnStatement = "ALTER TABLE %s CHANGE COLUMN %s %s %s";
@@ -176,11 +162,11 @@ class Catalog extends Backend
 	
 			if ($this->Database->fieldExists($colName, $tableName))
 			{
-				$statement = sprintf($this->renameColumnStatement, $tableName, $colName, $colName, $this->sqlDefColumn[$fieldType]);
+				$statement = sprintf($this->renameColumnStatement, $tableName, $colName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType]['sqlDefColumn']);
 			}
 			else
 			{
-				$statement = sprintf($this->createColumnStatement, $tableName, $colName, $this->sqlDefColumn[$fieldType]);
+				$statement = sprintf($this->createColumnStatement, $tableName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType]['sqlDefColumn']);
 			}
 			
 			$this->Database->execute($statement);
@@ -228,11 +214,11 @@ class Catalog extends Backend
 
 		if ($objOld->itemCount == 0 && $this->Database->fieldExists($oldColName, $tableName))
 		{
-			$statement = sprintf($this->renameColumnStatement, $tableName, $oldColName, $varValue, $this->sqlDefColumn[$fieldType]);
+			$statement = sprintf($this->renameColumnStatement, $tableName, $oldColName, $varValue, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType]['sqlDefColumn']);
 		}
 		else
 		{
-			$statement = sprintf($this->createColumnStatement, $tableName, $varValue, $this->sqlDefColumn[$fieldType]);
+			$statement = sprintf($this->createColumnStatement, $tableName, $varValue, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType]['sqlDefColumn']);
 		}
 		
 		$this->Database->execute($statement);
@@ -258,8 +244,10 @@ class Catalog extends Backend
 		
 		if ($varValue != $fieldType)
 		{
+			// TODO: I think we need something better here, like trying to convert the column first and if that fails backup to drop'ing and recreating.
+			// Otherwise existing data in the catalog will get lost when accidently changing the column type and changing it back (2009-04-24 c.schiffler).
 			$this->dropColumn($tableName, $colName);
-			$this->Database->execute(sprintf($this->createColumnStatement, $tableName, $colName, $this->sqlDefColumn[$varValue]));
+			$this->Database->execute(sprintf($this->createColumnStatement, $tableName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$varValue]['sqlDefColumn']));
 		}
 		
 		return $varValue;
@@ -297,71 +285,7 @@ class Catalog extends Backend
 	private $tableNames	= array();
 	private $strFormat	= array();
 	
-	protected $fieldDef = array
-	(
-		'text'          => array
-		(
-			'inputType' => 'text'
-		),
-		
-		'alias'          => array
-		(
-			'inputType' => 'text',
-			'eval'      => array('rgxp'=>'alnum', 'unique'=>true, 'spaceToUnderscore'=>true, 'maxlength'=>64),
-		),
 
-		'longtext'      => array
-		(
-			'inputType' => 'textarea'
-		),
-		
-		'number'        => array
-		(
-			'inputType' => 'text',
-			'eval'      => array('rgxp' => 'digit')
-		),
-		
-		'decimal'        => array
-		(
-			'inputType' => 'text',
-			'eval'      => array('rgxp' => 'digit')
-		),
-		
-		'date'          => array
-		(
-			'inputType' => 'text',
-		),
-
-		'select'        => array
-		(
-			'inputType' => 'tableTree',
-			'eval'      => array('fieldType'=>'radio', 'mandatory' => true )
-		),
-		
-		'tags'          => array
-		(
-			'inputType' => 'tableTree',
-			'eval'      => array('fieldType'=>'checkbox')
-		),
-		
-		'checkbox'      => array
-		(
-			'inputType' => 'checkbox',
-		),
-		
-		'url'           => array
-		(
-			'inputType' => 'text',
-		),
-		
-		'file'          => array
-		(
-			'inputType' => 'fileTree',
-			'eval'      => array('files' => true),
-		),
-
-	);
-    
 	public function getDefaultDca()
 	{
 		$this->loadLanguageFile('tl_catalog_items');
@@ -895,8 +819,8 @@ class Catalog extends Backend
 		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? ORDER BY sorting")
 					->execute($catalogId);
 
-		$this->fieldDef['date']['eval'] = array('datepicker' => $this->getDatePickerString());
-		
+		$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']['date']['fieldDef']['eval'] = array('datepicker' => $this->getDatePickerString());
+
 
 		// load default catalog dca
 		$dca = $this->getDefaultDca();        
@@ -942,9 +866,10 @@ class Catalog extends Backend
 			
 			$visibleOptions = trimsplit('[,;]', $GLOBALS['TL_DCA']['tl_catalog_fields']['palettes'][$colType]);
 			
-			$field = $this->fieldDef[$colType];
+			// Changed by c.schiffler to allow custom editors to register themselves.
+			$field = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType]['fieldDef'];
 			$fields[] = $colName;
-      $separators[] = (($objFields->insertBreak) ? ';' : ',');
+			$separators[] = (($objFields->insertBreak) ? ';' : ',');
 
 			// Ammend field with catalog field settings
 			$field['label'] = array($objFields->name, $objFields->description);
@@ -963,7 +888,20 @@ class Catalog extends Backend
 			{
 				$this->$configFunction($dca['fields'][$colName], $objFields);
 			}
-			
+			// Added by c.schiffler to allow custom editors to register themselves.
+			// HOOK: try to format the fieldtype as it might be a custom added one.
+			$fieldType=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType];
+			if(array_key_exists('generateFieldEditor', $fieldType) && is_array($fieldType['generateFieldEditor']))
+			{
+				foreach ($fieldType['generateFieldEditor'] as $callback)
+				{
+					$this->import($callback[0]);
+					$this->$callback[0]->$callback[1]($dca['fields'][$colName], $objFields);
+				}
+			}
+			// End of addition by c.schiffler to allow custom editors to register themselves.
+
+					
 			if ($objFields->titleField && in_array('titleField', $visibleOptions))
 			{
 				$titleFields[] = $colName;
@@ -1007,7 +945,7 @@ class Catalog extends Backend
 			$strPalette .= (($id > 0) ? $separators[$id] : '').$field;	
 		}
 		$dca['palettes']['default'] = $strPalette;
-					
+		
 		// set title fields
 		$titleFields = count($titleFields) ? $titleFields : array('id');
 		$titleFormat = implode(', ', array_fill(0, count($titleFields), '%s'));

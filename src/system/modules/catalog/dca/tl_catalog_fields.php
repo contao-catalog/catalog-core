@@ -14,8 +14,9 @@
  * This is the data container array for table tl_catalog_fields.
  *
  * PHP version 5
- * @copyright  Martin Komara, Thyon Design 2008
- * @author     Martin Komara, John Brand <john.brand@thyon.com> 
+ * @copyright  Martin Komara, Thyon Design, CyberSpectrum 2008, 2009
+ * @author     Martin Komara, John Brand <john.brand@thyon.com>
+ *             Christian Schiffler <c.schiffler@cyberspectrum.de>
  * @package    Catalog 
  * @license    GPL 
  * @filesource
@@ -48,7 +49,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'mode'                    => 4,
 			'fields'                  => array('sorting'),
 			'panelLayout'             => 'filter,limit', 
-			'headerFields'            => array('name', 'tableName', 'tstamp'), 
+			'headerFields'            => array('name', 'tableName', 'tstamp', 'makeFeed'), 
 			'flag'                    => 1,
 			'child_record_callback'   => array('tl_catalog_fields', 'renderField') 
 		),
@@ -471,22 +472,9 @@ class tl_catalog_fields extends Backend
 				'showImage'				=> 'iconJPG.gif',
 			);
 
-		$types = array
-			(
-				'text'			=> 'system/modules/catalog/html/text.gif',
-				'alias'			=> 'system/modules/catalog/html/alias.gif',
-				'longtext'	=> 'system/modules/catalog/html/longtext.gif',
-				'number'		=> 'system/modules/catalog/html/number.gif',
-				'decimal'		=> 'system/modules/catalog/html/decimal.gif',
-				'date'			=> 'system/modules/catalog/html/date.gif',
-				'checkbox'	=> 'system/modules/catalog/html/checkbox.gif',
-				'tags'			=> 'system/modules/catalog/html/tags.gif',
-				'select'		=> 'system/modules/catalog/html/select.gif',
-				'url' 			=> 'page.gif',
-				'file' 			=> 'iconPLAIN.gif',
-			);
-			
-		$strType = $this->generateImage($types[$arrRow['type']], $GLOBALS['TL_LANG']['tl_catalog_fields']['type'][0], 'title="'.$GLOBALS['TL_LANG']['tl_catalog_fields']['type'][0].': '.$arrRow['type'].'"') . ' ';
+		$type=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$arrRow['type']];
+		$strType = $this->generateImage($type['typeimage'], $GLOBALS['TL_LANG']['tl_catalog_fields']['type'][0], 'title="'.$GLOBALS['TL_LANG']['tl_catalog_fields']['type'][0].': '.$arrRow['type'].'"') . ' ';
+
 
 		$strImages = '';
 		foreach($images as $field=>$image)

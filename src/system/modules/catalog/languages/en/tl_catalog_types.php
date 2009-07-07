@@ -26,6 +26,7 @@
  * Fields
  */
 $GLOBALS['TL_LANG']['tl_catalog_types']['name'] = array('Name', 'Catalog name.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['tstamp']         = array('Revision date', 'Date and time of the latest revision');
 $GLOBALS['TL_LANG']['tl_catalog_types']['tableName'] = array('Table name', 'Name of database table to store items to.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['noTable'] = array('Independent table', 'If checked the database table will not be updated when adding or removing catalog fields. Useful for editing existing tables.');
 
@@ -61,6 +62,18 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['importDelete'] = array('Allow remove ex
 
 $GLOBALS['TL_LANG']['tl_catalog_types']['upgrade'] = array('Upgrade Catalog Installation', 'In order to complete the upgrade process to the new merged Catalog application, you will need to manually remove a previous folder from your installation. The contents of this folder is now merged into the catalog folder and therefore no longer required. However, due to some permission restrictions, it\'s not directly possible to delete the folder automatically. <br /><br />Once you have removed this folder, you will have access to the catalog application.');
 
+/**
+ * RSS Feeds.
+ */
+$GLOBALS['TL_LANG']['tl_catalog_types']['makeFeed']       = array('Generate feed', 'Generate an RSS or Atom feed from the news archive.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['feedFormat']         = array('Feed format', 'Please choose a feed format.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['language']       = array('Feed language', 'Please enter the page language according to the ISO-639 standard (e.g. <em>en</em> or <em>en-us</em>).');
+$GLOBALS['TL_LANG']['tl_catalog_types']['source']         = array('RSS description', 'Here you can choose which field will be used for the description in the RSS.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['datesource']     = array('RSS published date', 'Here you can choose a date field that will get used in the RSS as the "published" value.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['maxItems']       = array('Maximum number of items', 'Here you can limit the number of feed items. Set to 0 to export all.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['feedBase']       = array('Base URL', 'Please enter the base URL with protocol (e.g. <em>http://</em>).');
+$GLOBALS['TL_LANG']['tl_catalog_types']['alias']          = array('Feed alias', 'Here you can enter a unique filename (without extension). The XML feed file will be auto-generated in the root directory of your TYPOlight installation, e.g. as <em>name.xml</em>.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['description']    = array('Feed description', 'Please enter a short description of the catalog feed.'); 
 
 /**
  * Reference

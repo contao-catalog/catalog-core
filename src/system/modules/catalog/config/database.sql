@@ -44,6 +44,16 @@ CREATE TABLE `tl_catalog_types` (
   `searchable` char(1) NOT NULL default '',
   `searchCondition` varchar(255) NOT NULL default '',
   `titleField` varchar(64) NOT NULL default '',
+
+  `makeFeed` char(1) NOT NULL default '',
+  `feedFormat` varchar(32) NOT NULL default '',
+  `language` varchar(32) NOT NULL default '',
+  `source` varchar(32) NOT NULL default '',
+  `datesource` varchar(32) NOT NULL default '',
+  `maxItems` smallint(5) unsigned NOT NULL default '0',
+  `feedBase` varchar(255) NOT NULL default '',
+  `alias` varbinary(128) NOT NULL default '',
+  `description` text NULL,
   PRIMARY KEY  (`id`),
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -192,6 +202,7 @@ CREATE TABLE `tl_module` (
 
 -- catalog related
   `catalog_related` blob NULL,
+  `catalog_related_tagcount` smallint(3) unsigned NOT NULL default '0',
 
 -- catalog reference
   `catalog_selected` int(10) unsigned NOT NULL default '0',
@@ -239,5 +250,14 @@ CREATE TABLE `tl_user_group` (
 
 CREATE TABLE `tl_user` (
   `catalogs` blob NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- 
+-- Table `tl_user`
+-- 
+-- added by c.schiffler for rss feeds
+
+CREATE TABLE `tl_layout` (
+  `catalogfeeds` blob NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

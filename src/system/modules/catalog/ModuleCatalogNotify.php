@@ -21,7 +21,7 @@
  * PHP version 5
  * @copyright  Thyon Design 2008 
  * @author     John Brand <john.brand@thyon.com> 
- * @package    CatalogExtension 
+ * @package    Catalog 
  * @license    LGPL
  * @filesource
  */
