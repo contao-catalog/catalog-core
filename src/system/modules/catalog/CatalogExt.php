@@ -231,16 +231,18 @@ class CatalogExt extends Frontend
 	 */
 	public function removeOldFeeds()
 	{
-		$objCatalog = $this->Database->prepare("SELECT id, feedName FROM tl_catalog_types WHERE makeFeed=?")
+		$objCatalog = $this->Database->prepare("SELECT id, alias FROM tl_catalog_types WHERE makeFeed=?")
 									  ->limit(1)
 									  ->execute(1);
 		if ($objCatalog->numRows < 1)
 		{
 			return array();
 		}
+	
 		$tmp=array();
 		while ($objCatalog->next())
 		{
+			$objCatalog->feedName = strlen($objCatalog->alias) ? $objCatalog->alias : 'catalog' . $objCatalog->id;
 			$tmp[]=$objCatalog->feedName . '.xml';
 		}
 		return $tmp;
@@ -302,8 +304,9 @@ class CatalogExt extends Frontend
 				$objFeeds = $this->Database->execute("SELECT * FROM tl_catalog_types WHERE id IN(" . implode(',', $catalogfeeds) . ")");
 				while($objFeeds->next())
 				{
+					$objFeeds->feedName = strlen($objFeeds->alias) ? $objFeeds->alias : 'catalog' . $objFeeds->id;
 					$base = strlen($objFeeds->feedBase) ? $objFeeds->feedBase : $this->Environment->base;
-					$GLOBALS['TL_HEAD']['CATALOGFEED']= '<link rel="alternate" href="' . $base . $objFeeds->alias . '.xml" type="application/' . $objFeeds->feedFormat . '+xml" title="' . $objFeeds->description . ' ' . $strTemplate . '" />' . "\n";
+					$GLOBALS['TL_HEAD']['CATALOGFEED']= '<link rel="alternate" href="' . $base . $objFeeds->feedName . '.xml" type="application/' . $objFeeds->feedFormat . '+xml" title="' . $objFeeds->description . '" />' . "\n";
 				}
 			} 
 		}

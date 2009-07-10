@@ -35,9 +35,13 @@ $GLOBALS['TL_DCA']['tl_catalog_items'] = array
 		'ptable'                      => 'tl_catalog_types',
 		'switchToEdit'                => false,
 		'enableVersioning'            => false,
-		'oncreate_callback'						=> array
+		'oncreate_callback'			=> array
 			(
 				array('Catalog', 'initializeCatalogItems'),
+			),
+		'onload_callback'			=> array
+			(
+				array('tl_catalog_types', 'generateFeed'),
 			)
 	),
 	
