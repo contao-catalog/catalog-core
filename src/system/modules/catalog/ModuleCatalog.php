@@ -1771,7 +1771,7 @@ abstract class ModuleCatalog extends Module
 				$strLabel = strlen($label = $fieldConf['label'][0]) ? $label : $k;
 				$strType = $fieldConf['eval']['catalog']['type'];
 
-				$arrValues = $this->parseValue($this->type.$i, $k, $v, $blnImageLink);
+				$arrValues = $this->parseValue($this->type.$i, $k, $v, $blnImageLink, $objCatalog);
 				
 				$linked = deserialize($this->catalog_islink, true);
 				if ($this->catalog_link_override && is_array($linked) && in_array($k, $linked))
@@ -1791,10 +1791,9 @@ abstract class ModuleCatalog extends Module
 				{
 					case 'select':
 					case 'tags':
-		        list($refTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-		        
-		        if (strlen(trim($v)))
-		        {
+						list($refTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
+						if (strlen(trim($v)))
+						{
 							// Get referenced fields
 							$objRef = $this->Database->prepare("SELECT * FROM ".$refTable." WHERE id IN (".$v.")")
 													->execute();
@@ -1907,9 +1906,9 @@ abstract class ModuleCatalog extends Module
 	 * @return string
 	 */
 
-	protected function formatValue($id, $k, $value, $blnImageLink=true)
+	protected function formatValue($id, $k, $value, $blnImageLink=true, $objCatalog=array())
 	{
-		$arrFormat = $this->parseValue($id, $k, $value, $blnImageLink);
+		$arrFormat = $this->parseValue($id, $k, $value, $blnImageLink, $objCatalog);
 		return $arrFormat['html'];
 	}
 	
@@ -1923,7 +1922,7 @@ abstract class ModuleCatalog extends Module
 	 * @return array
 	 */
   
-	protected function parseValue($id, $k, $value, $blnImageLink=true)
+	protected function parseValue($id, $k, $value, $blnImageLink=true, $objCatalog=array())
 	{
 		$raw = $value;
 		$arrItems = deserialize($value, true);
@@ -1985,8 +1984,10 @@ abstract class ModuleCatalog extends Module
 						foreach ($fieldType['parseValue'] as $callback)
 						{
 							$this->import($callback[0]);
-							$ret=$this->$callback[0]->$callback[1]($id, $k, $value);
-							$strHtml=$ret['html'];
+							$ret=$this->$callback[0]->$callback[1]($id, $k, $value, $blnImageLink, $objCatalog);
+							$arrItems = $ret['items'];
+							$arrValues = $ret['values'];
+							$strHtml = $ret['html'];
 						}
 					}
 				}

@@ -227,9 +227,9 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['groupingMode'],
 			'inputType'               => 'select',
-			'options'                 => range(1, 12),
+			'options'                 => range(0, 12),
 			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_fields']['groupingModeOptions'],
-			'eval'      							=> array('mandatory' => true, 'includeBlankOption' => true),
+			'eval'      							=> array('mandatory' => false, 'includeBlankOption' => true),
 		),
 		
 		'parentCheckbox' => array
