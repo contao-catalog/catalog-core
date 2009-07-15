@@ -1446,7 +1446,8 @@ abstract class ModuleCatalog extends Module
 											specialchars($option['value']),
 											($option['selected'] ? ' checked="checked"' : ''),
 											$widget['attributes'],
-											$widget['id'].'_'.$i,
+											// $widget['id'].'_'.$i,
+											$widget['id'].'_'.$option['id'], // we have to use the proper ID otherwise the label won't be attached to the input.
 											$option['label']);
 				}
 		

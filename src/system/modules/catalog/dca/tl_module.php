@@ -64,7 +64,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
 	(
 		'catalog_filter_enable' => 'catalog_filter_headline,catalog_filters,catalog_filter_hide,catalog_tags_multi',
 		'catalog_range_enable' => 'catalog_range_headline,catalog_range',
-		'catalog_search_enable' => 'catalog_search_headline',
+		'catalog_search_enable' => 'catalog_search_headline,catalog_search',
 		'catalog_date_enable' => 'catalog_date_headline,catalog_dates,catalog_date_ranges',
 		'catalog_sort_enable' => 'catalog_sort_headline,catalog_sort,catalog_sort_type',
 		'catalog_link_override' => 'catalog_islink',
@@ -734,8 +734,10 @@ class tl_module_catalog extends Backend
 	 * Get all reference fields and return them as array
 	 * @return array
 	 */
-	public function getCatalogReferenceFields(DataContainer $dc, $arrTypes=array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'))
+	public function getCatalogReferenceFields(DataContainer $dc, $arrTypes=false)
 	{
+		if(!$arrTypes)
+			$arrTypes=$GLOBALS['BE_MOD']['content']['catalog']['typesReferenceFields'];
 		$fields = array();
 		$objFields = $this->Database->prepare("SELECT c.* FROM tl_catalog_fields c, tl_module m WHERE c.pid=m.catalog_selected AND m.id=? AND c.type IN ('" . implode("','", $arrTypes) . "') ORDER BY c.sorting ASC")
 							->execute($this->Input->get('id'));
