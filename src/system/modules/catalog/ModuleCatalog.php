@@ -1985,7 +1985,7 @@ abstract class ModuleCatalog extends Module
 						foreach ($fieldType['parseValue'] as $callback)
 						{
 							$this->import($callback[0]);
-							$ret=$this->$callback[0]->$callback[1]($id, $k, $value, $blnImageLink, $objCatalog);
+							$ret=$this->$callback[0]->$callback[1]($id, $k, $value, $blnImageLink, $objCatalog, $this);
 							$arrItems = $ret['items'];
 							$arrValues = $ret['values'];
 							$strHtml = $ret['html'];
