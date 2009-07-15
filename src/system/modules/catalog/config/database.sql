@@ -54,6 +54,7 @@ CREATE TABLE `tl_catalog_types` (
   `feedBase` varchar(255) NOT NULL default '',
   `alias` varbinary(128) NOT NULL default '',
   `description` text NULL,
+  
   PRIMARY KEY  (`id`),
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -77,11 +78,15 @@ CREATE TABLE `tl_catalog_fields` (
   `aliasTitle` varchar(255) NOT NULL default '',
   `filteredField` char(1) NOT NULL default '',
   `insertBreak` char(1) NOT NULL default '',
+  `legendTitle` varchar(255) NOT NULL default '',
+  `legendHide` char(1) NOT NULL default '',
+  `width50` char(1) NOT NULL default '',
   `sortingField` char(1) NOT NULL default '',
   `groupingMode` int(10) NOT NULL default '0',
   `searchableField` char(1) NOT NULL default '',
   `parentCheckbox` varchar(255) NOT NULL default '',
   `mandatory` char(1) NOT NULL default '',
+  `includeBlankOption` char(1) NOT NULL default '',
   `defValue` varchar(255) NOT NULL default '',
   `minValue` int(10) NULL default NULL,
   `maxValue` int(10) NULL default NULL,
@@ -96,6 +101,7 @@ CREATE TABLE `tl_catalog_fields` (
   `limitItems` char(1) NOT NULL default '',
   `items` text NULL,
   `childrenSelMode` varchar(64) NOT NULL default '',
+  `itemFilter` text NULL,
   `includeTime` char(1) NOT NULL default '',
   `multiple` char(1) NOT NULL default '',
   `showLink` char(1) NOT NULL default '',
@@ -252,8 +258,11 @@ CREATE TABLE `tl_user` (
   `catalogs` blob NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+
+-- --------------------------------------------------------
+
 -- 
--- Table `tl_user`
+-- Table `tl_layout`
 -- 
 -- added by c.schiffler for rss feeds
 

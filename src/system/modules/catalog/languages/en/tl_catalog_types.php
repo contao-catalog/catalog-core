@@ -57,7 +57,7 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['disableCaptcha'] = array('Disable secur
 
 $GLOBALS['TL_LANG']['tl_catalog_types']['import'] = array('Enable CSV import', 'Select to enable CSV import ability for this catalog. It will then appear at the top while editing the catalog, next to export.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['importAdmin'] = array('Restrict to only admins', 'Select to restrict regular users from using the CSV import feature, so only admins can use it.');
-$GLOBALS['TL_LANG']['tl_catalog_types']['importDelete'] = array('Allow remove existing data feature', 'Select to allow the feature that enables removal of all current data in the catalog (use with caution). This is intended for people who want to montly update the entire catalog from an external source.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['importDelete'] = array('Allow feature: [Remove existing data]', 'Select to allow the feature that enables removal of all current data in the catalog (use with caution). This is intended for people who want to montly update the entire catalog from an external source.');
 
 
 $GLOBALS['TL_LANG']['tl_catalog_types']['upgrade'] = array('Upgrade Catalog Installation', 'In order to complete the upgrade process to the new merged Catalog application, you will need to manually remove a previous folder from your installation. The contents of this folder is now merged into the catalog folder and therefore no longer required. However, due to some permission restrictions, it\'s not directly possible to delete the folder automatically. <br /><br />Once you have removed this folder, you will have access to the catalog application.');
@@ -76,8 +76,14 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['alias']          = array('Feed alias', 
 $GLOBALS['TL_LANG']['tl_catalog_types']['description']    = array('Feed description', 'Please enter a short description of the catalog feed.'); 
 
 /**
- * Reference
+ * Legends
  */
+$GLOBALS['TL_LANG']['tl_catalog_types']['title_legend']			= 'Name, table and redirect page';
+$GLOBALS['TL_LANG']['tl_catalog_types']['display_legend']		= 'Display format';
+$GLOBALS['TL_LANG']['tl_catalog_types']['comments_legend']	= 'Comments';
+$GLOBALS['TL_LANG']['tl_catalog_types']['search_legend']		= 'Search';
+$GLOBALS['TL_LANG']['tl_catalog_types']['import_legend']		= 'Import';
+$GLOBALS['TL_LANG']['tl_catalog_types']['feed_legend']			= 'RSS/Atom feed';
 
 
 /**

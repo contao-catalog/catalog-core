@@ -307,8 +307,7 @@ class Catalog extends Backend
 			(
 				'sorting' => array
 				(
-					'mode'                    => 2, // 2 Records are sorted by a switchable sorting value
-					'flag'										=> 1, // 1 Sort by initial letter ascending
+					'mode'                    => 1, // 1 default sorting value, 2 switchable sorting value
 					'panelLayout'             => 'filter,limit;search,sort',
 					'headerFields'            => array('name', 'tstamp'),
 					'fields'            			=> array(),
@@ -628,11 +627,11 @@ class Catalog extends Backend
 	{
 		$catConfig = $GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['eval']['catalog'];
 
-		if ($varValue > $catConfig['maxValue'])
+		if (strlen($catConfig['maxValue']) && $varValue > $catConfig['maxValue'])
 		{
 			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['limitMax'], $catConfig['maxValue']));
 		} 
-		elseif ($varValue < $catConfig['minValue'])
+		elseif (strlen($catConfig['minValue']) && $varValue < $catConfig['minValue'])
 		{
 			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['limitMin'], $catConfig['minValue']));
 		}
@@ -642,6 +641,7 @@ class Catalog extends Backend
 
 
 
+/*
 
 	public function dcaLoadOptions(DataContainer $dc)
 	{
@@ -653,6 +653,7 @@ class Catalog extends Backend
 				$this->loadOptions($catConfig['foreignKey'], $catConfig['limitItems'], $catConfig['childrenSelMode'], $catConfig['selectedIds']) :
 				$GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['options'];
 	}
+*/
 
 
 /**
@@ -869,17 +870,26 @@ class Catalog extends Backend
 			// Changed by c.schiffler to allow custom editors to register themselves.
 			$field = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType]['fieldDef'];
 			$fields[] = $colName;
-			$separators[] = (($objFields->insertBreak) ? ';' : ',');
+			$separators[] = (($objFields->insertBreak) ? ((count($separators)>0 ? ';':'') . '{'.$objFields->legendTitle. ( ($objFields->legendHide) ? ':hide': '' ).'},') : ',');
 
 			// Ammend field with catalog field settings
 			$field['label'] = array($objFields->name, $objFields->description);
 			$field['eval']['mandatory'] = $field['eval']['mandatory'] || ($objFields->mandatory && in_array('mandatory', $visibleOptions) ? true : false);
+			if ($objFields->includeBlankOption && $colType == 'select')
+			{	
+				$field['eval']['includeBlankOption'] = true;
+			}
 			$field['eval']['unique'] = $field['eval']['unique'] || ($objFields->uniqueItem && in_array('uniqueItem', $visibleOptions) ? true : false);
 			$field['eval']['catalog']['type'] = $colType;
 			$field['default'] = $objFields->defValue;
 			$field['filter'] = ($objFields->filteredField && in_array('filteredField', $visibleOptions) ? true : false);
 			$field['search'] = ($objFields->searchableField && in_array('searchableField', $visibleOptions) ? true : false);
 			$field['sorting'] = ($objFields->sortingField && in_array('sortingField', $visibleOptions) ? true : false);
+
+			if ($objFields->width50)
+			{
+				$field['eval']['tl_class'] = 'w50';
+			}
 			
 			$dca['fields'][$colName] = $field;
 			
@@ -937,15 +947,16 @@ class Catalog extends Backend
 		}
 		$dca['palettes']['__selector__'] = array_keys($selectors);
 
-		// added insertbreak behaviour by thyon
+		// legends
 		$strPalette = '';
 		$palettes = array_diff($fields, $fieldsInSubpalette);
 		foreach ($palettes as $id=>$field) 
 		{
-			$strPalette .= (($id > 0) ? $separators[$id] : '').$field;	
+//			$strPalette .= (($id > 0) ? $separators[$id] : '').$field;	
+			$strPalette .= $separators[$id] . $field;	
 		}
 		$dca['palettes']['default'] = $strPalette;
-		
+					
 		// set title fields
 		$titleFields = count($titleFields) ? $titleFields : array('id');
 		$titleFormat = implode(', ', array_fill(0, count($titleFields), '%s'));
@@ -957,9 +968,19 @@ class Catalog extends Backend
 		);
 		
 		// set sorting fields
-		if (count($sortingFields)) 
+		if (count($sortingFields) > 1) 
 		{
+			// switchable sorting/grouping value
 			$dca['list']['sorting']['fields'] = $sortingFields;
+			$dca['list']['sorting']['mode'] = 2;
+			unset($dca['list']['operations']['cut']);
+		}
+		elseif (count($sortingFields) == 1)
+		{
+			// set as parent-child, ignore sorting DB field
+			$dca['list']['sorting']['mode'] = 4;
+			$dca['list']['sorting']['fields'] = $sortingFields;
+			//$dca['list']['sorting']['ignoreSorting'] = true;
 			unset($dca['list']['operations']['cut']);
 		}
 		else 
@@ -967,7 +988,6 @@ class Catalog extends Backend
 			$dca['list']['sorting']['mode'] = 4;
 			$dca['list']['sorting']['fields'] = array('sorting'); 
 		}
-
 
 		// return dynamic catalog DCA
 		return $dca;
@@ -1031,7 +1051,6 @@ class Catalog extends Backend
 		$sortCol = $objRow->itemSortCol;
 
 
-
 		if (!$objRow->limitItems || ($objRow->limitItems && ($objRow->childrenSelMode == 'items' || $objRow->childrenSelMode == 'children'))) 
 		{
 			if (!$objRow->limitItems)
@@ -1040,44 +1059,46 @@ class Catalog extends Backend
 				$ids = array(0);
 			}
 
+			if ($objRow->mandatory)
+			{
+				$field['eval']['mandatory'] = true;
+			}
+
 			if ($blnTags) 
 			{
 				$field['inputType'] = 'checkbox';		
-				$field['eval'] = array('multiple' => true);
+				$field['eval']['multiple'] = true;
 			}
 			else
 			{
-				$field['inputType'] = 'select';		
-				$field['eval'] = array('mandatory' => true);	
+				$field['inputType'] = 'select';
 			}	
 		}
 
+		// setup new findInSet options
+		$field['eval']['findInSet'] = true;
 
-		if ($objRow->mandatory && $blnTags)
-		{
-			$field['eval']['mandatory'] = true;
-		}
-		
-		
 		$field['eval']['catalog']['foreignKey'] = $foreignKey;
 		$field['eval']['catalog']['limitItems'] = $limitItems;
 		$field['eval']['catalog']['selectedIds'] = $ids;
 		$field['eval']['catalog']['sortCol'] = $sortCol;
 		$field['eval']['catalog']['childrenSelMode'] = $objRow->childrenSelMode;
-
+		$field['eval']['catalog']['itemFilter'] = $objRow->itemFilter;
 
 		$blnItems = (!$objRow->limitItems || ($objRow->limitItems && $objRow->childrenSelMode == 'items'));
 		
-		$field['options'] = $this->loadAllOptions($foreignKey, $ids, 0, $sortCol, $blnItems);
+		$field['options'] = $this->loadAllOptions($foreignKey, $ids, 0, $sortCol, $blnItems, $objRow->itemFilter);
 		$field['eval']['tableColumn'] = $foreignKey;
 		$field['eval']['root'] = $ids;
 
 
+/*
 		if (!$objRow->limitItems || ($objRow->limitItems && ($objRow->childrenSelMode == 'items' || $objRow->childrenSelMode == 'children'))) 
 		{
-			sort($field['options']);
+			// sort and keep associative array
+			asort($field['options']);
 		}
-
+*/
 
 		// default is "Select %s"
 		$field['eval']['title'] = sprintf($GLOBALS['TL_LANG']['MSC']['optionsTitle'], $objRow->name);
@@ -1100,8 +1121,56 @@ class Catalog extends Backend
 	}
 
 
-	private function loadAllOptions($foreignKey, $ids, $level=0, $sortColumn='sorting', $blnItems=false)
+
+	/**
+	 * Replace Catalog InsertTags including TL InsertTags
+	 * @param string
+	 * @param array
+	 * @return string
+	 */
+
+	protected function replaceCatalogTags($strValue, $arrCatalog)
 	{
+		$strValue = trim($strValue);
+
+		// search for catalog tags
+		$tags = array();
+		preg_match_all('/{{[^}]+}}/i', $strValue, $tags);
+
+		// Replace tags of type {{catalog::fieldname}}
+		foreach ($tags[0] as $tag)
+		{
+			$elements = explode('::', trim(str_replace(array('{{', '}}'), array('', ''), $tag)));
+
+			// {{catalog::fieldname}}
+			if (strtolower($elements[0]) == 'catalog')
+			{
+				$key = $elements[1];
+				if (array_key_exists($key, $arrCatalog))
+				{
+					$strValue = str_replace($tag, str_replace("\n", " ", $arrCatalog[$key]), $strValue);
+				}
+			}
+		}
+		
+/*
+		// Replace standard insert tags
+		if (strlen($strValue))
+		{
+			$strValue = $this->replaceInsertTags($strValue);
+		}
+
+*/
+		return $strValue;
+	} 
+
+
+
+
+
+	private function loadAllOptions($foreignKey, $ids, $level=0, $sortColumn='sorting', $blnItems=false, $itemFilter='')
+	{
+
 
 		list($sourceTable, $sourceColumn) = explode('.', $foreignKey);
 		$ids = is_array($ids) ? $ids : array($ids);
@@ -1117,17 +1186,25 @@ class Catalog extends Backend
 					->execute($sourceTable);
 			$blnCatalog = ($objCatalog->numRows == 1);
 
+/*
+
+			if ($blnCatalog) 
+			{
+				$itemFilter = $this->replaceCatalogTags($itemFilter, $objRow);
+			}
+*/
+
 			$treeView = $this->Database->fieldExists('pid', $sourceTable) && !$blnCatalog;
 
 			if ($treeView)
 			{
-				$objNodes = $this->Database->prepare("SELECT id, (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " FROM ". $sourceTable. " o WHERE ".($blnItems ? 'id' : 'pid')." IN (" . join(',', $ids) . ") ORDER BY ". $sort)
+				$objNodes = $this->Database->prepare("SELECT id, (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " FROM ". $sourceTable. " o WHERE ".(strlen($itemFilter) ? '('.$itemFilter.') AND ' : '').($blnItems ? 'id' : 'pid')." IN (" . join(',', $ids) . ") ORDER BY ". $sort)
 										 ->execute();
 			}
 			
 			if (!$treeView || ($treeView && $objNodes->numRows == 0 && $level == 0))
 			{
-				$objNodes = $this->Database->execute("SELECT id, 0 AS childCount, ". $sourceColumn ." FROM ". $sourceTable ." ORDER BY ".$sort);
+				$objNodes = $this->Database->execute("SELECT id, 0 AS childCount, ". $sourceColumn ." FROM ". $sourceTable . (strlen($itemFilter) ? ' WHERE ('.$itemFilter.')' : '') ." ORDER BY ".$sort);
 			}
 		}
 
@@ -1147,9 +1224,9 @@ class Catalog extends Backend
 		while ($objNodes->next())
 		{
 			$arrNodes[$objNodes->id] = str_repeat('  ', $level) . $objNodes->$sourceColumn;
-			if ($objNodes->childCount && !$blnItems)
+			if ($objNodes->childCount > 0 && !$blnItems)
 			{
-				$arrChildren = $this->loadAllOptions($foreignKey, $objNodes->id, ($level+1), $sortColumn, $blnItems);
+				$arrChildren = $this->loadAllOptions($foreignKey, $objNodes->id, ($level+1), $sortColumn, $blnItems, $itemFilter);
 				$arrNodes += $arrChildren;
 			}
 		}

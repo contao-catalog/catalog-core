@@ -19,7 +19,7 @@
  * Software Foundation website at http://www.gnu.org/licenses/.
  *
  * PHP version 5
- * @copyright  Thyon Design 2008, 2009
+ * @copyright  Thyon Design 2008-2009
  * @author     John Brand <john.brand@thyon.com>, 
  * 	           Christian Schiffler <c.schiffler@cyberspectrum.de>
  * @package    Catalog 
@@ -31,7 +31,7 @@
 /**
  * Class ModuleCatalog
  *
- * @copyright  Thyon Design 2008 
+ * @copyright  Thyon Design 
  * @author     John Brand <john.brand@thyon.com> 
  * @package    Controller
  *
@@ -1793,11 +1793,22 @@ abstract class ModuleCatalog extends Module
 					case 'select':
 					case 'tags':
 						list($refTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
+
 						if (strlen(trim($v)))
 						{
+							// set sort order
+							$sortCol =	$fieldConf['eval']['catalog']['sortCol'];
+							if (!strlen($sortCol)) 
+							{
+								$sortCol = 'sorting';
+							}
+									
+							$sortOrder = $this->Database->fieldExists($sortCol, $refTable) ? $sortCol : $refCol;
+
 							// Get referenced fields
-							$objRef = $this->Database->prepare("SELECT * FROM ".$refTable." WHERE id IN (".$v.")")
+							$objRef = $this->Database->prepare("SELECT * FROM ".$refTable." WHERE id IN (".trim($v).") ORDER BY ".$sortOrder)
 													->execute();
+
 							if ($objRef->numRows)
 							{
 								// Get Ref Catalog JumpTo
@@ -2545,7 +2556,6 @@ abstract class ModuleCatalog extends Module
 			// setup field and value
 			$field = $objFields->colName;
 			$value = $objNodes->$valueField;
-
 				
 			$href = $this->generateCatalogNavigationUrl($field, $value);
 

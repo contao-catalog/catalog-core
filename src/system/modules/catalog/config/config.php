@@ -29,14 +29,15 @@
 
 $GLOBALS['BE_MOD']['content']['catalog'] = array
 (
-    'tables'       	=> array('tl_catalog_types', 'tl_catalog_fields', 'tl_catalog_items'),
-    'icon'         	=> 'system/modules/catalog/html/icon.gif',
-    'import'				=> array('Catalog', 'importCSV'),
-    'export'				=> array('Catalog', 'exportItems'),
-	'comments' 				=> array('CatalogComments', 'run'),
-    'upgrade'				=> array('CatalogUpgrade', 'upgrade'),
-	// Added by c.schiffler to allow custom editors to register themselves.
-	'fieldTypes' => array
+		'tables'			=> array('tl_catalog_types', 'tl_catalog_fields', 'tl_catalog_items'),
+		'icon'				=> 'system/modules/catalog/html/icon.gif',
+		'import'			=> array('Catalog', 'importCSV'),
+		'export'			=> array('Catalog', 'exportItems'),
+		'comments'		=> array('CatalogComments', 'run'),
+		'upgrade'			=> array('CatalogUpgrade', 'upgrade'),
+
+		// Added by c.schiffler to allow custom editors to register themselves.
+		'fieldTypes' => array
 		(
 			'text' => array
 				(
@@ -172,8 +173,8 @@ if (TL_MODE == 'BE')
 
 $GLOBALS['FE_MOD']['catalog'] = array
 	(
-		'catalogfilter' 		=> 'ModuleCatalogFilter',
-		'cataloglist' 			=> 'ModuleCatalogList',
+		'catalogfilter'			=> 'ModuleCatalogFilter',
+		'cataloglist'				=> 'ModuleCatalogList',
 		'catalogreader'			=> 'ModuleCatalogReader',
 		'catalogfeatured'		=> 'ModuleCatalogFeatured',
 		'catalogrelated'		=> 'ModuleCatalogRelated',

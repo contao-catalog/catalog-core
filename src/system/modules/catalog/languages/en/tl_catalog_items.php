@@ -14,9 +14,9 @@
  * Language file for table tl_catalog_fields (en).
  *
  * PHP version 5
- * @copyright  Martin Komara 2007 
- * @author     Martin Komara 
- * @package    CatalogModule 
+ * @copyright  Martin Komara, Thyon Design, 2007-2009 
+ * @author     Martin Komara, John Brand <john.brand@thyon.com>
+ * @package    Catalog 
  * @license    GPL 
  * @filesource
  */

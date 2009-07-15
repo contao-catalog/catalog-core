@@ -109,25 +109,26 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 	// Palettes
 	'palettes' => array
 	(
-		'__selector__' => array('type', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree'),
-		'default' => 'name,description,colName,type;insertBreak,titleField,parentCheckbox;filteredField,searchableField,sortingField;mandatory,uniqueItem,defValue;format',
-		'text' => 'name,description,colName,type;insertBreak,titleField,parentCheckbox;filteredField,searchableField,sortingField;mandatory,uniqueItem,defValue;format',
-		'alias' => 'name,description,colName,type,aliasTitle;insertBreak,titleField;filteredField,searchableField,sortingField',
-		'longtext' => 'name,description,colName,type;insertBreak,parentCheckbox;searchableField;mandatory,rte',
-		'number' => 'name,description,colName,type;insertBreak,titleField,parentCheckbox;filteredField,sortingField;mandatory,defValue,minValue,maxValue;format',
-		'decimal' => 'name,description,colName,type;insertBreak,titleField,parentCheckbox;filteredField,searchableField,sortingField;mandatory,defValue,minValue,maxValue;format',
-		'date' => 'name,description,colName,type;insertBreak,titleField,parentCheckbox;filteredField,searchableField,sortingField;mandatory,defValue,includeTime;format',
-		'select' => 'name,description,colName,type;insertBreak,parentCheckbox;filteredField,sortingField;itemTable,itemTableValueCol,itemSortCol,limitItems',
-		'tags' => 'name,description,colName,type;insertBreak,parentCheckbox;searchableField;mandatory;itemTable,itemTableValueCol,itemSortCol,limitItems',
-		'checkbox' => 'name,description,colName,type;insertBreak,titleField;filteredField,sortingField;parentCheckbox',
-		'url' => 'name,description,colName,type;insertBreak,titleField,parentCheckbox;filteredField,searchableField,sortingField;mandatory',
-		'file' => 'name,description,colName,type;insertBreak,titleField,parentCheckbox;filteredField,searchableField,sortingField;mandatory,multiple,customFiletree;showLink,showImage',
+		'__selector__' => array('type', 'insertBreak', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree'),
+		'default' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},format',
+		'text' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},format',
+		'alias' => '{title_legend},name,description,colName,type,aliasTitle;{display_legend},insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField',
+		'longtext' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory,rte',
+		'number' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},format',
+		'decimal' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},format',
+		'date' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,includeTime;{format_legend:hide},format',
+		'select' => 'name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50;{filter_legend:hide},sortingField,filteredField;{advanced_legend:hide},mandatory,includeBlankOption;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems',
+		'tags' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems',
+		'checkbox' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField',
+		'url' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory',
+		'file' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,multiple,customFiletree;{format_legend},showImage,showLink',
 		
 	),
 
 	// Subpalettes
 	'subpalettes' => array
 	(
+		'insertBreak'			=> 'legendTitle,legendHide',
 		'sortingField'		=> 'groupingMode',
 		'showImage'				=> 'imageSize',
 		'format'					=> 'formatFunction,formatStr',
@@ -143,7 +144,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['name'],
 			'exclude'                 => true,
 			'inputType'               => 'text',
-			'eval'                    => array('mandatory'=>true, 'maxlength'=>255)
+			'eval'                    => array('mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50')
 		),
 		
 		'description' => array
@@ -151,7 +152,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['description'],
 			'exclude'                 => true,
 			'inputType'               => 'text',
-			'eval'                    => array('mandatory'=>true, 'maxlength'=>255)
+			'eval'                    => array('mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50')
 		),
 		
 		// AVOID: doNotCopy => true, as child records won't be copied when copy catalog
@@ -160,7 +161,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['colName'],
 			'exclude'                 => true,
 			'inputType'               => 'text',
-			'eval'                    => array('mandatory'=>true, 'maxlength'=>64),
+			'eval'                    => array('mandatory'=>true, 'maxlength'=>64, 'tl_class'=>'w50'),
 			'save_callback'           => array
 			(
 				array('Catalog', 'renameColumn')
@@ -175,7 +176,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'inputType'               => 'select',
 			'options'                 => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'checkbox', 'select', 'tags', 'url', 'file'),
 			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_fields']['typeOptions'],
-			'eval'                    => array('submitOnChange'=>true),
+			'eval'                    => array('submitOnChange'=>true, 'tl_class'=>'w50'),
 			'save_callback'           => array
 			(
 				//added by thyon
@@ -196,7 +197,28 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['insertBreak'],
 			'inputType'               => 'checkbox',
+			'eval'                    => array('submitOnChange'=>true)
 		),
+		
+		'legendTitle' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['legendTitle'],
+			'inputType'               => 'text',
+			'eval'                    => array('maxlength'=>255)
+		),
+
+		'legendHide' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['legendHide'],
+			'inputType'               => 'checkbox',
+		),		
+
+		'width50' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['width50'],
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50'),
+		),		
 
 		'titleField' => array
 		(
@@ -208,6 +230,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['filteredField'],
 			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50'),
 		),
 		
 		'searchableField' => array
@@ -229,7 +252,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'inputType'               => 'select',
 			'options'                 => range(0, 12),
 			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_fields']['groupingModeOptions'],
-			'eval'      							=> array('mandatory' => false, 'includeBlankOption' => true),
+			'eval'      							=> array('mandatory' => true, 'includeBlankOption' => true),
 		),
 		
 		'parentCheckbox' => array
@@ -243,13 +266,22 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'mandatory' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['mandatory'],
-			'inputType'               => 'checkbox'
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50'),
+		),
+
+		'includeBlankOption' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['includeBlankOption'],
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50'),
 		),
 		
 		'defValue' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['defValue'],
-			'inputType'               => 'text'
+			'inputType'               => 'text',
+			'eval'                    => array('tl_class'=>'w50'),
 		),
 		
 		'uniqueItem' => array
@@ -262,14 +294,14 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['minValue'],
 			'inputType'               => 'text',
-			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit')
+			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit', 'tl_class'=>'w50')
 		),
 		
 		'maxValue' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['maxValue'],
 			'inputType'               => 'text',
-			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit')
+			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit', 'tl_class'=>'w50')
 		),
 		
 		'format' => array
@@ -283,8 +315,9 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunction'],
 			'inputType'               => 'select',
-			'options'                 => array('string', 'number', 'money', 'date'),
+			'options'                 => array('string', 'number', 'date'),
 			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunctionOptions'],
+			'eval'                    => array('tl_class'=>'w50'),
 		),
 		
 		'formatStr' => array
@@ -308,6 +341,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'eval'                    => array('submitOnChange'=>true)
 		),
 		
+/*
 		'itemTableIdCol' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemTableIdCol'],
@@ -315,13 +349,14 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'options_callback'        => array('tl_catalog_fields', 'getTableKeys'),
 			'eval'                    => array('submitOnChange'=>true)
 		),
+*/
 		
 		'itemTableValueCol' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemTableValueCol'],
 			'inputType'               => 'select',
 			'options_callback'        => array('tl_catalog_fields', 'getTableFields'),
-			'eval'                    => array('submitOnChange'=>true)
+			'eval'                    => array('tl_class'=>'w50', 'submitOnChange'=>true)
 		),
 
 		'itemSortCol' => array
@@ -358,6 +393,14 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_fields']['childOptions'],
 			'default'               	=> 'treeAll',
 		),
+
+		'itemFilter' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemFilter'],
+			'inputType'               => 'textarea',
+			'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;')
+		),
+
 		
 		'includeTime' => array
 		(
@@ -414,12 +457,13 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['validFileTypes'],
 			'inputType'               => 'text',
-			'eval'                    => array('maxlength'=>255)
+			'eval'                    => array('maxlength'=>255, 'tl_class'=>'w50')
 		),
 		'filesOnly' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['filesOnly'],
 			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50')
 		),
 
 		
@@ -470,23 +514,37 @@ class tl_catalog_fields extends Backend
 				'groupingMode'		=> 'modPlus.gif',
 				'mandatory'				=> 'protect.gif',
 				'showImage'				=> 'iconJPG.gif',
+				'uniqueItem'			=> 'page.gif',
+				'parentCheckbox'	=> 'ok.gif',
+				'width50'					=> 'wrap.gif',
 			);
 
 		$type=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$arrRow['type']];
 		$strType = $this->generateImage($type['typeimage'], $GLOBALS['TL_LANG']['tl_catalog_fields']['type'][0], 'title="'.$GLOBALS['TL_LANG']['tl_catalog_fields']['type'][0].': '.$arrRow['type'].'"') . ' ';
 
-
 		$strImages = '';
 		foreach($images as $field=>$image)
 		{
-			$strImages .= $arrRow[$field] ? ' '. $this->generateImage($image, $GLOBALS['TL_LANG']['tl_catalog_fields'][$field][0], 'title="'.$GLOBALS['TL_LANG']['tl_catalog_fields'][$field][0].'"') : '';
+			if ($arrRow[$field])
+			{
+				if ($field == 'groupingMode' && !$arrRow['sortingField'])
+					continue;
+
+				$strImages .= ' '. $this->generateImage($image, $GLOBALS['TL_LANG']['tl_catalog_fields'][$field][0], 'title="'.$GLOBALS['TL_LANG']['tl_catalog_fields'][$field][0].'"');
+			
+			}
 		}
+
+
+
+		$legendImage = $this->generateImage(($arrRow['legendHide'] ? 'palCollapsed.gif' : 'palOpen.gif'), $GLOBALS['TL_LANG']['tl_catalog_fields']['legendTitle'][0], 'title="'.$GLOBALS['TL_LANG']['tl_catalog_fields']['legendTitle'][0].'"');
 		
 		return 		
 '<div class="field_heading cte_type'.$titleField.'"><strong>' . $arrRow['colName'] . '</strong> <em>['.$arrRow['type'].']</em></div>
 <div class="field_type block">
 	<div style="padding-top:3px; float:right;">'. $strImages.'</div>
-	'.$strType.'<strong>' . $arrRow['name'] . '</strong> - '.$arrRow['description'].'
+	'.$strType.'<strong>' . $arrRow['name'] . '</strong> - '.$arrRow['description'].'<br />
+	'.($arrRow['insertBreak'] ? '<span style="padding-left:20px;" class="legend" title="'.$GLOBALS['TL_LANG']['tl_catalog_fields']['legendTitle'][0].'">'.$legendImage.' '.$arrRow['legendTitle'] .'</span>' : '').'
 </div>';
 
 	}
@@ -662,5 +720,6 @@ class tl_catalog_fields extends Backend
 	
 	
 }
+
 
 ?>

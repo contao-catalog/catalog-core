@@ -104,12 +104,12 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 				'href'                => 'act=show',
 				'icon'                => 'show.gif'
 			),
-			'fields' => array
+      'fields' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['fields'],
 				'href'                => 'table=tl_catalog_fields',
 				'icon'                => 'tablewizard.gif',
-				'button_callback'     => array('tl_catalog_types', 'fieldsButton')
+        'button_callback'     => array('tl_catalog_types', 'fieldsButton')
 			),
 			'comments' => array
 			(
@@ -125,15 +125,15 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 	'palettes' => array
 	(
 		'__selector__'		=> array('addImage', 'import', 'searchable', 'allowComments', 'makeFeed'),
-		'default'					=> 'name,tableName;addImage;format;jumpTo,aliasField;allowComments;import;searchable;makeFeed',
+		'default'					=> '{title_legend},name,tableName,aliasField,jumpTo;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed',
 	),
 
 	// Subpalettes
 	'subpalettes' => array
 	(
 		'addImage'				=> 'singleSRC,size',
-		'allowComments'			=> 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha',
-		'import'				=> 'importAdmin,importDelete',
+		'allowComments'		=> 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha',
+		'import'					=> 'importAdmin,importDelete',
 		'searchable'			=> 'searchCondition,titleField',
 		'makeFeed'				=> 'feedFormat,language,source,datesource,maxItems,feedBase,alias,description',
 	),
@@ -145,14 +145,16 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['name'],
 			'exclude'                 => true,
+			'search'                  => true,
 			'inputType'               => 'text',
-			'eval'                    => array('mandatory'=>true, 'maxlength'=>255)
+			'eval'                    => array('mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50')
 		),
         
 		'tableName' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['tableName'],
 			'exclude'                 => true,
+			'search'                  => true,
 			'inputType'               => 'text',
 			'eval'                    => array('mandatory'=>true, 'maxlength'=>64, 'doNotCopy'=>true),
 			'save_callback'           => array
@@ -175,6 +177,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'inputType'               => 'fileTree',
 			'eval'                    => array('fieldType'=>'radio', 'files'=>true, 'filesOnly'=>true, 'mandatory'=>true, 'extensions' => 'jpg,jpeg,gif,png,tif,tiff')
 		),
+		
 		'size' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['size'],
@@ -225,7 +228,8 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'default'                 => 'com_default',
 			'exclude'                 => true,
 			'inputType'               => 'select',
-			'options'                 => $this->getTemplateGroup('com_')
+			'options'                 => $this->getTemplateGroup('com_'),
+			'eval'                    => array('tl_class'=>'w50')
 		),
 		'sortOrder' => array
 		(
@@ -234,40 +238,44 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'exclude'                 => true,
 			'inputType'               => 'select',
 			'options'                 => array('ascending', 'descending'),
-			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_types']
+			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_types'],
+			'eval'                    => array('tl_class'=>'w50')
 		),
 		'perPage' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['perPage'],
 			'exclude'                 => true,
 			'inputType'               => 'text',
-			'eval'                    => array('rgxp'=>'digit')
+			'eval'                    => array('rgxp'=>'digit', 'tl_class'=>'w50')
 		),
 		'moderate' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['moderate'],
 			'exclude'                 => true,
-			'inputType'               => 'checkbox'
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50')
 		),
 		'bbcode' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['bbcode'],
 			'exclude'                 => true,
-			'inputType'               => 'checkbox'
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50')
 		),
 		'requireLogin' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['requireLogin'],
 			'exclude'                 => true,
-			'inputType'               => 'checkbox'
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50')
 		),
 		'disableCaptcha' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['disableCaptcha'],
 			'exclude'                 => true,
-			'inputType'               => 'checkbox'
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50')
 		),
-
 
 		'import' => array
 		(
@@ -277,22 +285,24 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'eval'										=> array('submitOnChange'=>true),
 			'doNotCopy'               => true,
 		),
+		
 		'importAdmin' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['importAdmin'],
 			'exclude'                 => true,
 			'inputType'               => 'checkbox',
 			'doNotCopy'               => true,
+			'eval'                    => array('tl_class'=>'w50')
 		),
+		
 		'importDelete' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['importDelete'],
 			'exclude'                 => true,
 			'inputType'               => 'checkbox',
 			'doNotCopy'               => true,
+			'eval'                    => array('tl_class'=>'w50')
 		),
-
-
 
 		'searchable' => array
 		(
@@ -310,6 +320,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'inputType'               => 'text',
 			'eval'                    => array('decodeEntities'=>true),
 			'doNotCopy'               => true,
+			'eval'                    => array('tl_class'=>'w50')
 		),
 		
 		'titleField' => array
@@ -321,15 +332,17 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'eval'                    => array('mandatory' => false, 'includeBlankOption' => true),
 			'doNotCopy'               => true,
 		),
+
 		
 		'makeFeed' => array
 		(
-			'label'					=> &$GLOBALS['TL_LANG']['tl_catalog_types']['makeFeed'],
-			'exclude'				=> true,
-			'inputType'				=> 'checkbox',
-			'eval'					=> array('submitOnChange'=>true),
-			'doNotCopy'				=> true,
+			'label'										=> &$GLOBALS['TL_LANG']['tl_catalog_types']['makeFeed'],
+			'exclude'									=> true,
+			'inputType'								=> 'checkbox',
+			'eval'										=> array('submitOnChange'=>true),
+			'doNotCopy'								=> true,
 		),
+		
 		'feedFormat' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['feedFormat'],
@@ -340,6 +353,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'options'                 => array('rss'=>'RSS 2.0', 'atom'=>'Atom'),
 			'eval'                    => array('tl_class'=>'w50')
 		),
+		
 		'language' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['language'],
@@ -349,6 +363,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'inputType'               => 'text',
 			'eval'                    => array('mandatory'=>true, 'maxlength'=>32, 'tl_class'=>'w50')
 		),
+		
 		'source' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['source'],
@@ -358,6 +373,8 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'eval'                    => array('mandatory' => false, 'includeBlankOption' => true),
 			'doNotCopy'               => true,
 		),
+		
+		
 		'datesource' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['datesource'],
@@ -367,6 +384,8 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'eval'                    => array('mandatory' => false, 'includeBlankOption' => true),
 			'doNotCopy'               => true,
 		),
+		
+		
 		'maxItems' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['maxItems'],
@@ -375,6 +394,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'inputType'               => 'text',
 			'eval'                    => array('mandatory'=>true, 'rgxp'=>'digit', 'tl_class'=>'w50')
 		),
+		
 		'feedBase' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['feedBase'],
@@ -384,6 +404,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'inputType'               => 'text',
 			'eval'                    => array('trailingSlash'=>true, 'rgxp'=>'url', 'decodeEntities'=>true, 'maxlength'=>255, 'tl_class'=>'w50')
 		),
+		
 		'alias' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['alias'],
@@ -399,7 +420,8 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'search'                  => true,
 			'inputType'               => 'textarea',
 			'eval'                    => array('style'=>'height:60px;', 'tl_class'=>'clr')
-		)
+		),
+
 	)
 );
 
@@ -595,8 +617,8 @@ class tl_catalog_types extends Backend
 	public function getAliasFields(DataContainer $dc)
 	{
 
-		$objFields = $this->Database->prepare("SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND type=?")
-				->execute($dc->id, 'alias');
+		$objFields = $this->Database->prepare("SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND (type=? OR uniqueItem=?)")
+				->execute($dc->id, 'alias', 1);
 
 		 
 		$result = array();
