@@ -216,6 +216,7 @@ $GLOBALS['TL_PERMISSIONS'][] = 'catalogs';
  * CONFIG Parameters
  */
 
+$GLOBALS['TL_CONFIG']['catalog']['csvDelimiter']	= ',';
 $GLOBALS['TL_CONFIG']['catalog']['safeCheck']		= array('/', '\'');
 $GLOBALS['TL_CONFIG']['catalog']['safeReplace']	= array('-slash-', '-apos-');
 

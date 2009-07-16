@@ -22,26 +22,47 @@
  */
 
 
+
+
+
 /**
  * Miscellaneous
  */
 
-$GLOBALS['TL_LANG']['ERR']['tableExists'] = 'Table `%s` already exists. Please choose different name.';
-$GLOBALS['TL_LANG']['ERR']['tableDoesNotExist'] = 'Table `%s` does not exists.';
-$GLOBALS['TL_LANG']['ERR']['columnExists'] = 'Column `%s` already exists. Please choose different name.';
-$GLOBALS['TL_LANG']['ERR']['columnDoesNotExist'] = 'Column `%s` does not exist in table %s.';
-$GLOBALS['TL_LANG']['ERR']['systemColumn'] = 'Name `%s` is reserved for system use. Please choose different name.';
-$GLOBALS['TL_LANG']['ERR']['invalidColumnName'] = 'Invalid column name `%s`. Please use only letters, numbers and underscore.';
-$GLOBALS['TL_LANG']['ERR']['invalidTableName'] = 'Invalid table name `%s`. Please use only letters, numbers and underscore.';
+
+$GLOBALS['TL_LANG']['MSC']['noCatalog'] = 'Catalog doesn\'t exist, contact the administrator.';
+$GLOBALS['TL_LANG']['MSC']['removeDataConfirm'] = 'Do you really want to delete all records from %s before importing?';
+
+//Select Options
+$GLOBALS['TL_LANG']['MSC']['optionsTitle'] = 'Select %s';
+
+
+
+/**
+ * Error
+ */
+$GLOBALS['TL_LANG']['ERR']['noHeaderFields']     = 'The header fields (line 1) in the CSV file must exactly match those defined in the catalog';
+$GLOBALS['TL_LANG']['ERR']['noCSVData']     = 'There is no data in the CSV file.';
+$GLOBALS['TL_LANG']['ERR']['importSuccess'] = 'CSV import to the catalog successful: %s records';
+$GLOBALS['TL_LANG']['ERR']['noCSVFile']     = 'Please select a CSV file!';
+$GLOBALS['TL_LANG']['ERR']['filetype']       = 'File type "%s" is not allowed to be uploaded!';
+$GLOBALS['TL_LANG']['ERR']['filepartial']    = 'File %s was only partially uploaded!';
+$GLOBALS['TL_LANG']['ERR']['importFolder']   = 'Folder "%s" cannot be imported!';
+
+$GLOBALS['TL_LANG']['ERR']['tableExists'] = 'Table %s already exists. Please choose different name.';
+$GLOBALS['TL_LANG']['ERR']['tableDoesNotExist'] = 'Table %s does not exists.';
+$GLOBALS['TL_LANG']['ERR']['columnExists'] = 'Column %s already exists. Please choose different name.';
+$GLOBALS['TL_LANG']['ERR']['columnDoesNotExist'] = 'Column %s does not exist in table %s.';
+$GLOBALS['TL_LANG']['ERR']['systemColumn'] = 'Name %s is reserved for system use. Please choose different name.';
+$GLOBALS['TL_LANG']['ERR']['invalidColumnName'] = 'Invalid column name. Please use only letters, numbers and underscore.';
+$GLOBALS['TL_LANG']['ERR']['invalidTableName'] = 'Invalid table name. Please use only letters, numbers and underscore.';
+
 
 $GLOBALS['TL_LANG']['ERR']['aliasTitleMissing'] = 'Incorrect alias field configuration. Missing Title field parameter.';
 $GLOBALS['TL_LANG']['ERR']['aliasDuplicate'] = 'Alias field `%s` already defined. Only one alias field is allowed per table.';
 
 $GLOBALS['TL_LANG']['ERR']['limitMin'] = 'This value is smaller than the minimum value: %s';
 $GLOBALS['TL_LANG']['ERR']['limitMax'] = 'This value is greater than the maximum value: %s';
-
-//Select Options
-$GLOBALS['TL_LANG']['MSC']['optionsTitle'] = 'Select %s';
 
 
 /**

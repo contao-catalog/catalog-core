@@ -1381,7 +1381,7 @@ class Catalog extends Backend
 
 		foreach ($arrExport as $export) 
 		{
-			$output .= '"' . join('","', $export).'"' . "\n";
+			$output .= '"' . join('"'.$GLOBALS['TL_CONFIG']['catalog']['csvDelimiter'].'"', $export).'"' . "\n";
 		}
 
 		echo $output;
@@ -1537,7 +1537,7 @@ class Catalog extends Backend
 			  // trim to remove new line character at the end of line and split into columns 
 				$row = trimsplit($strSeparator, trim($line));
 
-				$objRow = $this->Database->prepare("INSERT INTO ".$objCatalog->tableName." (pid, tstamp, ".join(',',$headerRow).") VALUES (?,?".str_repeat(',?', $headercount).")")
+				$objRow = $this->Database->prepare("REPLACE INTO ".$objCatalog->tableName." (pid, tstamp, ".join(',',$headerRow).") VALUES (?,?".str_repeat(',?', $headercount).")")
 													->execute(array_merge(array($this->Input->get('id'), time()), $row));
 
 				$addcount ++;
