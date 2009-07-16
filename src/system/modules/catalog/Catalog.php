@@ -10,13 +10,19 @@
  * CSS engine, multi-language support and many more. For more information and 
  * additional TYPOlight applications like the TYPOlight MVC Framework please 
  * visit the project website http://www.typolight.org.
- *
+ * 
+ * The Catalog extension allows the creation of multiple catalogs of custom items,
+ * each with its own unique set of selectable field types, with field extendability.
+ * The Front-End modules allow you to build powerful listing and filtering of the 
+ * data in each catalog.
+ * 
  * PHP version 5
- * @copyright  Martin Komara, Thyon Design, CyberSpectrum 2008, 2009
- * @author     Martin Komara, John Brand <john.brand@thyon.com>
- *             Christian Schiffler <c.schiffler@cyberspectrum.de>
- * @package    Catalog
- * @license    GPL 
+ * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
+ * @author		Martin Komara, 
+ * 				John Brand <john.brand@thyon.com>,
+ * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package		Catalog
+ * @license		LGPL 
  * @filesource
  */
 
@@ -24,9 +30,12 @@
 /**
  * Class Catalog 
  *
- * @copyright  Martin Komara, Thyon Design 2008 
- * @author     Martin Komara, John Brand <john.brand@thyon.com> 
- * @package    Controller
+ * the core class of the catalog.
+ * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
+ * @author		Martin Komara, 
+ * 				John Brand <john.brand@thyon.com>,
+ * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package		Controller
  */
 class Catalog extends Backend
 {
@@ -1488,8 +1497,7 @@ class Catalog extends Backend
 			unset($objFields);
 
 			$headercount = 0;
-			$line = fgets($csvFile, 4096);
-			$headerRow =  trimsplit($strSeparator, trim($line));
+			$headerRow = fgetcsv($csvFile, 4096, $strSeparator);
 			foreach ($headerRow as $field)
 			{
 				if (in_array($field, $fieldlist))
@@ -1502,7 +1510,6 @@ class Catalog extends Backend
 			{
 				$this->Session->set('tl_csv_import', null);
 				$_SESSION['TL_ERROR'][] = $GLOBALS['TL_LANG']['ERR']['noHeaderFields'];
-
 				$this->redirect($referer);
 			}
 
@@ -1515,7 +1522,6 @@ class Catalog extends Backend
 			{
 				$this->Session->set('tl_csv_import', null);
 				$_SESSION['TL_ERROR'][] = $GLOBALS['TL_LANG']['ERR']['noCatalog'];
-
 				$this->redirect($referer);
 			}
 
@@ -1531,11 +1537,8 @@ class Catalog extends Backend
 			$addcount = 0;
 
 			// keep fetching a line from the file until end of file
-			while ($line = fgets($csvFile, 4096)) 
+			while ($row = fgetcsv($csvFile, 4096, $strSeparator)) 
 			{
-			  // trim to remove new line character at the end of line and split into columns 
-				$row = trimsplit($strSeparator, trim($line));
-
 				$objRow = $this->Database->prepare("REPLACE INTO ".$objCatalog->tableName." (pid, tstamp, ".join(',',$headerRow).") VALUES (?,?".str_repeat(',?', $headercount).")")
 													->execute(array_merge(array($this->Input->get('id'), time()), $row));
 

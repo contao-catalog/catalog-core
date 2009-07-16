@@ -10,15 +10,19 @@
  * CSS engine, multi-language support and many more. For more information and 
  * additional TYPOlight applications like the TYPOlight MVC Framework please 
  * visit the project website http://www.typolight.org.
- *
- * This is the data container array for table tl_catalog_fields.
- *
+ * 
+ * The Catalog extension allows the creation of multiple catalogs of custom items,
+ * each with its own unique set of selectable field types, with field extendability.
+ * The Front-End modules allow you to build powerful listing and filtering of the 
+ * data in each catalog.
+ * 
  * PHP version 5
- * @copyright  Martin Komara, Thyon Design, CyberSpectrum 2008, 2009
- * @author     Martin Komara, John Brand <john.brand@thyon.com>
- *             Christian Schiffler <c.schiffler@cyberspectrum.de>
- * @package    Catalog 
- * @license    GPL 
+ * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
+ * @author		Martin Komara, 
+ * 				John Brand <john.brand@thyon.com>,
+ * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package		Catalog
+ * @license		LGPL 
  * @filesource
  */
 

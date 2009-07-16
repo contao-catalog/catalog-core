@@ -2,27 +2,27 @@
 
 /**
  * TYPOlight webCMS
- * Copyright (C) 2005 Leo Feyer
  *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 2.1 of the License, or (at your option) any later version.
+ * The TYPOlight webCMS is an accessible web content management system that 
+ * specializes in accessibility and generates W3C-compliant HTML code. It 
+ * provides a wide range of functionality to develop professional websites 
+ * including a built-in search engine, form generator, file and user manager, 
+ * CSS engine, multi-language support and many more. For more information and 
+ * additional TYPOlight applications like the TYPOlight MVC Framework please 
+ * visit the project website http://www.typolight.org.
  * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
+ * The Catalog extension allows the creation of multiple catalogs of custom items,
+ * each with its own unique set of selectable field types, with field extendability.
+ * The Front-End modules allow you to build powerful listing and filtering of the 
+ * data in each catalog.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at http://www.gnu.org/licenses/.
- *
  * PHP version 5
- * @copyright  Thyon Design, CyberSpectrum 2008, 2009
- * @author     John Brand <john.brand@thyon.com>, Christian Schiffler <c.schiffler@cyberspectrum.de>
- * @package    Catalog
- * @license    LGPL
+ * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
+ * @author		Martin Komara, 
+ * 				John Brand <john.brand@thyon.com>,
+ * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package		Catalog
+ * @license		LGPL 
  * @filesource
  */
 
@@ -30,9 +30,11 @@
 /**
  * Class CatalogExt 
  *
- * @copyright  Thyon Design 2008 
- * @author     John Brand <john.brand@thyon.com>, Christian Schiffler <c.schiffler@cyberspectrum.de>
- * @package    Catalog
+ * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
+ * @author		Martin Komara, 
+ * 				John Brand <john.brand@thyon.com>,
+ * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package		Controller
  */
 class CatalogExt extends Frontend
 {
@@ -228,6 +230,7 @@ class CatalogExt extends Frontend
 
 	/**
 	 * gets called by hook to prevent RSS feeds from deletion by cronjob
+	 * @return array
 	 */
 	public function removeOldFeeds()
 	{
@@ -283,6 +286,7 @@ class CatalogExt extends Frontend
 		
 	/**
 	 * get called by hook to inject all RSS feeds for the current layout into the template
+	 * @param string
 	 */
 	public function parseFrontendTemplate($strBuffer, $strTemplate) {
 		// I totally admit it. This function sucks big time. It is ugly, a hack, but non the less the only possibility to get this working.
@@ -292,6 +296,7 @@ class CatalogExt extends Frontend
 		// And we definately hope that all of this will get more easy and Leo will add a hook.
 		if(!isset($GLOBALS['TL_HEAD']['CATALOGFEED'])) {
 			global $objPage;
+			$GLOBALS['TL_HEAD']['CATALOGFEED']='';
 			// here we are getting dirty, we have to import the page layout as we have no other way to get the layout from it.
 			// I know it does exist already as we are being called from it but hey, we got no Hook in PageRegular::createStyleSheets
 			// and therefore have to suffer the hard way... :(
@@ -306,7 +311,7 @@ class CatalogExt extends Frontend
 				{
 					$objFeeds->feedName = strlen($objFeeds->alias) ? $objFeeds->alias : 'catalog' . $objFeeds->id;
 					$base = strlen($objFeeds->feedBase) ? $objFeeds->feedBase : $this->Environment->base;
-					$GLOBALS['TL_HEAD']['CATALOGFEED']= '<link rel="alternate" href="' . $base . $objFeeds->feedName . '.xml" type="application/' . $objFeeds->feedFormat . '+xml" title="' . $objFeeds->description . '" />' . "\n";
+					$GLOBALS['TL_HEAD']['CATALOGFEED'] .= '<link rel="alternate" href="' . $base . $objFeeds->feedName . '.xml" type="application/' . $objFeeds->feedFormat . '+xml" title="' . $objFeeds->description . '" />' . "\n";
 				}
 			} 
 		}

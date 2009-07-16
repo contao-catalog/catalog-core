@@ -2,27 +2,27 @@
 
 /**
  * TYPOlight webCMS
- * Copyright (C) 2005 Leo Feyer
  *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 2.1 of the License, or (at your option) any later version.
+ * The TYPOlight webCMS is an accessible web content management system that 
+ * specializes in accessibility and generates W3C-compliant HTML code. It 
+ * provides a wide range of functionality to develop professional websites 
+ * including a built-in search engine, form generator, file and user manager, 
+ * CSS engine, multi-language support and many more. For more information and 
+ * additional TYPOlight applications like the TYPOlight MVC Framework please 
+ * visit the project website http://www.typolight.org.
  * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
+ * The Catalog extension allows the creation of multiple catalogs of custom items,
+ * each with its own unique set of selectable field types, with field extendability.
+ * The Front-End modules allow you to build powerful listing and filtering of the 
+ * data in each catalog.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at http://www.gnu.org/licenses/.
- *
  * PHP version 5
- * @copyright  Thyon Design 2008 
- * @author     John Brand <john.brand@thyon.com> 
- * @package    Catalog 
- * @license    GPL 
+ * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
+ * @author		Martin Komara, 
+ * 				John Brand <john.brand@thyon.com>,
+ * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package		Catalog
+ * @license		LGPL 
  * @filesource
  */
 
