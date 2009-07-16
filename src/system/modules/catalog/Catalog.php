@@ -969,19 +969,18 @@ class Catalog extends Backend
 		);
 		
 		// set sorting fields
-		if (count($sortingFields) > 1) 
+		if (count($sortingFields) > 1 || (count($sortingFields) == 1 && $dca['fields'][$sortingFields[0]]['flag'] > 0))
 		{
 			// switchable sorting/grouping value
 			$dca['list']['sorting']['fields'] = $sortingFields;
 			$dca['list']['sorting']['mode'] = 2;
 			unset($dca['list']['operations']['cut']);
 		}
-		elseif (count($sortingFields) == 1)
+		elseif (count($sortingFields) == 1 && $dca['fields'][$sortingFields[0]]['flag'] == 0)
 		{
 			// set as parent-child, ignore sorting DB field
 			$dca['list']['sorting']['mode'] = 4;
 			$dca['list']['sorting']['fields'] = $sortingFields;
-			//$dca['list']['sorting']['ignoreSorting'] = true;
 			unset($dca['list']['operations']['cut']);
 		}
 		else 
