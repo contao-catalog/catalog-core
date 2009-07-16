@@ -1786,7 +1786,9 @@ abstract class ModuleCatalog extends Module
 			
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
 				
-				if (in_array($k, array('id','pid','sorting','tstamp')) || $fieldConf['inputType'] == 'password')
+				$blnParentCheckbox = $fieldConf['eval']['catalog']['parentCheckbox'] && !$arrData[$fieldConf['eval']['catalog']['parentCheckbox']];
+				
+				if (in_array($k, array('id','pid','sorting','tstamp')) || $fieldConf['inputType'] == 'password' || $blnParentCheckbox)
 					continue;
 
 				$strLabel = strlen($label = $fieldConf['label'][0]) ? $label : $k;

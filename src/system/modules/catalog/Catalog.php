@@ -925,6 +925,7 @@ class Catalog extends Backend
 			
 			if ($objFields->parentCheckbox)
 			{
+				$dca['fields'][$colName]['eval']['catalog']['parentCheckbox'] = $objFields->parentCheckbox;
 				if (isset($selectors[$objFields->parentCheckbox]))
 				{
 					$selectors[$objFields->parentCheckbox][] = $colName;
