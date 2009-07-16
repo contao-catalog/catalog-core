@@ -243,7 +243,7 @@ class CatalogExt extends Frontend
 		while ($objCatalog->next())
 		{
 			$objCatalog->feedName = strlen($objCatalog->alias) ? $objCatalog->alias : 'catalog' . $objCatalog->id;
-			$tmp[]=$objCatalog->feedName . '.xml';
+			$tmp[]=$objCatalog->feedName;
 		}
 		return $tmp;
 	}
