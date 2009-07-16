@@ -393,6 +393,26 @@ abstract class ModuleCatalog extends Module
 							break;
 
 					default:;
+						// HOOK: Might be a custom field type, check if that one has registered a hook.
+						$fieldType=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
+						if(array_key_exists('generateFilter', $fieldType) && is_array($fieldType['generateFilter']))
+						{
+							foreach ($fieldType['generateFilter'] as $callback)
+							{
+								$this->import($callback[0]);
+								$tmp=$this->$callback[0]->$callback[1]($field, $fieldConf, $this->Input->get($this->strSearch));
+								$procedure['search'][$field] = $tmp['procedure'];
+								if(is_array($tmp['search']))
+								{
+									if(isset($values['search'][$field]))
+										$values['search'][$field]=array_merge($values['search'][$field], $tmp['search']);
+									else
+										$values['search'][$field]=$tmp['search'];
+								}
+								else
+									$values['search'][$field]=$tmp['search'];
+							}
+						}
 				}
 			} // of search
 
