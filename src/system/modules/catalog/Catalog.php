@@ -792,9 +792,11 @@ class Catalog extends Backend
 								$GLOBALS['TL_LANG']['MSC']['thousandsSeparator']);
 						break;
 						
+/*
 				case 'money':
 						$value = money_format($fieldConf['eval']['catalog']['formatStr'], $value);
 						break;
+*/
 						
 				case 'date':
 						$value = date($fieldConf['eval']['catalog']['formatStr'], $value);
@@ -807,10 +809,20 @@ class Catalog extends Backend
 						}
 			}
 			
+			// add prefix and suffix format strings
+			if (is_array($fieldConf['eval']['catalog']['formatPrePost']) && count($fieldConf['eval']['catalog']['formatPrePost'])>0)
+			{
+				$value = $fieldConf['eval']['catalog']['formatPrePost'][0].$value.$fieldConf['eval']['catalog']['formatPrePost'][1];
+				// only restore basic entities for visual display in back-end
+				$value = $this->restoreBasicEntities($value);
+			}
+
+
 			if ($fieldConf['eval']['catalog']['type'] == 'checkbox' && $value)
 			{
 				$value = $fieldConf['label'][0];
 			}
+
 		}
 				
 		return $value;
@@ -1338,6 +1350,7 @@ class Catalog extends Backend
 	
 	private function formatConfig(&$field, $objRow)
 	{
+		$field['eval']['catalog']['formatPrePost'] = deserialize($objRow->formatPrePost, true);
 		$field['eval']['catalog']['formatFunction'] = $objRow->format ? $objRow->formatFunction : '';
 		$field['eval']['catalog']['formatStr'] = $objRow->formatStr;
 	}

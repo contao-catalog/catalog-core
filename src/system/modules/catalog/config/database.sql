@@ -93,6 +93,7 @@ CREATE TABLE `tl_catalog_fields` (
   `format` char(1) NOT NULL default '',
   `formatFunction` varchar(6) NOT NULL default '',
   `formatStr` varchar(255) NOT NULL default '',
+  `formatPrePost` varchar(255) NOT NULL default '',
   `uniqueItem` char(1) NOT NULL default '',
   `rte` char(1) NOT NULL default '',
   `itemTable` varchar(255) NOT NULL default '',

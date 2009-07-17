@@ -63,9 +63,10 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['itemFilter'] = array('Filter items', '
 
 $GLOBALS['TL_LANG']['tl_catalog_fields']['includeTime'] = array('Include time', 'If selected, user is able to enter date and time.');
 
-$GLOBALS['TL_LANG']['tl_catalog_fields']['format'] = array('Format', 'Enable to format the value using one of the formatting functions.');
-$GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunction'] = array('Format type', 'Select which formatting function will be used.');
-$GLOBALS['TL_LANG']['tl_catalog_fields']['formatStr'] = array('Formatting string', 'Enter the format string. For <strong>Text</strong>: enter [<a href="http://php.net/sprintf" onclick="window.open(this.href)">sprintf</a>] format string, for <strong>Number</strong> - enter decimals only, as TL configured separators are used, for <strong>Date</strong> - enter [<a href="http://php.net/date" title="Click to open link" onclick="window.open(this.href)">date</a>] format.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['formatPrePost'] = array('Prefix and Suffix Strings', 'Enter strings, e.g. currency, to be displayed before and after this field.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['format'] = array('Special Format', 'Enables the value to be formatted by one of the special functions.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunction'] = array('Format function', 'Select which formatting function will be used.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['formatStr'] = array('Format string or parameter', '<strong>Text</strong>:  [<a href="http://php.net/sprintf" onclick="window.open(this.href)">sprintf</a>] format, <strong>Date</strong>: [<a href="http://php.net/date" title="Click to open link" onclick="window.open(this.href)">date</a>] format, <strong>Number</strong>: decimals, as TL configured separators are used for number formats.');
 
 $GLOBALS['TL_LANG']['tl_catalog_fields']['showLink'] = array('Create link as file download or image lightbox', 'Wraps the item in a link that will show the fullscreen image or download the file.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['showImage'] = array('Enable as image field with thumbnail', 'If selected, a thumbnail will be created for image files.');

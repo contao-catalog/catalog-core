@@ -2027,7 +2027,8 @@ abstract class ModuleCatalog extends Module
 				}
 		}		
 		
-		// formatting 
+
+		// special formatting 
 		$formatStr = $fieldConf['eval']['catalog']['formatStr'];
 		if (strlen($formatStr))
 		{
@@ -2046,9 +2047,11 @@ abstract class ModuleCatalog extends Module
 								$GLOBALS['TL_LANG']['MSC']['thousandsSeparator']);
 						break;
 						
+/*
 				case 'money':
 						$value = money_format($formatStr, $value);
 						break;
+*/
 						
 				case 'date':
 						$value = date((strlen($formatStr) ? $formatStr : $GLOBALS['TL_CONFIG']['dateFormat']), $raw);
@@ -2059,6 +2062,13 @@ abstract class ModuleCatalog extends Module
 			}
 			$arrValues[0] = $value;
 			$strHtml = $value;
+		}
+
+		// add prefix and suffix format strings
+		if (is_array($fieldConf['eval']['catalog']['formatPrePost']) && count($fieldConf['eval']['catalog']['formatPrePost'])>0)
+		{
+			$strHtml = $fieldConf['eval']['catalog']['formatPrePost'][0].$strHtml.$fieldConf['eval']['catalog']['formatPrePost'][1];
+			// no $this->restoreBasicEntities() as this is done in the OutputTemplate
 		}
 
 		$return['items'] = $arrItems;
