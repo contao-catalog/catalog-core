@@ -91,7 +91,8 @@ class CatalogExt extends Frontend
 			$strUrl = $domain . $this->generateFrontendUrl($objParent->row(), '/items/%s');
 
 			// Get items
-			$where = $objArchive->searchCondition;
+			$this->import('String');
+			$where = $this->String->decodeEntities($objArchive->searchCondition);
 			$objCatalog = $this->Database->prepare("SELECT * FROM ".$objArchive->tableName." WHERE pid=?".(strlen($where)? " AND ".$where : "")." ORDER BY tstamp DESC")
 										 ->execute($objArchive->id);
 
@@ -152,7 +153,8 @@ class CatalogExt extends Frontend
 		$strUrl = $this->generateFrontendUrl($objParent->fetchAssoc(), '/items/%s');
 
 		// Get items
-		$where = $arrCatalog->searchCondition;
+		$this->import('String');
+		$where = $this->String->decodeEntities($objArchive->searchCondition);
 		$datefield=(strlen($arrCatalog->datesource) ? $arrCatalog->datesource : 'tstamp');
 		$objArticleStmt = $this->Database->prepare("SELECT * FROM " . $arrCatalog->tableName . " WHERE pid=? ".(strlen($where)? " AND ".$where : "")." ORDER BY " . $datefield . " DESC");
 
@@ -161,7 +163,7 @@ class CatalogExt extends Frontend
 			$objArticleStmt->limit($arrArchive['maxItems']);
 		}
 
-		$objArticle = $objArticleStmt->execute($arrCatalog->id, $time, $time);
+		$objArticle = $objArticleStmt->execute($arrCatalog->id);
 
 		// Parse items
 		while ($objArticle->next())
