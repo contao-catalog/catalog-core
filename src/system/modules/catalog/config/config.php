@@ -96,6 +96,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 							'inputType' => 'text',
 						),
 					'sqlDefColumn' => "int(10) unsigned NOT NULL default '0'",
+//					'sqlDefColumn' => "varchar(10) NOT NULL default ''",
 				),
 			'select' => array
 				(

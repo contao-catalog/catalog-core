@@ -777,6 +777,33 @@ class Catalog extends Backend
 	{
 		if (strlen($value))
 		{
+
+			switch ($fieldConf['eval']['catalog']['type'])
+			{
+				case 'select':
+						$value = $fieldConf['options'][$value];
+						break;
+
+				case 'tags':
+						$tags = trimsplit(',',$value);
+						$arrTags = array();
+						foreach ($tags as $tag)
+						{
+							$arrTags[] = $fieldConf['options'][$tag];
+						}
+						$value = join(', ', $arrTags);
+						break;
+
+				case 'checkbox':
+						if ($value)
+						{
+							$value = $fieldConf['label'][0];
+						}
+						break;
+
+				default:;
+			}
+
 			switch ($fieldConf['eval']['catalog']['formatFunction'])
 			{
 				case 'string':
@@ -815,12 +842,6 @@ class Catalog extends Backend
 				$value = $fieldConf['eval']['catalog']['formatPrePost'][0].$value.$fieldConf['eval']['catalog']['formatPrePost'][1];
 				// only restore basic entities for visual display in back-end
 				$value = $this->restoreBasicEntities($value);
-			}
-
-
-			if ($fieldConf['eval']['catalog']['type'] == 'checkbox' && $value)
-			{
-				$value = $fieldConf['label'][0];
 			}
 
 		}
