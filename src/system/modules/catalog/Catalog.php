@@ -909,9 +909,9 @@ class Catalog extends Backend
 
 			if ($objFields->width50)
 			{
-				$field['eval']['tl_class'] = 'w50';
+				$field['eval']['tl_class'] = 'w50' . (($colType == 'date') ? ' wizard' : '' );
 			}
-			
+
 			$dca['fields'][$colName] = $field;
 			
 			$configFunction = $colType . "Config";
