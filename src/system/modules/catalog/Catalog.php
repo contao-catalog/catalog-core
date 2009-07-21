@@ -628,9 +628,9 @@ class Catalog extends Backend
 
 	public function getCalc($varValue, DataContainer $dc, $blnReturn=false)
 	{
-		$objCalc = $this->Database->prepare("SELECT calcValue FROM tl_catalog_fields f WHERE f.pid=(SELECT c.pid FROM ".$dc->table." c WHERE id=?) AND f.type=?")
+		$objCalc = $this->Database->prepare("SELECT f.calcValue FROM tl_catalog_fields f WHERE f.pid=(SELECT c.id FROM tl_catalog_types c WHERE c.tableName=?) AND f.colName=?")
 							   ->limit(1)
-							   ->execute($dc->id, 'calc');
+							   ->execute($dc->table, $dc->field);
 
 		// set default value to forumla (for load_callback display)
 		$value = $objCalc->calcValue;
