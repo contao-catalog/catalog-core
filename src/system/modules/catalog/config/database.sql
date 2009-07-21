@@ -87,6 +87,7 @@ CREATE TABLE `tl_catalog_fields` (
   `parentCheckbox` varchar(255) NOT NULL default '',
   `mandatory` char(1) NOT NULL default '',
   `includeBlankOption` char(1) NOT NULL default '',
+  `calcValue` text NULL,
   `defValue` varchar(255) NOT NULL default '',
   `minValue` int(10) NULL default NULL,
   `maxValue` int(10) NULL default NULL,

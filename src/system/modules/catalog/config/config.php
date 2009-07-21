@@ -95,8 +95,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 						(
 							'inputType' => 'text',
 						),
-					'sqlDefColumn' => "int(10) unsigned NOT NULL default '0'",
-//					'sqlDefColumn' => "varchar(10) NOT NULL default ''",
+					'sqlDefColumn' => "varchar(10) NOT NULL default ''",
 				),
 			'select' => array
 				(
@@ -145,6 +144,16 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 						),
 					'sqlDefColumn' => "text NULL",
 				),
+			'calc' => array
+				(
+					'typeimage'    => 'system/modules/catalog/html/calc.gif',
+					'fieldDef'     => array
+						(
+							'inputType' => 'text',
+							'eval'			=> array('disabled'=>true, 'style'=>'padding-right:25px;background: #eee url(system/modules/catalog/html/calc.gif) no-repeat 99% center;'),
+						),
+					'sqlDefColumn' => "varchar(255) NOT NULL default ''",
+				),
 			'taxonomy' => array
 				(
 					'typeimage'    => 'system/modules/taxonomy/html/icon.gif',
@@ -163,6 +172,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 	'typesReferenceFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'),
 	'typesCatalogFields' => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'),
 	'typesRSSFields' => array('text', 'alias', 'longtext'),
+	'typesWizardFields' => array('date', 'calc', 'url'),
 		
 	// End of addition by c.schiffler to allow custom editors to register themselves.
 );

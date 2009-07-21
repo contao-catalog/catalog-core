@@ -49,6 +49,7 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['mandatory'] = array('Mandatory', 'Whet
 $GLOBALS['TL_LANG']['tl_catalog_fields']['includeBlankOption'] = array('Include blank option', 'Include a blank option in the drop-down list.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['uniqueItem'] = array('Unique', 'Whether this field is unique within the table.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['defValue'] = array('Default value', 'Please enter the default value for the field.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['calcValue'] = array('Calculation formula', 'Enter the SQL calculation for the field, e.g. (price*1.15)*qty.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['minValue'] = array('Minimum', 'Specifies the minimal value user can input.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['maxValue'] = array('Maximum', 'Specifies the maximal value user can input.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['rte'] = array('Rich text', 'If select, rich text editor is displayed.');
@@ -115,6 +116,7 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['typeOptions']['tags']			= 'Tags';
 $GLOBALS['TL_LANG']['tl_catalog_fields']['typeOptions']['checkbox']	= 'Checkbox';
 $GLOBALS['TL_LANG']['tl_catalog_fields']['typeOptions']['url']			= 'Url';
 $GLOBALS['TL_LANG']['tl_catalog_fields']['typeOptions']['file']			= 'File';
+$GLOBALS['TL_LANG']['tl_catalog_fields']['typeOptions']['calc']			= 'Calculate';
 
 
 $GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunctionOptions']['string']	= 'String';

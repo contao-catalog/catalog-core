@@ -126,6 +126,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'checkbox' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField',
 		'url' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory',
 		'file' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,multiple,customFiletree;{format_legend},showImage,showLink',
+		'calc' => '{title_legend},name,description,colName,type,calcValue;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{format_legend:hide},formatPrePost,format',
 		
 	),
 
@@ -178,7 +179,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'default'                 => 'text', 
 			'exclude'                 => true,
 			'inputType'               => 'select',
-			'options'                 => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'checkbox', 'select', 'tags', 'url', 'file'),
+			'options'                 => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'checkbox', 'select', 'tags', 'url', 'file', 'calc'),
 			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_fields']['typeOptions'],
 			'eval'                    => array('submitOnChange'=>true, 'tl_class'=>'w50'),
 			'save_callback'           => array
@@ -288,6 +289,17 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'eval'                    => array('tl_class'=>'w50'),
 		),
 		
+		'calcValue' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['calcValue'],
+			'inputType'               => 'textarea',
+			'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;', 'mandatory'=>true),
+			'save_callback'           => array
+			(
+				array('tl_catalog_fields', 'checkCalc')
+			),
+		),
+
 		'uniqueItem' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['uniqueItem'],
@@ -652,6 +664,39 @@ class tl_catalog_fields extends Backend
 		}
 		
 		return $result;
+	}
+
+
+
+	public function checkCalc($varValue, DataContainer $dc)
+	{
+		$objTable = $this->Database->prepare("SELECT tableName FROM tl_catalog_types t WHERE t.id=(SELECT f.pid FROM tl_catalog_fields f where f.id=?)")
+				->limit(1)
+				->execute($dc->id);
+				
+		if (!$objTable->numRows)
+		{
+			return $varValue;
+		}
+
+		try
+		{
+			$objValue = $this->Database->prepare("SELECT ".$varValue." as calcValue FROM ".$objTable->tableName)
+								   ->limit(1)
+								   ->execute();
+	
+			if ($objValue->numRows)
+			{
+				$value = $objValue->calcValue;
+			}
+		}
+
+		catch (Exception $e)
+		{
+			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['calcInvalid'], $e->getMessage()));
+		}
+
+		return $varValue;
 	}
 
 

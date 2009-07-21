@@ -624,6 +624,50 @@ class Catalog extends Backend
 		}
 		return serialize($values);
 	}
+
+
+	public function getCalc($varValue, DataContainer $dc, $blnReturn=false)
+	{
+		$objCalc = $this->Database->prepare("SELECT calcValue FROM tl_catalog_fields f WHERE f.pid=(SELECT c.pid FROM ".$dc->table." c WHERE id=?) AND f.type=?")
+							   ->limit(1)
+							   ->execute($dc->id, 'calc');
+
+		// set default value to forumla (for load_callback display)
+		$value = $objCalc->calcValue;
+		try
+		{
+			$objValue = $this->Database->prepare("SELECT ".$objCalc->calcValue." as calcValue FROM ".$dc->table." WHERE id=?")
+								   ->limit(1)
+								   ->execute($dc->id);
+	
+			if ($objValue->numRows)
+			{
+				$value = $objValue->calcValue;
+			}
+		}
+
+		catch (Exception $e)
+		{
+			// set error into label (it appears as it we can't use exceptions on load_callback methods)
+			$GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['label'][0] = '<span class="tl_error">'.$GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['label'][0].'</span>';
+			$GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['label'][1] = '<span class="tl_error">'.sprintf($GLOBALS['TL_LANG']['ERR']['calcError'], trim($e->getMessage())).'</span>';
+
+		}
+
+		return (($blnReturn) ? $value : '');
+	}
+
+
+	public function loadCalc($varValue, DataContainer $dc)
+	{
+		return $this->getCalc($varValue, $dc, true);
+	}
+
+	public function saveCalc($varValue, DataContainer $dc)
+	{
+		return $this->getCalc($varValue, $dc, false);
+	}
+
     
 
 	/**
@@ -699,7 +743,7 @@ class Catalog extends Backend
 		$values = array();
 		foreach($fields as $field)
 		{
-			$values[$field] = $this->formatTitle($row[$field], $GLOBALS['TL_DCA'][$tableName]['fields'][$field]);
+			$values[$field] = $this->formatTitle($row[$field], $GLOBALS['TL_DCA'][$tableName]['fields'][$field], $tableName, $row['id']);
 		}
 
 		if (!strlen($strFormat))
@@ -773,9 +817,11 @@ class Catalog extends Backend
 
 	}
     
-	private function formatTitle($value, &$fieldConf)
+	private function formatTitle($value, &$fieldConf, $tableName, $id)
 	{
-		if (strlen($value))
+		$blnCalc = ($fieldConf['eval']['catalog']['type'] == 'calc' && strlen($fieldConf['eval']['catalog']['calcValue']));
+	
+		if (strlen($value) || $blnCalc)
 		{
 
 			switch ($fieldConf['eval']['catalog']['type'])
@@ -800,6 +846,28 @@ class Catalog extends Backend
 							$value = $fieldConf['label'][0];
 						}
 						break;
+
+				case 'calc':
+						$value = '';
+						try
+						{
+							$objValue = $this->Database->prepare("SELECT ".$fieldConf['eval']['catalog']['calcValue']." as calcValue FROM ".$tableName." WHERE id=?")
+												   ->limit(1)
+												   ->execute($id);
+					
+							if ($objValue->numRows)
+							{
+								$value = $objValue->calcValue;
+							}
+						}
+				
+						catch (Exception $e)
+						{
+							$value = '';
+						}
+
+						break;
+
 
 				default:;
 			}
@@ -930,7 +998,7 @@ class Catalog extends Backend
 
 			if ($objFields->width50)
 			{
-				$field['eval']['tl_class'] = 'w50' . (($colType == 'date') ? ' wizard' : '' );
+				$field['eval']['tl_class'] = 'w50' . (in_array($colType, $GLOBALS['BE_MOD']['content']['catalog']['typesWizardFields']) ? ' wizard' : '' );
 			}
 
 			$dca['fields'][$colName] = $field;
@@ -942,7 +1010,7 @@ class Catalog extends Backend
 			}
 			// Added by c.schiffler to allow custom editors to register themselves.
 			// HOOK: try to format the fieldtype as it might be a custom added one.
-			$fieldType=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType];
+			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType];
 			if(array_key_exists('generateFieldEditor', $fieldType) && is_array($fieldType['generateFieldEditor']))
 			{
 				foreach ($fieldType['generateFieldEditor'] as $callback)
@@ -1368,6 +1436,17 @@ class Catalog extends Backend
 		$field['wizard'] = array(array('Catalog', 'pagePicker'));
 		$field['eval']['catalog']['showLink'] = $objRow->showLink ? true : false;
 	}
+
+
+	private function calcConfig(&$field, $objRow)
+	{
+		$field['eval']['catalog']['calcValue'] = $objRow->calcValue;
+
+		$field['load_callback'][] = array('Catalog', 'loadCalc');
+		$field['save_callback'][] = array('Catalog', 'saveCalc');
+	}
+
+
 	
 	private function formatConfig(&$field, $objRow)
 	{

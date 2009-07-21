@@ -32,12 +32,11 @@
  */
 
 
-$GLOBALS['TL_LANG']['MSC']['noCatalog'] = 'Catalog doesn\'t exist, contact the administrator.';
-$GLOBALS['TL_LANG']['MSC']['removeDataConfirm'] = 'Do you really want to delete all records from %s before importing?';
-
 //Select Options
 $GLOBALS['TL_LANG']['MSC']['optionsTitle'] = 'Select %s';
 
+$GLOBALS['TL_LANG']['MSC']['noCatalog'] = 'Catalog doesn\'t exist, contact the administrator.';
+$GLOBALS['TL_LANG']['MSC']['removeDataConfirm'] = 'Do you really want to delete all records from %s before importing?';
 
 
 /**
@@ -65,6 +64,9 @@ $GLOBALS['TL_LANG']['ERR']['aliasDuplicate'] = 'Alias field `%s` already defined
 
 $GLOBALS['TL_LANG']['ERR']['limitMin'] = 'This value is smaller than the minimum value: %s';
 $GLOBALS['TL_LANG']['ERR']['limitMax'] = 'This value is greater than the maximum value: %s';
+
+$GLOBALS['TL_LANG']['ERR']['calcInvalid'] = 'Invalid Calculation SQL statement: %s';
+$GLOBALS['TL_LANG']['ERR']['calcError'] = 'Calculation Error - %s';
 
 
 /**
