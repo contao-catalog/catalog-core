@@ -118,7 +118,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			),
 			'comments' => array
 			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_archive']['comments'],
+				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['comments'],
 				'href'                => 'key=comments',
 				'icon'                => 'system/modules/catalog/html/comments.gif',
 				'button_callback'     => array('tl_catalog_types', 'showComments')

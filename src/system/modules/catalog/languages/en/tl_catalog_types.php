@@ -101,6 +101,7 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['delete'] = array('Delete catalog', 'Del
 $GLOBALS['TL_LANG']['tl_catalog_types']['show']   = array('Catalog details', 'Show details of catalog ID %s');
 $GLOBALS['TL_LANG']['tl_catalog_types']['editheader'] = array('Edit catalog', 'Edit the catalog');
 $GLOBALS['TL_LANG']['tl_catalog_types']['fields'] = array('Define fields', 'Define fields for catalog ID %s');
+$GLOBALS['TL_LANG']['tl_catalog_types']['comments'] = array('Show Comments', 'Show comments for catalog ID %s');
 $GLOBALS['TL_LANG']['tl_catalog_types']['regenerateDca'] = array('Regenerate DCA', 'Regenerate DCA for all catalogs');
 
 /**
