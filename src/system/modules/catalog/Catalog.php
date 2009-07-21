@@ -634,6 +634,7 @@ class Catalog extends Backend
 
 		// set default value to forumla (for load_callback display)
 		$value = $objCalc->calcValue;
+
 		try
 		{
 			$objValue = $this->Database->prepare("SELECT ".$objCalc->calcValue." as calcValue FROM ".$dc->table." WHERE id=?")
@@ -1477,9 +1478,19 @@ class Catalog extends Backend
 			return '';
 		}
 		
+		// get fields
+		$objFields = $this->Database->prepare("SELECT colName, type, calcValue FROM tl_catalog_fields WHERE pid=? ORDER BY sorting")
+					->execute($objCatalog->id);
+
+		$arrFields = array();
+		while ($objFields->next())
+		{
+			$arrFields[] = ($objFields->type != 'calc') ? $objFields->colName : '('.$objFields->calcValue . ') AS '.$objFields->colName.'_calc';
+		}
+
 		// get records
 		$arrExport = array();
-		$objRow = $this->Database->prepare("SELECT * FROM ".$objCatalog->tableName." WHERE pid=?")
+		$objRow = $this->Database->prepare("SELECT ". join(', ', $arrFields) ." FROM ".$objCatalog->tableName." WHERE pid=?")
 					->execute($objCatalog->id);
 
 		if ($objRow->numRows)
@@ -1502,7 +1513,7 @@ class Catalog extends Backend
 
 		foreach ($arrExport as $export) 
 		{
-			$output .= '"' . join('"'.$GLOBALS['TL_CONFIG']['catalog']['csvDelimiter'].'"', $export).'"' . "\n";
+			$output .= '"' . join('"'.$GLOBALS['TL_CONFIG']['catalog']['csvDelimiter'].'"', str_replace("\"", "\"\"", $export)).'"' . "\n";
 		}
 
 		echo $output;
