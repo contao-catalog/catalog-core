@@ -102,7 +102,8 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 					'typeimage'    => 'system/modules/catalog/html/select.gif',
 					'fieldDef'     => array
 						(
-							'inputType' => 'select',
+							'inputType' => 'tableTree',
+							'eval'      => array('fieldType' => 'radio')
 						),
 					'sqlDefColumn' => "int(10) NOT NULL default 0",
 				),
@@ -111,8 +112,8 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 					'typeimage'    => 'system/modules/catalog/html/tags.gif',
 					'fieldDef'     => array
 						(
-							'inputType' => 'checkbox',
-							'eval'      => array('multiple' => true)
+							'inputType' => 'tableTree',
+							'eval'      => array('fieldType' => 'checkbox', 'multiple' => true)
 						),
 					'sqlDefColumn' => "text NULL",
 				),
