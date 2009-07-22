@@ -137,7 +137,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'sortingField'		=> 'groupingMode',
 		'showImage'				=> 'imageSize',
 		'format'					=> 'formatFunction,formatStr',
-		'limitItems'			=> 'items,childrenSelMode',
+		'limitItems'			=> 'items,childrenSelMode,parentFilter',
 		'customFiletree'	=> 'uploadFolder,validFileTypes,filesOnly',
 	),
 
@@ -264,7 +264,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['parentCheckbox'],
 			'inputType'               => 'select',
-			'options_callback'        => array('tl_catalog_fields', 'getSelectors'),
+			'options_callback'        => array('tl_catalog_fields', 'getCheckboxSelectors'),
 			'eval'                    => array('includeBlankOption' => true),
 		),
 		
@@ -413,9 +413,18 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['childrenSelMode'],
 			'inputType'               => 'select',
+			'default'               	=> 'treeAll',
 			'options'                 => array('items', 'children', 'treeAll', 'treeChildrenOnly'),
 			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_fields']['childOptions'],
-			'default'               	=> 'treeAll',
+			'eval'                    => array('tl_class'=>'w50'),
+		),
+
+		'parentFilter' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['parentFilter'],
+			'inputType'               => 'select',
+			'options_callback'        => array('tl_catalog_fields', 'getOptionSelectors'),
+			'eval'                    => array('includeBlankOption' => true, 'tl_class'=>'w50'),
 		),
 
 		'itemFilter' => array
@@ -640,9 +649,24 @@ class tl_catalog_fields extends Backend
 			return $result;
 		}
 	}
-	
-	public function getSelectors(DataContainer $dc)
+
+	public function getCheckboxSelectors(DataContainer $dc)
 	{
+		return $this->getSelectors($dc, $GLOBALS['BE_MOD']['content']['catalog']['typesCheckboxSelectors']);
+	}
+
+	public function getOptionSelectors(DataContainer $dc)
+	{
+		return $this->getSelectors($dc, $GLOBALS['BE_MOD']['content']['catalog']['typesOptionSelectors']);
+	}
+	
+	public function getSelectors(DataContainer $dc, $type=NULL)
+	{
+		if (!$type)
+		{
+			return array();
+		}
+	
 		$objField = $this->Database->prepare("SELECT pid FROM tl_catalog_fields WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
@@ -654,8 +678,8 @@ class tl_catalog_fields extends Backend
 		
 		$pid = $objField->pid;
 		
-		$objFields = $this->Database->prepare("SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND id != ? AND type=?")
-				->execute($pid, $dc->id, 'checkbox');
+		$objFields = $this->Database->prepare("SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND id != ? AND type IN ('".join("','", $type)."')")
+				->execute($pid, $dc->id);
 		 
 		$result = array();
 		while ($objFields->next())

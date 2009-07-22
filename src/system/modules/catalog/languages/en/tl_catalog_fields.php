@@ -47,6 +47,7 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['groupingMode'] = array('Sorting mode',
 $GLOBALS['TL_LANG']['tl_catalog_fields']['parentCheckbox'] = array('Controlling checkbox', 'Please select a checkbox. Current field is hidden in edit view until the selected checkbox is checked.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['mandatory'] = array('Mandatory', 'Whether the user is required to fill in the field.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['includeBlankOption'] = array('Include blank option', 'Include a blank option in the drop-down list.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['parentFilter'] = array('Parent filter', 'Select the parent control that provides additional root(s) for options filtering.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['uniqueItem'] = array('Unique', 'Whether this field is unique within the table.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['defValue'] = array('Default value', 'Please enter the default value for the field.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['calcValue'] = array('Calculation formula', 'Enter the SQL calculation for the field, e.g. (price*1.15)*qty.');

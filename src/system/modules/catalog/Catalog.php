@@ -1046,12 +1046,19 @@ class Catalog extends Backend
 					$selectors[$objFields->parentCheckbox] = array($colName);
 				}
 			}
+
+			if ($objFields->parentFilter)
+			{
+				$dca['fields'][$colName]['eval']['catalog']['parentFilter'] = $objFields->parentFilter;
+				$dca['fields'][$objFields->parentFilter]['eval']['submitOnChange'] = true;
+			}
+			
 		}
-		
+
 		// build palettes and subpalettes
 		$selectors = array_intersect_key($selectors, array_flip($fields));
 		$fieldsInSubpalette = array();
-		foreach ($selectors as $selector => $subpaletteFields)
+		foreach ($selectors as $selector=>$subpaletteFields)
 		{
 			$dca['fields'][$selector]['eval']['submitOnChange'] = true;
 			$dca['subpalettes'][$selector] = implode(',', $subpaletteFields);
@@ -1158,10 +1165,11 @@ class Catalog extends Backend
 	{
 		$foreignKey = $objRow->itemTable . '.' . $objRow->itemTableValueCol;
 		$limitItems = $objRow->limitItems ? true : false;
+		$parentFilter = $objRow->limitItems ? $objRow->parentFilter : '';
+
 		$ids = deserialize($objRow->items);
 		$sortCol = $objRow->itemSortCol;
-
-
+		
 		if (!$objRow->limitItems || ($objRow->limitItems && ($objRow->childrenSelMode == 'items' || $objRow->childrenSelMode == 'children'))) 
 		{
 			if (!$objRow->limitItems)
@@ -1193,12 +1201,13 @@ class Catalog extends Backend
 		$field['eval']['catalog']['limitItems'] = $limitItems;
 		$field['eval']['catalog']['selectedIds'] = $ids;
 		$field['eval']['catalog']['sortCol'] = $sortCol;
-		$field['eval']['catalog']['childrenSelMode'] = $objRow->childrenSelMode;
+		$field['eval']['catalog']['childrenSelMode'] = $objRow->limitItems ? $objRow->childrenSelMode : '';
 		$field['eval']['catalog']['itemFilter'] = $objRow->itemFilter;
 
 		$blnItems = (!$objRow->limitItems || ($objRow->limitItems && $objRow->childrenSelMode == 'items'));
+
 		
-		$field['options'] = $this->loadAllOptions($foreignKey, $ids, 0, $sortCol, $blnItems, $objRow->itemFilter);
+		$field['options'] = $this->loadAllOptions($foreignKey, $ids, 0, $sortCol, $blnItems, $objRow->itemFilter, $parentFilter);
 		$field['eval']['tableColumn'] = $foreignKey;
 		$field['eval']['root'] = $ids;
 
@@ -1279,9 +1288,8 @@ class Catalog extends Backend
 
 
 
-	private function loadAllOptions($foreignKey, $ids, $level=0, $sortColumn='sorting', $blnItems=false, $itemFilter='')
+	private function loadAllOptions($foreignKey, $ids, $level=0, $sortColumn='sorting', $blnItems=false, $itemFilter='', $parentFilter='')
 	{
-
 
 		list($sourceTable, $sourceColumn) = explode('.', $foreignKey);
 		$ids = is_array($ids) ? $ids : array($ids);
@@ -1292,30 +1300,55 @@ class Catalog extends Backend
 			$sortColumn = strlen($sortColumn) ? $sortColumn : 'sorting';
 			$sort = $this->Database->fieldExists($sortColumn, $sourceTable) ? $sortColumn : $sourceColumn;
 
+			$arrWhere = array();
+			if (strlen($itemFilter))
+			{
+				$arrWhere['filter'] = '('.$itemFilter.')';
+			}
+				
 			$objCatalog = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE tableName=?")
 					->limit(1)
 					->execute($sourceTable);
 			$blnCatalog = ($objCatalog->numRows == 1);
 
-/*
-
-			if ($blnCatalog) 
-			{
-				$itemFilter = $this->replaceCatalogTags($itemFilter, $objRow);
-			}
-*/
-
 			$treeView = $this->Database->fieldExists('pid', $sourceTable) && !$blnCatalog;
 
 			if ($treeView)
 			{
-				$objNodes = $this->Database->prepare("SELECT id, (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " FROM ". $sourceTable. " o WHERE ".(strlen($itemFilter) ? '('.$itemFilter.') AND ' : '').($blnItems ? 'id' : 'pid')." IN (" . join(',', $ids) . ") ORDER BY ". $sort)
+
+				if (strlen($parentFilter) && $level == 0 && strlen($this->Input->get('id')) && $this->Input->get('act') == 'edit')
+				{
+					$objTable = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE id=?")
+							->limit(1)
+							->execute(CURRENT_ID);
+							
+					if ($objTable->numRows) 
+					{
+						$objParents = $this->Database->prepare("SELECT ".$parentFilter." FROM ". $objTable->tableName . " WHERE id=?")
+												->execute($this->Input->get('id'));
+		
+						$arrWhere['items'] = 'pid IN ('.$objParents->$parentFilter.')';
+	
+					}
+	
+					$parentFilter = '';
+				}
+				else
+				{
+					$arrWhere['items'] = ($blnItems ? 'id' : 'pid')." IN (" . join(',', $ids) . ")";
+				}
+				
+				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? join(' AND ', $arrWhere) : '';
+
+				$objNodes = $this->Database->prepare("SELECT id, (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " FROM ". $sourceTable. " o WHERE ".$strWhere." ORDER BY ". $sort)
 										 ->execute();
 			}
 			
 			if (!$treeView || ($treeView && $objNodes->numRows == 0 && $level == 0))
 			{
-				$objNodes = $this->Database->execute("SELECT id, 0 AS childCount, ". $sourceColumn ." FROM ". $sourceTable . (strlen($itemFilter) ? ' WHERE ('.$itemFilter.')' : '') ." ORDER BY ".$sort);
+				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? ' WHERE '. join(' AND ', $arrWhere) : '';
+
+				$objNodes = $this->Database->execute("SELECT id, 0 AS childCount, ". $sourceColumn ." FROM ". $sourceTable . $strWhere . " ORDER BY ".$sort);
 			}
 		}
 
@@ -1337,7 +1370,7 @@ class Catalog extends Backend
 			$arrNodes[$objNodes->id] = str_repeat('  ', $level) . $objNodes->$sourceColumn;
 			if ($objNodes->childCount > 0 && !$blnItems)
 			{
-				$arrChildren = $this->loadAllOptions($foreignKey, $objNodes->id, ($level+1), $sortColumn, $blnItems, $itemFilter);
+				$arrChildren = $this->loadAllOptions($foreignKey, $objNodes->id, ($level+1), $sortColumn, $blnItems, $itemFilter, $parentFilter);
 				$arrNodes += $arrChildren;
 			}
 		}
@@ -1345,58 +1378,7 @@ class Catalog extends Backend
 		return $arrNodes;
 	}
 
-	
-	private function loadOptions($foreignKey, $limitItems, $childrenSelMode, $ids, $sort='sorting')
-	{
-		$idCol = 'id';
-		list($itemTable, $valueCol) = explode('.', $foreignKey);
 		
-		$items = array();
-		
-		if (!strlen($sort)) 
-		{
-			$sort = 'sorting';
-		}
-				
-		$sortOrder = $this->Database->fieldExists($sort, $itemTable) ? $sort : $valueCol;
-		
-		if (!$limitItems)
-		{
-			$query = "SELECT $idCol, $valueCol FROM $itemTable ORDER BY $sortOrder";
-			$items = $this->loadOptionsFromDb($query, $idCol, $valueCol);
-		}
-		else
-		{
-			if (is_array($ids) && count($ids) != 0)
-			{
-				$condCol = $childrenSelMode ? 'pid' : 'id';
-				$query = sprintf("SELECT $idCol, $valueCol FROM $itemTable WHERE $condCol IN (%s) ORDER BY $sortOrder",
-						implode(',', $ids));
-				$items = $this->loadOptionsFromDb($query, $idCol, $valueCol);
-			}
-		}
-		return $items;
-	}
-	
-	private function loadOptionsFromDb($query, $idCol, $valueCol)
-	{
-		try
-		{
-				$objItems = $this->Database->execute($query);
-		}
-		catch (Exception $e)
-		{
-				return array();
-		}
-		
-		$result = array();
-		while($objItems->next())
-		{
-				$result[$objItems->$idCol] = $objItems->$valueCol;
-		}
-		return $result;
-	}
-	
 	private function dateConfig(&$field, $objRow)
 	{
 		$field['eval']['rgxp'] = $objRow->includeTime ? 'datim' : 'date';

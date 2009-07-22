@@ -166,6 +166,8 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 					'sqlDefColumn' => "text NULL",
 				),
 		),
+	'typesCheckboxSelectors' => array('checkbox'),
+	'typesOptionSelectors' => array('select', 'tags'),
 	'typesFilterFields' => array('number', 'decimal', 'text', 'longtext', 'date', 'select', 'tags', 'checkbox'),
 	'typesMatchFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'),
 	'typesEditFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url'), /* TODO: add file support later */
