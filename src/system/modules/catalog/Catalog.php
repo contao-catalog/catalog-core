@@ -1166,7 +1166,6 @@ class Catalog extends Backend
 	{
 		$foreignKey = $objRow->itemTable . '.' . $objRow->itemTableValueCol;
 		$limitItems = $objRow->limitItems ? true : false;
-		$parentFilter = $objRow->limitItems ? $objRow->parentFilter : '';
 
 		$ids = deserialize($objRow->items);
 		$sortCol = $objRow->itemSortCol;
@@ -1207,11 +1206,30 @@ class Catalog extends Backend
 
 		$blnItems = (!$objRow->limitItems || ($objRow->limitItems && $objRow->childrenSelMode == 'items'));
 
-		
-		$field['options'] = $this->loadAllOptions($foreignKey, $ids, 0, $sortCol, $blnItems, $objRow->itemFilter, $parentFilter);
+
+		$parentFilter = $objRow->limitItems ? $objRow->parentFilter : '';
+
+		// only filter items further if in editing mode in BE
+		$idsFilter = '';
+		if (strlen($parentFilter) && strlen($this->Input->get('id')) && $this->Input->get('act') == 'edit')
+		{
+			$objTable = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE id=?")
+					->limit(1)
+					->execute(CURRENT_ID);
+					
+			if ($objTable->numRows) 
+			{
+				$objParents = $this->Database->prepare("SELECT ".$parentFilter." FROM ". $objTable->tableName . " WHERE id=?")
+										->execute($this->Input->get('id'));
+				$idsFilter = ($objParents->$parentFilter != 0) ? $objParents->$parentFilter : '';
+				$ids = strlen($idsFilter) ? split(',',$idsFilter) : $ids;
+				$ids = is_array($ids) ? $ids : array($ids);
+			}
+		}
+	
+		$field['options'] = $this->loadAllOptions($foreignKey, $ids, 0, $sortCol, $blnItems, $objRow->itemFilter, $idsFilter);
 		$field['eval']['tableColumn'] = $foreignKey;
 		$field['eval']['root'] = $ids;
-
 
 /*
 		if (!$objRow->limitItems || ($objRow->limitItems && ($objRow->childrenSelMode == 'items' || $objRow->childrenSelMode == 'children'))) 
@@ -1289,7 +1307,7 @@ class Catalog extends Backend
 
 
 
-	private function loadAllOptions($foreignKey, $ids, $level=0, $sortColumn='sorting', $blnItems=false, $itemFilter='', $parentFilter='')
+	private function loadAllOptions($foreignKey, $ids, $level=0, $sortColumn='sorting', $blnItems=false, $itemFilter='', $idsFilter='')
 	{
 
 		list($sourceTable, $sourceColumn) = explode('.', $foreignKey);
@@ -1317,22 +1335,10 @@ class Catalog extends Backend
 			if ($treeView)
 			{
 
-				if (strlen($parentFilter) && $level == 0 && strlen($this->Input->get('id')) && $this->Input->get('act') == 'edit')
+				if (strlen($idsFilter) && $level == 0 && strlen($this->Input->get('id')) && $this->Input->get('act') == 'edit')
 				{
-					$objTable = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE id=?")
-							->limit(1)
-							->execute(CURRENT_ID);
-							
-					if ($objTable->numRows) 
-					{
-						$objParents = $this->Database->prepare("SELECT ".$parentFilter." FROM ". $objTable->tableName . " WHERE id=?")
-												->execute($this->Input->get('id'));
-		
-						$arrWhere['items'] = 'pid IN ('.$objParents->$parentFilter.')';
-	
-					}
-	
-					$parentFilter = '';
+					$arrWhere['items'] = 'pid IN ('.$idsFilter.')';	
+					$idsFilter = '';
 				}
 				else
 				{
@@ -1371,7 +1377,7 @@ class Catalog extends Backend
 			$arrNodes[$objNodes->id] = str_repeat('  ', $level) . $objNodes->$sourceColumn;
 			if ($objNodes->childCount > 0 && !$blnItems)
 			{
-				$arrChildren = $this->loadAllOptions($foreignKey, $objNodes->id, ($level+1), $sortColumn, $blnItems, $itemFilter, $parentFilter);
+				$arrChildren = $this->loadAllOptions($foreignKey, $objNodes->id, ($level+1), $sortColumn, $blnItems, $itemFilter, $idsFilter);
 				$arrNodes += $arrChildren;
 			}
 		}
