@@ -547,8 +547,8 @@ class tl_catalog_fields extends Backend
 
 		$images = array
 			(
-				'filteredField'		=> 'system/modules/development/html/extension.gif',
-				'searchableField'	=> 'system/modules/development/html/labels.gif',
+				'filteredField'		=> 'system/modules/catalog/html/extension.gif',
+				'searchableField'	=> 'system/modules/catalog/html/labels.gif',
 				'sortingField'		=> 'tablewizard.gif',
 				'groupingMode'		=> 'modPlus.gif',
 				'mandatory'				=> 'protect.gif',
