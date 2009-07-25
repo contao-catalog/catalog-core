@@ -264,7 +264,7 @@ class tl_catalog_comments extends Backend
 										  ->execute($this->Input->get('id'), 1, 'text');
 
 				$titleField = strlen($objArchive->titleField) ? $objArchive->titleField : 
-						($objFields->numRows ? $objFields->name : 'id');
+						($objFields->numRows ? $objFields->colName : 'id');
 
 				$objData = $this->Database->prepare("SELECT c.id". ($titleField != 'id' ? ", c.".$titleField : '') ." FROM ". $objArchive->tableName ." c, tl_catalog_types a WHERE a.id=c.pid AND a.id=?")
 										  ->execute($this->Input->get('id'));
