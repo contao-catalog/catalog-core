@@ -87,6 +87,10 @@ class CatalogComments extends Backend
 			{
 				$GLOBALS['TL_DCA']['tl_catalog_comments']['list']['sorting']['root'] = $objChilds->fetchEach('id');
 			}
+			else
+			{
+				$GLOBALS['TL_DCA']['tl_catalog_comments']['list']['sorting']['root'] = array(0);
+			}
 		}
 			
 		// Create data container
@@ -123,6 +127,25 @@ class CatalogComments extends Backend
 					trigger_error('The current data container is not editable', E_USER_ERROR);
 				}
 				break;
+		}
+
+		// Store the referer URL even if it includes the "key" parameter
+		if ($this->Input->get('key') == 'comments')
+		{
+			$session = $this->Session->getData();
+
+			// Main script
+			if ($this->Environment->script == 'typolight/main.php' && $session['referer']['current'] != $this->Environment->requestUri && !$this->Input->get('act') && !$this->Input->get('token'))
+			{
+				$session['referer']['last'] = $session['referer']['current'];
+				$session['referer']['current'] = $this->Environment->requestUri;
+			}
+
+			$this->Session->setData($session);
+
+			// Store session data
+			$this->Database->prepare("UPDATE tl_user SET session=? WHERE id=?")
+						   ->execute(serialize($session), $this->User->id);
 		}
 
 		return $dc->$act();

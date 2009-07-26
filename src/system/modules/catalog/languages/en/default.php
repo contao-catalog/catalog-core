@@ -68,6 +68,8 @@ $GLOBALS['TL_LANG']['ERR']['limitMax'] = 'This value is greater than the maximum
 $GLOBALS['TL_LANG']['ERR']['calcInvalid'] = 'Invalid Calculation SQL statement: %s';
 $GLOBALS['TL_LANG']['ERR']['calcError'] = 'Calculation Error - %s';
 
+$GLOBALS['TL_LANG']['ERR']['catalogItemInvalid'] = 'Catalog Item not Found';
+
 
 /**
  * Filter Module
@@ -133,8 +135,8 @@ $GLOBALS['TL_LANG']['MSC']['notifyConfirm']	= 'Your notification has been sent.'
 $GLOBALS['TL_LANG']['MSC']['catalogCondition']	= 'Please first select the following filter(s): %s';
 $GLOBALS['TL_LANG']['MSC']['catalogInvalid'] 		= 'Invalid Catalog!';
 $GLOBALS['TL_LANG']['MSC']['catalogNoFields'] 	= 'No Catalog fields defined!';
-$GLOBALS['TL_LANG']['ERR']['catalogItemInvalid'] = 'Catalog Item not Found';
 
-
+$GLOBALS['TL_LANG']['MSC']['com_catalog_subject']  = 'TYPOlight :: New comment in Catalog: %s [%s]';
+$GLOBALS['TL_LANG']['MSC']['com_catalog_message']  			= "Catalog Name: %s\nItem Title: %s\n\n%s has created a new comment on your website.\n\n---\n\n%s\n\n---\n\nView: %s\nEdit: %s\n\nIf you are moderating comments, you have to log in to the back end to publish it.";
 
 ?>

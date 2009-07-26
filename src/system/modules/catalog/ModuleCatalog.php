@@ -2054,7 +2054,8 @@ abstract class ModuleCatalog extends Module
 */
 						
 				case 'date':
-						$value = date((strlen($formatStr) ? $formatStr : $GLOBALS['TL_CONFIG']['dateFormat']), $raw);
+						$date = new Date($raw);
+						$value = $this->parseDate((strlen($formatStr) ? $formatStr : $GLOBALS['TL_CONFIG']['dateFormat']), $date->tstamp);
 						break;
 				
 				default:;
@@ -2903,20 +2904,22 @@ abstract class ModuleCatalog extends Module
 			$strComment = $this->String->encodeEmail($strComment);
 		}
 
+		$time = time();
+
 		// Prevent cross-site request forgeries
-		$strComment = preg_replace('/(href|src)="[^"]*(typolight\/main\.php|javascript|vbscri?pt|script|alert|document|cookie|window)[^"]*"/i', '$1="#"', $strComment);
+		$strComment = preg_replace('/(href|src|on[a-z]+)="[^"]*(typolight\/main\.php|javascript|vbscri?pt|script|alert|document|cookie|window)[^"]*"+/i', '$1="#"', $strComment);
 
 		// Prepare record
 		$arrSet = array
 		(
 			'pid' => $objCatalog->id,
-			'tstamp' => time(),
+			'tstamp' => $time,
 			'name' => $this->Input->post('name'),
-			'email' => $this->Input->post('email'),
+			'email' => $this->Input->post('email', true),
 			'website' => $strWebsite,
 			'comment' => nl2br_pre($strComment),
 			'ip' => $this->Environment->ip,
-			'date' => time(),
+			'date' => $time,
 			'published' => 1
 		);
 
@@ -2926,32 +2929,32 @@ abstract class ModuleCatalog extends Module
 			$arrSet['published'] = '';
 		}
 
-		$this->Database->prepare("INSERT INTO tl_catalog_comments %s")->set($arrSet)->execute();
+		$insert = $this->Database->prepare("INSERT INTO tl_catalog_comments %s")->set($arrSet)->execute();
 
 		// Inform admin
 		$objEmail = new Email();
 
 		$objEmail->from = $GLOBALS['TL_ADMIN_EMAIL'];
-		$objEmail->subject = sprintf($GLOBALS['TL_LANG']['MSC']['com_subject'], $this->Environment->host);
+		$objEmail->subject = sprintf($GLOBALS['TL_LANG']['MSC']['com_catalog_subject'], $objArchive->name, $this->Environment->host);
 
 		// Add First Catalog Title Field
 		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? AND titleField=? AND titleField=? ORDER BY sorting")
 								  ->execute($this->Input->get('id'), 1, 'text');
 
 		$titleField = strlen($objArchive->titleField) ? $objArchive->titleField : 
-				($objFields->numRows ? $objFields->name : 'id');
-
+				($objFields->numRows ? $objFields->colName : 'id');
 
 		// Add comment details
-		$strData = "\n\n";
-		$strData .= 'Catalog Name: '. $objArchive->name. "\n";
-		$strData .= 'Item Title: '. $objCatalog->$titleField. "\n";
-		$strData .= 'Item ID: '. $objCatalog->id. "\n";
-		$strData .= 'Name: ' . $arrSet['name'] . ' (' . $arrSet['email'] . ')' . "\n";
-		$strData .= 'Comment: ' . strip_tags($arrSet['comment']) . "\n";
+		$objEmail->text = sprintf($GLOBALS['TL_LANG']['MSC']['com_catalog_message'],
+									$objArchive->name, 
+									$objCatalog->$titleField,
+								  $arrSet['name'] . ' (' . $arrSet['email'] . ')',
+								  strip_tags($arrSet['comment']),
+								  $this->Environment->base . $this->Environment->request,
+								  $this->Environment->base . 'typolight/main.php?do=catalog&key=comments&act=edit&id=' . $insert->insertId);
 
-		$objEmail->text = sprintf($GLOBALS['TL_LANG']['MSC']['com_message'], $strData . "\n") . "\n";
 		$objEmail->sendTo($GLOBALS['TL_ADMIN_EMAIL']);
+
 	}
 
 
