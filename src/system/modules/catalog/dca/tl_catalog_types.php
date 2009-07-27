@@ -140,7 +140,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 		'allowComments'		=> 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha',
 		'import'					=> 'importAdmin,importDelete',
 		'searchable'			=> 'searchCondition,titleField',
-		'makeFeed'				=> 'feedFormat,language,source,datesource,maxItems,feedBase,alias,description',
+		'makeFeed'				=> 'feedFormat,language,source,datesource,maxItems,feedBase,alias,description,feedTitle',
 	),
 
 	// Fields
@@ -426,7 +426,14 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'inputType'               => 'textarea',
 			'eval'                    => array('style'=>'height:60px;', 'tl_class'=>'clr')
 		),
-
+		'feedTitle' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['feedTitle'],
+			'exclude'                 => true,
+			'search'                  => true,
+			'inputType'               => 'textarea',
+			'eval'                    => array('style'=>'height:60px;', 'tl_class'=>'clr')
+		),
 	)
 );
 
@@ -697,7 +704,7 @@ class tl_catalog_types extends Backend
 			{
 
 
-				$objComments = $this->Database->prepare("SELECT id FROM tl_catalog_comments WHERE pid IN (SELECT id FROM ".$objArchive->tableName." WHERE pid=?)")
+				$objComments = $this->Database->prepare("SELECT id FROM tl_catalog_comments WHERE catid=?")
 											  ->execute($row['id']);
 	
 				if ($objComments->numRows)

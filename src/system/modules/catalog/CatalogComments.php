@@ -68,10 +68,17 @@ class CatalogComments extends Backend
 		// Add style sheet
 		$GLOBALS['TL_CSS'][] = 'system/modules/catalog/html/comment.css';
 
-
+		// issue #52 - deleting does drop the catalog.
+		if($this->Input->get('act')=='delete') {
+			$tmpCat=$this->Database->prepare("SELECT catid FROM tl_catalog_comments WHERE id=?")
+								  ->execute($this->Input->get('id'));
+			$catId=$tmpCat->catid;
+		} else {
+			$catId=$this->Input->get('id');
+		}
 		// Get Catalog and set TableName
 		$objArchive = $this->Database->prepare("SELECT * FROM tl_catalog_types WHERE id=?")
-								  ->execute($this->Input->get('id'));
+								  ->execute($catId);
 
 		$GLOBALS['TL_DCA']['tl_catalog_comments']['list']['sorting']['root'] = array(0);
 		if ($objArchive->numRows && strlen($objArchive->tableName))
@@ -80,8 +87,8 @@ class CatalogComments extends Backend
 			$GLOBALS['TL_DCA']['tl_catalog_comments']['config']['ptable'] = $objArchive->tableName;	
 			
 			// Limit results to the current catalog archive
-			$objChilds = $this->Database->prepare("SELECT id FROM tl_catalog_comments WHERE pid IN (SELECT id FROM ".$objArchive->tableName."  WHERE pid=?)")
-										->execute(CURRENT_ID);
+			$objChilds = $this->Database->prepare("SELECT id FROM tl_catalog_comments WHERE (catid=?)")
+										->execute($catId);
 		
 			if ($objChilds->numRows)
 			{
@@ -92,9 +99,9 @@ class CatalogComments extends Backend
 				$GLOBALS['TL_DCA']['tl_catalog_comments']['list']['sorting']['root'] = array(0);
 			}
 		}
-			
+		
 		// Create data container
-		$dc = new DC_Table('tl_catalog_comments');
+		$dc = new DC_CatalogCommentTable('tl_catalog_comments');
 		$act = $this->Input->get('act');
 
 		// Run the current action
@@ -147,8 +154,113 @@ class CatalogComments extends Backend
 			$this->Database->prepare("UPDATE tl_user SET session=? WHERE id=?")
 						   ->execute(serialize($session), $this->User->id);
 		}
-
 		return $dc->$act();
+	}
+}
+
+/**
+ * Class DC_CatalogCommentTable
+ *
+ * Driver class that allows a callback to define multiple parent tables.
+ * This is needed as otherwise the DC_Table would kill all comments not related to the currently visible catalog.
+ * @copyright  CyberSpectrum 2009
+ * @author     Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package    Controller
+ */
+
+class DC_CatalogCommentTable extends DC_Table
+{
+	/**
+	 * Delete all incomplete and unrelated records
+	 */
+	protected function reviseTable()
+	{
+		$reload = false;
+		$ptables=array();
+		if(isset($GLOBALS['TL_DCA'][$this->strTable]['config']['ptable']) && strlen($GLOBALS['TL_DCA'][$this->strTable]['config']['ptable']))
+			$ptables[] = $GLOBALS['TL_DCA'][$this->strTable]['config']['ptable'];
+		if(!empty($this->ptable))
+			$ptables[] = $this->ptable;
+			
+		// now fetch all catalog tables.
+		$catalogs=$this->Database->prepare("SELECT * FROM tl_catalog_types")
+								->execute();
+		while($catalogs->next())
+		{
+			$ptables[] = $catalogs->tableName;
+		}
+		$ptables=array_unique($ptables);
+			
+		$ctable = $GLOBALS['TL_DCA'][$this->strTable]['config']['ctable'];
+
+		$new_records = $this->Session->get('new_records');
+
+		// HOOK: addCustomLogic
+		if (is_array($ptables) && isset($GLOBALS['TL_HOOKS']['reviseTable']) && is_array($GLOBALS['TL_HOOKS']['reviseTable']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['reviseTable'] as $callback)
+			{
+				foreach($ptables as $ptable)
+				{
+					$this->import($callback[0]);
+					$status = $this->$callback[0]->$callback[1]($this->strTable, $new_records[$this->strTable], $ptable, $ctable);
+					if ($status === true)
+					{
+						$reload = true;
+					}
+				}
+			}
+		}
+
+		// Delete all new but incomplete records (tstamp=0)
+		if (is_array($new_records[$this->strTable]) && count($new_records[$this->strTable]) > 0)
+		{
+			$objStmt = $this->Database->execute("DELETE FROM " . $this->strTable . " WHERE id IN(" . implode(',', $new_records[$this->strTable]) . ") AND tstamp=0");
+
+			if ($objStmt->affectedRows > 0)
+			{
+				$reload = true;
+			}
+		}
+
+		// Delete all records of the current table that are not related to the parent tables
+		if (is_array($ptables))
+		{
+			$subsql=array();
+			foreach($ptables as $ptable)
+			{
+				$subsql[]="(NOT EXISTS (SELECT * FROM " . $ptable . " WHERE " . $this->strTable . ".pid = " . $ptable . ".id))";
+			}
+			$objStmt = $this->Database->execute("DELETE FROM " . $this->strTable . " WHERE " . join(" AND ", $subsql));
+
+			if ($objStmt->affectedRows > 0)
+			{
+				$reload = true;
+			}
+		}
+
+		// Delete all records of the child table that are not related to the current table
+		if (is_array($ctable) && count($ctable))
+		{
+			foreach ($ctable as $v)
+			{
+				if (strlen($v))
+				{
+					$objStmt = $this->Database->execute("DELETE FROM " . $v . " WHERE NOT EXISTS (SELECT * FROM " . $this->strTable . " WHERE " . $v . ".pid = " . $this->strTable . ".id)");
+
+					if ($objStmt->affectedRows > 0)
+					{
+						$reload = true;
+					}
+				}
+			}
+		}
+
+		// Reload the page
+		if ($reload)
+		{
+			$this->reload();
+		}
 	}
 }
 

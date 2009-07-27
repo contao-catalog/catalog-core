@@ -78,7 +78,8 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['datesource']     = array('RSS published
 $GLOBALS['TL_LANG']['tl_catalog_types']['maxItems']       = array('Maximum number of items', 'Here you can limit the number of feed items. Set to 0 to export all.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['feedBase']       = array('Base URL', 'Please enter the base URL with protocol (e.g. <em>http://</em>).');
 $GLOBALS['TL_LANG']['tl_catalog_types']['alias']          = array('Feed alias', 'Here you can enter a unique filename (without extension). The XML feed file will be auto-generated in the root directory of your TYPOlight installation, e.g. as <em>name.xml</em>.');
-$GLOBALS['TL_LANG']['tl_catalog_types']['description']    = array('Feed description', 'Please enter a short description of the catalog feed.'); 
+$GLOBALS['TL_LANG']['tl_catalog_types']['description']    = array('Feed description', 'Please enter a short description of the catalog feed.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['feedTitle']    = array('Feed title', 'Please the title for this catalog feed.');
 
 /**
  * Legends

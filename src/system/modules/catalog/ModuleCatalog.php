@@ -2679,8 +2679,8 @@ abstract class ModuleCatalog extends Module
 			$offset = ($page - 1) * $objArchive->perPage;
 
 			// Get total number of comments
-			$objTotal = $this->Database->prepare("SELECT COUNT(*) AS count FROM tl_catalog_comments WHERE pid=?" . (!BE_USER_LOGGED_IN ? " AND published=?" : ""))
-									   ->execute($objCatalog->id, 1);
+			$objTotal = $this->Database->prepare("SELECT COUNT(*) AS count FROM tl_catalog_comments WHERE pid=? AND catid=?" . (!BE_USER_LOGGED_IN ? " AND published=?" : ""))
+									   ->execute($objCatalog->id, $objCatalog->pid, 1);
 
 			// Add pagination menu
 			$objPagination = new PaginationCustom($objTotal->count, $objArchive->perPage, 7, 'com_page');
@@ -2688,14 +2688,14 @@ abstract class ModuleCatalog extends Module
 		}
 
 		// Get all published comments
-		$objCommentsStmt = $this->Database->prepare("SELECT * FROM tl_catalog_comments WHERE pid=?" . (!BE_USER_LOGGED_IN ? " AND published=?" : "") . " ORDER BY date" . (($objArchive->sortOrder == 'descending') ? " DESC" : ""));
+		$objCommentsStmt = $this->Database->prepare("SELECT * FROM tl_catalog_comments WHERE pid=? AND catid=?" . (!BE_USER_LOGGED_IN ? " AND published=?" : "") . " ORDER BY date" . (($objArchive->sortOrder == 'descending') ? " DESC" : ""));
 
 		if ($limit)
 		{
 			$objCommentsStmt->limit($limit, $offset);
 		}
 
-		$objComments = $objCommentsStmt->execute($objCatalog->id, 1);
+		$objComments = $objCommentsStmt->execute($objCatalog->id, $objCatalog->pid, 1);
 
 		if ($objComments->numRows)
 		{
@@ -2913,6 +2913,7 @@ abstract class ModuleCatalog extends Module
 		$arrSet = array
 		(
 			'pid' => $objCatalog->id,
+			'catid' => $objCatalog->pid,
 			'tstamp' => $time,
 			'name' => $this->Input->post('name'),
 			'email' => $this->Input->post('email', true),

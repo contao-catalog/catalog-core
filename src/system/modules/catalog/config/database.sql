@@ -54,6 +54,7 @@ CREATE TABLE `tl_catalog_types` (
   `feedBase` varchar(255) NOT NULL default '',
   `alias` varbinary(128) NOT NULL default '',
   `description` text NULL,
+  `feedTitle` text NULL,
   
   PRIMARY KEY  (`id`),
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -130,6 +131,7 @@ CREATE TABLE `tl_catalog_fields` (
 CREATE TABLE `tl_catalog_comments` (
   `id` int(10) unsigned NOT NULL auto_increment,
   `pid` int(10) unsigned NOT NULL default '0',
+  `catid` int(10) unsigned NOT NULL default '0',
   `tstamp` int(10) unsigned NOT NULL default '0',
   `name` varchar(64) NOT NULL default '',
   `email` varchar(128) NOT NULL default '',
@@ -139,7 +141,8 @@ CREATE TABLE `tl_catalog_comments` (
   `date` int(10) unsigned NOT NULL default '0',
   `published` char(1) NOT NULL default '',
   PRIMARY KEY  (`id`),
-  KEY `pid` (`pid`)
+  KEY `pid` (`pid`),
+  KEY `catid` (`catid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 

@@ -140,7 +140,7 @@ class CatalogExt extends Frontend
 		$objFeed = new Feed($strFile);
 
 		$objFeed->link = $strLink;
-		$objFeed->title = $arrCatalog->title;
+		$objFeed->title = $arrCatalog->feedTitle;
 		$objFeed->description = $arrCatalog->description;
 		$objFeed->language = $arrCatalog->language;
 		$objFeed->published = $arrCatalog->tstamp;
@@ -160,7 +160,7 @@ class CatalogExt extends Frontend
 
 		if ($arrCatalog->maxItems > 0)
 		{
-			$objArticleStmt->limit($arrArchive['maxItems']);
+			$objArticleStmt->limit($arrCatalog->maxItems);
 		}
 
 		$objArticle = $objArticleStmt->execute($arrCatalog->id);

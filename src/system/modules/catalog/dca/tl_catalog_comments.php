@@ -158,6 +158,12 @@ $GLOBALS['TL_DCA']['tl_catalog_comments'] = array
 			'label'                   => array('PID', 'Parent ID'),
 			'filter'                  => true,
 			'sorting'                 => true
+		),
+		'catid' => array
+		(
+			'label'                   => array('CatId', 'Catalog ID'),
+			'filter'                  => true,
+			'sorting'                 => true
 		)
 	)
 );
