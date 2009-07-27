@@ -446,13 +446,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['includeTime'],
 			'inputType'               => 'checkbox'
 		),
-		
-		'linkToDetails' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['linkToDetails'],
-			'inputType'               => 'checkbox'
-		),
-		
+				
 		'multiple' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['multiple'],

@@ -109,7 +109,6 @@ CREATE TABLE `tl_catalog_fields` (
   `includeTime` char(1) NOT NULL default '',
   `multiple` char(1) NOT NULL default '',
   `showLink` char(1) NOT NULL default '',
-  `linkToDetails` char(1) NOT NULL default '',
   `showImage` char(1) NOT NULL default '',
   `imageSize` varchar(255) NOT NULL default '',
   `customFiletree` char(1) NOT NULL default '',
