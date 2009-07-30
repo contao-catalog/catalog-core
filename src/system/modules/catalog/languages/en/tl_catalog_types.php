@@ -57,7 +57,9 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['perPage']        = array('Items per pag
 $GLOBALS['TL_LANG']['tl_catalog_types']['moderate']       = array('Moderate', 'Approve comments before they are shown on the website.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['bbcode']         = array('Allow BBCode', 'Allow visitors to use BBCode to format their comments.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['requireLogin']   = array('Require login', 'Do not allow guests to create comments.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['hideMember']   = array('Hide member details if logged in', 'Hide the username and e-mail when a member is logged in.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['disableCaptcha'] = array('Disable security question', 'Choose this option to disable the security question (not recommended).');
+$GLOBALS['TL_LANG']['tl_catalog_types']['disableWebsite'] = array('Disable website field', 'Choose this option to disable the website field.');
 
 
 $GLOBALS['TL_LANG']['tl_catalog_types']['import'] = array('Enable CSV import', 'Select to enable CSV import ability for this catalog. It will then appear at the top while editing the catalog, next to export.');

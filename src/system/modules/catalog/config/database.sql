@@ -40,6 +40,8 @@ CREATE TABLE `tl_catalog_types` (
   `bbcode` char(1) NOT NULL default '',
   `disableCaptcha` char(1) NOT NULL default '',
   `requireLogin` char(1) NOT NULL default '',
+  `hideMember` char(1) NOT NULL default '',
+  `disableWebsite` char(1) NOT NULL default '',
 
   `searchable` char(1) NOT NULL default '',
   `searchCondition` varchar(255) NOT NULL default '',

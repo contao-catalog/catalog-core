@@ -2734,7 +2734,11 @@ abstract class ModuleCatalog extends Module
 			return;
 		}
 
+
+		// check if member logged in
 		$this->import('FrontendUser', 'User');
+
+		$blnHide = (FE_USER_LOGGED_IN && $objArchive->hideMember);
 
 		// Form fields
 		$arrFields = array
@@ -2742,27 +2746,32 @@ abstract class ModuleCatalog extends Module
 			'name' => array
 			(
 				'name' => 'name',
-				'label' => $GLOBALS['TL_LANG']['MSC']['com_name'],
+				'label' =>  $blnHide ? '' : $GLOBALS['TL_LANG']['MSC']['com_name'],
 				'value' => FE_USER_LOGGED_IN ? ($this->User->firstname . ' ' . $this->User->lastname) : '',
-				'inputType' => 'text',
-				'eval' => array('mandatory'=>true, 'maxlength'=>64)
+				'inputType' => ($blnHide) ? 'hidden' : 'text',
+				'eval' => array('mandatory'=> !$blnHide, 'maxlength'=>64)
 			),
 			'email' => array
 			(
 				'name' => 'email',
-				'label' => $GLOBALS['TL_LANG']['MSC']['com_email'],
+				'label' => ($blnHide) ? '' : $GLOBALS['TL_LANG']['MSC']['com_email'],
 				'value' => $this->User->email,
-				'inputType' => 'text',
-				'eval' => array('rgxp'=>'email', 'mandatory'=>true, 'maxlength'=>128)
+				'inputType' => ($blnHide) ? 'hidden' : 'text',
+				'eval' => array('rgxp'=>'email', 'mandatory'=>!$blnHide, 'maxlength'=>128)
 			),
-			'website' => array
-			(
-				'name' => 'website',
-				'label' => $GLOBALS['TL_LANG']['MSC']['com_website'],
-				'inputType' => 'text',
-				'eval' => array('rgxp'=>'url', 'maxlength'=>128, 'decodeEntities'=>true)
-			)
 		);
+		
+		
+		if (!$objArchive->disableWebsite)
+		{
+			$arrFields['website'] = array
+				(
+					'name' => 'website',
+					'label' => $GLOBALS['TL_LANG']['MSC']['com_website'],
+					'inputType' => 'text',
+					'eval' => array('rgxp'=>'url', 'maxlength'=>128, 'decodeEntities'=>true)
+				);
+		}
 
 		// Captcha
 		if (!$objArchive->disableCaptcha)

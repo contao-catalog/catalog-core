@@ -137,7 +137,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 	'subpalettes' => array
 	(
 		'addImage'				=> 'singleSRC,size',
-		'allowComments'		=> 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha',
+		'allowComments'		=> 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha,hideMember,disableWebsite',
 		'import'					=> 'importAdmin,importDelete',
 		'searchable'			=> 'searchCondition,titleField',
 		'makeFeed'				=> 'feedFormat,language,source,datesource,maxItems,feedBase,alias,description,feedTitle',
@@ -270,6 +270,20 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 		'requireLogin' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['requireLogin'],
+			'exclude'                 => true,
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50')
+		),
+		'hideMember' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['hideMember'],
+			'exclude'                 => true,
+			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50')
+		),
+		'disableWebsite' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['disableWebsite'],
 			'exclude'                 => true,
 			'inputType'               => 'checkbox',
 			'eval'                    => array('tl_class'=>'w50')
