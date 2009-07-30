@@ -64,6 +64,11 @@ class ModuleCatalogEdit extends ModuleCatalog
 			$objTemplate = new BackendTemplate('be_wildcard');
 			$objTemplate->wildcard = '### CATALOG EDIT ###';
 
+			$objTemplate->title = $this->headline;
+			$objTemplate->id = $this->id;
+			$objTemplate->link = $this->name;
+			$objTemplate->href = 'typolight/main.php?do=modules&amp;act=edit&amp;id=' . $this->id;
+
 			return $objTemplate->parse();
 		}
 
