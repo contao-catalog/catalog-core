@@ -1052,7 +1052,10 @@ class Catalog extends Backend
 				$dca['fields'][$colName]['eval']['catalog']['parentFilter'] = $objFields->parentFilter;
 				$dca['fields'][$objFields->parentFilter]['eval']['submitOnChange'] = true;
 			}
-			
+			if ($objFields->editGroups)
+			{
+				$dca['fields'][$colName]['eval']['catalog']['editGroups'] = unserialize($objFields->editGroups);
+			}
 		}
 
 		// build palettes and subpalettes

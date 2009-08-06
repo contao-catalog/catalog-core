@@ -609,6 +609,15 @@ class tl_catalog_types extends Backend
 
 	public function checkRemoveTable(DataContainer $dc)
 	{
+		// TODO: When and where do we really need this function? IMO it is way too hazardous. See comment for bugfix below.
+		
+		// bugfix to resolve issue #52 also here - We keep ending up here as this is called from DC_Table::__construct
+		// This means, when we are deleting comments (or whatever we might want to add in the future) the act equals 'delete'
+		// and therefore without this check here, we would kill the catalog table.
+		// We have to find out if this routine is really needed in this way, or if it would be better to handle it in something
+		// like an onDelete callback. (c.schiffler 2009-08-04)
+		if($this->Input->get('key') != '')
+			return;
 		$act = $this->Input->get('act');
 		if ($act == 'deleteAll' || $act == 'delete')
 		{

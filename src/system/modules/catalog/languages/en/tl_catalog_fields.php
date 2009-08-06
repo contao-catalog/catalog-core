@@ -80,7 +80,7 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['customFiletree'] = array('Customize th
 $GLOBALS['TL_LANG']['tl_catalog_fields']['uploadFolder'] = array('Set file root folder', 'Selects the root point from which the user will select this file field.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['validFileTypes'] = array('Valid file types', 'Please enter a comma separated list of extensions of valid file types for this field.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['filesOnly'] = array('Allow files only', 'Select this option to restrict the file browser to files only (folders not selectable).');
-
+$GLOBALS['TL_LANG']['tl_catalog_fields']['editGroups'] = array('Frontend editing groups', 'If defined only selected groups are allowed to edit this field.');
 
 /**
  * Reference
@@ -136,7 +136,7 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['filter_legend']		= 'Back-end filter se
 $GLOBALS['TL_LANG']['tl_catalog_fields']['advanced_legend']	= 'Advanced settings';
 $GLOBALS['TL_LANG']['tl_catalog_fields']['options_legend']	= 'Options settings';
 $GLOBALS['TL_LANG']['tl_catalog_fields']['format_legend']		= 'Format settings';
-
+$GLOBALS['TL_LANG']['tl_catalog_fields']['feedit_legend']		= 'Frontend editing';
 
 
 /**

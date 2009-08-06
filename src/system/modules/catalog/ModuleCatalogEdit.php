@@ -175,6 +175,38 @@ class ModuleCatalogEdit extends ModuleCatalog
 		{
 			
 			$arrData = $fieldConf[$field];
+			// check permissions here
+			if (!is_object($this->User))
+				$this->import('FrontendUser', 'User');
+
+			// check if editing of this field is restricted to a certain user group.
+			if(isset($arrData['eval']['catalog']['editGroups']))
+			{
+				$allow_field = false;
+				foreach($arrData['eval']['catalog']['editGroups'] as $group)
+				{
+					if($this->User->isMemberOf($group))
+					{
+						$allow_field = true;
+						break;
+					}
+				}
+				if(!$allow_field)
+					continue;
+			}
+			
+			// HOOK: additional permission checks if this field may be edited (for the current user).
+			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$arrData['eval']['catalog']['type']];
+			if(array_key_exists('checkPermissionFEEdit', $fieldType) && is_array($fieldType['checkPermissionFEEdit']))
+			{
+				foreach ($fieldType['checkPermissionFEEdit'] as $callback)
+				{
+					$this->import($callback[0]);
+					// TODO: Do we need more parameters here?
+					if(!($this->$callback[0]->$callback[1]($fieldConf)))
+						continue;
+				}
+			}
 
 			unset($objWidgetUpload);
 			//$strUpload = '';

@@ -118,6 +118,7 @@ CREATE TABLE `tl_catalog_fields` (
   `uploadFolder` varchar(255) NOT NULL default '',
   `validFileTypes` varchar(255) NOT NULL default '',
   `filesOnly` char(1) NOT NULL default '',
+  `editGroups` blob NULL,
 
   PRIMARY KEY  (`id`),
   KEY `pid` (`pid`)
