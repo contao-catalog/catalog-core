@@ -255,8 +255,10 @@ class Catalog extends Backend
 		{
 			// TODO: I think we need something better here, like trying to convert the column first and if that fails backup to drop'ing and recreating.
 			// Otherwise existing data in the catalog will get lost when accidently changing the column type and changing it back (2009-04-24 c.schiffler).
-			$this->dropColumn($tableName, $colName);
-			$this->Database->execute(sprintf($this->createColumnStatement, $tableName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$varValue]['sqlDefColumn']));
+			//$this->dropColumn($tableName, $colName);
+			//$this->Database->execute(sprintf($this->createColumnStatement, $tableName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$varValue]['sqlDefColumn']));
+
+			$this->Database->execute(sprintf($this->renameColumnStatement, $tableName, $colName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$varValue]['sqlDefColumn']));
 		}
 		
 		return $varValue;
