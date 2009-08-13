@@ -2003,6 +2003,18 @@ abstract class ModuleCatalog extends Module
 						$arrValues[0] = $raw;
 						$strHtml = '<a href="'.$raw.'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$raw.'</a>';
 					}
+
+			case 'date':
+					if (strlen($raw) && $raw !== 0)
+					{
+						$date = new Date($raw);
+						$value = $this->parseDate((strlen($formatStr) ? $formatStr : $GLOBALS['TL_CONFIG']['dateFormat']), $date->tstamp);
+					}
+					else
+					{
+						$value = '';
+					}
+					break;
 				
 				}
 				break;
