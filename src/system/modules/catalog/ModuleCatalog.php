@@ -2003,6 +2003,8 @@ abstract class ModuleCatalog extends Module
 						$arrValues[0] = $raw;
 						$strHtml = '<a href="'.$raw.'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$raw.'</a>';
 					}
+				}
+				break;
 
 			case 'date':
 					if (strlen($raw) && $raw !== 0)
@@ -2015,9 +2017,6 @@ abstract class ModuleCatalog extends Module
 						$value = '';
 					}
 					break;
-				
-				}
-				break;
 		
 			// Changed by c.schiffler to allow custom fields.
 			default:
