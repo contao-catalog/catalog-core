@@ -41,7 +41,7 @@ $GLOBALS['TL_LANG']['tl_module']['catalog'] = array('Catalog', 'Please select th
 $GLOBALS['TL_LANG']['tl_module']['catalog_filtertemplate'] = array('Filter layout', 'Please choose a filter layout. You can add custom filter layouts to folder <em>templates</em>. Filter template files start with <em>filter_</em> and require file extension <em>.tpl</em>.');
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_template'] = array('Catalog layout', 'Please choose a catalog layout. You can add custom catalog layouts to folder <em>templates</em>. Catalog template files start with <em>catalog_</em> and require file extension <em>.tpl</em>.');
-
+$GLOBALS['TL_LANG']['tl_module']['catalog_layout'] = array('Catalog template', 'Please choose template for the module. You can add custom templates to folder <em>templates</em>. Catalog module template files start with <em>mod_catalog</em> and require file extension <em>.tpl</em>.');
 /**
  * Catalog Filter
  */

@@ -26,7 +26,10 @@
  * @filesource
  */
 
-
+/**
+ * Fields
+ */
+$GLOBALS['TL_LANG']['tl_user_group']['catalogs'] = array('Allowed catalogs', 'Here you can grant access to one or more catalog types.');
 /**
  * Legends
  */

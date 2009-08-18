@@ -37,7 +37,7 @@ $GLOBALS['TL_DCA']['tl_user_group']['palettes']['default'] = str_replace('fop;',
  */
 $GLOBALS['TL_DCA']['tl_user_group']['fields']['catalogs'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_user']['catalogs'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_user_group']['catalogs'],
 	'exclude'                 => true,
 	'inputType'               => 'checkbox',
 	'foreignKey'              => 'tl_catalog_types.name',

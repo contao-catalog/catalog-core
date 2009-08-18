@@ -2186,7 +2186,10 @@ abstract class ModuleCatalog extends Module
 						$tmpFile = '<img src="'.$src.'" alt="'.$alt.'" '.$size[3].' />';
 						if ($showLink)	
 						{
-							$tmpFile = '<a rel="lightbox[lb'.$id.']" href="'.$file.'" title="'.$alt.'">'.$tmpFile.'</a>';
+							// $tmpFile = '<a rel="lightbox[lb'.$id.']" href="'.$file.'" title="'.$alt.'">'.$tmpFile.'</a>';
+							// we have to supply the catalog id here as we might have more than one catalog with a field with the same name 
+							// which will cause the lightbox to display the images for items with the same id in both.
+							$tmpFile = '<a rel="lightbox[lb' . $this->strTable . $id . ']" href="'.$file.'" title="'.$alt.'">'.$tmpFile.'</a>';
 						}
 					}
 					// files
@@ -2266,7 +2269,10 @@ abstract class ModuleCatalog extends Module
 								$tmpFile = '<img src="'.$src.'" alt="'.$alt.'" '.$size[3].' />';
 								if ($showLink)	
 								{
-									$tmpFile = '<a rel="lightbox[lb'.$id.']" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
+									// $tmpFile = '<a rel="lightbox[lb'.$id.']" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
+									// we have to supply the catalog id here as we might have more than one catalog with a field with the same name here.
+									$tmpFile = '<a rel="lightbox[lb' . $this->strTable . $id . ']" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
+
 								}
 							}
 							// files

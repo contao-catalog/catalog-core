@@ -158,6 +158,7 @@ CREATE TABLE `tl_catalog_comments` (
 CREATE TABLE `tl_module` (
   `catalog` int(10) unsigned NOT NULL default '0',
   `catalog_template` varchar(64) NOT NULL default '',
+  `catalog_layout` varchar(64) NOT NULL default '',
 
   `catalog_jumpTo` smallint(5) unsigned NOT NULL default '0',
 
