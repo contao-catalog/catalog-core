@@ -544,13 +544,14 @@ class Catalog extends Backend
 		}		
 		$pid = $objField->pid;
 
-		$objAliasTitle = $this->Database->prepare("SELECT aliasTitle FROM tl_catalog_fields WHERE pid=? AND type=?")
+		$objAliasTitle = $this->Database->prepare("SELECT colName, aliasTitle FROM tl_catalog_fields WHERE pid=? AND type=?")
 									   ->limit(1)
 									   ->execute($pid, 'alias');
 
 		if ($objAliasTitle->numRows)
 		{
 			$aliasTitle = $objAliasTitle->aliasTitle;
+			$aliasCol = $objAliasTitle->colName;
 		}
 		else
 		{
@@ -570,11 +571,11 @@ class Catalog extends Backend
 			$varValue = standardize($objTitle->$aliasTitle);
 		}
 
-		$objAlias = $this->Database->prepare("SELECT id FROM ".$dc->table." WHERE ".$aliasTitle."=?")
+		$objAlias = $this->Database->prepare("SELECT id FROM ".$dc->table." WHERE ".$aliasCol."=? AND id!=?")
 								   ->execute($varValue, $dc->id);
 
 		// Check whether the catalog alias exists
-		if ($objAlias->numRows > 1 && !$autoAlias)
+		if ($objAlias->numRows && !$autoAlias)
 		{
 			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $varValue));
 		}
@@ -584,7 +585,6 @@ class Catalog extends Backend
 		{
 			$varValue .= '.' . $dc->id;
 		}
-
 		return $varValue;
 	}
 
