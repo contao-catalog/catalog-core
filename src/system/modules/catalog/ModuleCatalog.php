@@ -1748,9 +1748,14 @@ abstract class ModuleCatalog extends Module
 			// get alias field WARNING -- check if blnLink is needed for edit mode where alias is also used
 			if ($i==0 && $blnLink)
 			{
-				$objArchive = $this->Database->prepare("SELECT aliasField FROM tl_catalog_types where name=?")
+//				$objArchive = $this->Database->prepare("SELECT aliasField FROM tl_catalog_types where name=?")
+//										 ->limit(1)
+//										 ->execute($objCatalog->catalog_name);
+				// We have to use pid here as Catalog names are not unique - Does this imply any problems in any module?
+				$objArchive = $this->Database->prepare("SELECT aliasField FROM tl_catalog_types where id=?")
 										 ->limit(1)
-										 ->execute($objCatalog->catalog_name);
+										 ->execute($objCatalog->pid);
+
 	
 				$aliasField = $objArchive->numRows ? $objArchive->aliasField : 'alias';
 			}

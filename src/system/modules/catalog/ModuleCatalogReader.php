@@ -93,13 +93,33 @@ class ModuleCatalogReader extends ModuleCatalog
 										->execute($this->catalog);
 
 
-		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';		
-		
-		$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE (id=?".$strAlias.")")
+		/*
+			$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE (CAST(id AS CHAR)=?".$strAlias.")")
+											->limit(1)
+											->execute($this->Input->get('items'), $this->Input->get('items'));
+		*/
+		// We have to handle numeric input data differently from string input, as otherwise
+		// we have the problem that within MySQL the following is really true:
+		// Given: id INT(10), alias VARCHAR(...) and a string to match in a query 'somestring'.
+		// id=15
+		// alias='15-some-alias-beginning-with-digits'
+		// somestring='15'
+		// in MySQL this all(!) matches in the original Query here, therefore we have to change it 
+		// (and in all other modules aswell).
+		// So, if the input is numeric, do id lookup, otherwise do the alias lookup.
+		// Note we are enforcing a "no numeric aliases policy here but we 
+		// can live with that as we would get random results anyway.
+		$value=$this->Input->get('items');
+		$strAlias = $objCatalogType->aliasField ? $objCatalogType->aliasField : (is_numeric($value) ? "id" : '');
+		if(strlen($strAlias))
+		{
+			$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE " . $strAlias . "=?")
 										->limit(1)
-										->execute($this->Input->get('items'), $this->Input->get('items'));
+										->execute($value);
+		}
 
-		if ($objCatalog->numRows < 1)
+		// if no item, then check if add allowed and then show add form
+		if (!$objCatalog || $objCatalog->numRows < 1)
 		{
 			$this->Template->catalog = '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['catalogItemInvalid'].'</p>';
 
