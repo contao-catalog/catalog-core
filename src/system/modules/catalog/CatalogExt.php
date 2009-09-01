@@ -132,6 +132,12 @@ class CatalogExt extends Frontend
 	 */
 	protected function generateFiles(Database_Result $arrCatalog)
 	{
+		// If we do not have a table name, we can not work.
+		// This should not happen under normal circumstances but as issue #57 proves, it can happen
+		// when activating RSS before saving the catalog.
+		if(!strlen($arrCatalog->tableName))
+			return;
+			
 		$time = time();
 		$strType = ($arrCatalog->feedFormat == 'atom') ? 'generateAtom' : 'generateRss';
 		$strLink = strlen($arrCatalog->feedBase) ? $arrCatalog->feedBase : $this->Environment->base;
@@ -209,7 +215,7 @@ class CatalogExt extends Frontend
 		else
 		{
 			$this->generateFiles($objCatalog);
-			$this->log('Generated event feed "' . $objCatalog->feedName . '.xml"', 'Catalog generateFeed()', TL_CRON);
+			$this->log('Generated catalog feed "' . $objCatalog->feedName . '.xml"', 'Catalog generateFeed()', TL_CRON);
 		}
 	}
 	/**
@@ -247,9 +253,9 @@ class CatalogExt extends Frontend
 		$tmp=array();
 		while ($objCatalog->next())
 		{
-			$objCatalog->feedName = strlen($objCatalog->alias) ? $objCatalog->alias : 'catalog' . $objCatalog->id;
-			$tmp[]=$objCatalog->feedName;
+			$tmp[]=strlen($objCatalog->alias) ? $objCatalog->alias : 'catalog' . $objCatalog->id;
 		}
+		$this->log('Protected catalog feeds ' . join(', ', $tmp) . ' from deletion"', 'Catalog removeOldFeeds()', TL_CRON);
 		return $tmp;
 	}
 
