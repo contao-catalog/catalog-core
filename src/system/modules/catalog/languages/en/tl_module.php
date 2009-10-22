@@ -152,7 +152,9 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_show_field'] = array('Select text fiel
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit'] = array('Editable Fields', 'Please select the catalog fields that should be editable. You can also reorder items using the up/down arrow buttons.');
 $GLOBALS['TL_LANG']['tl_module']['catalog_editJumpTo'] = array('Jump to page', 'Please select the page to which visitors will be redirected when clicking on the add or edit link.');
-
+$GLOBALS['TL_LANG']['tl_module']['catalog_edit_use_default'] = array('Enable restriction to defaults', 'By checking this, you enable the possibility to restrict values to defaults, no matter if the fields defined in here are mentioned to be editable above, they will not be able to be saved with any other value as defined here (within this edit module).');
+$GLOBALS['TL_LANG']['tl_module']['catalog_edit_default'] = array('Restricted fields', 'Select all the fields that shall be restricted (make sure to provide the proper default value below).');
+$GLOBALS['TL_LANG']['tl_module']['catalog_edit_default_value'] = array('Restricted fields default values', 'These are the default values for the above defined fields.');
 
 /**
  * Catalog Notify
@@ -172,7 +174,7 @@ $GLOBALS['TL_LANG']['tl_module']['catalogNotifyText'] = array('Catalog Notificat
 $GLOBALS['TL_LANG']['tl_module']['catalog_thumb_legend'] 	= 'Catalog Thumbnails';
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit_legend'] 	= 'Catalog Edit';
 $GLOBALS['TL_LANG']['tl_module']['catalog_filter_legend']	= 'Catalog Filtering';
-
+$GLOBALS['TL_LANG']['tl_module']['restrict_to_defaults_legend']	= 'Restrict to default values';
 
 
 /**

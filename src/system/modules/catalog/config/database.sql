@@ -234,6 +234,9 @@ CREATE TABLE `tl_module` (
   `catalog_edit_enable` char(1) NOT NULL default '',
   `catalog_editJumpTo` smallint(5) unsigned NOT NULL default '0',
   `catalog_edit` blob NULL,
+  `catalog_edit_use_default` char(1) NOT NULL default '',
+  `catalog_edit_default` blob NULL,
+  `catalog_edit_default_value` blob NULL,
 
 -- catalog notify
   `catalog_notify_fields` text NULL,

@@ -1769,13 +1769,35 @@ abstract class ModuleCatalog extends Module
 				$arrCatalog[$i]['url'] = $this->generateCatalogUrl($objCatalog, $aliasField, $this->strTable);
 			}
 
-			if ($this->catalog_edit_enable)
+
+			$arrData = $objCatalog->row();
+			// check if editing of this record is disabled for frontend.
+			$editingallowedByFields=true;
+			foreach ($GLOBALS['TL_DCA'][$this->strTable]['fields'] as $field)
+			{
+				// HOOK: additional permission checks if this field allows editing of this record (for the current user).
+				$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$field['eval']['catalog']['type']];
+				if(is_array($fieldType) && array_key_exists('checkPermissionFEEdit', $fieldType) && is_array($fieldType['checkPermissionFERecordEdit']))
+				{
+					foreach ($fieldType['checkPermissionFERecordEdit'] as $callback)
+					{
+						$this->import($callback[0]);
+						// TODO: Do we need more parameters here?
+						if(!($this->$callback[0]->$callback[1]($this->strTable, $arrData)))
+						{
+							$editingallowedByFields=false;
+							break;
+						}
+					}
+				}
+			}
+
+			if ($this->catalog_edit_enable && $editingallowedByFields)
 			{
 				$arrCatalog[$i]['linkEdit'] = $this->generateLink($objCatalog, $aliasField, $this->strTable, true);
 				$arrCatalog[$i]['urlEdit'] = $this->generateCatalogEditUrl($objCatalog, $aliasField, $this->strTable);
 			}
 
-			$arrData = $objCatalog->row();
 			if (is_array($visible))
 			{
 				foreach($visible as $field)
@@ -2368,7 +2390,7 @@ abstract class ModuleCatalog extends Module
 	 * @return string
 	 */
 
-	public function generateCatalogNavigationUrl($field, $value)
+	public function generateCatalogNavigationUrl($field=false, $value=false)
 	{
 	
 		global $objPage;
@@ -2397,7 +2419,12 @@ abstract class ModuleCatalog extends Module
 			return ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 		}
 
-		$strParams = $GLOBALS['TL_CONFIG']['disableAlias'] ? '&amp;' . $field . '=' . $value  : '/' . $field . '/' . $value;
+		if($field)
+		{
+			$strParams = $GLOBALS['TL_CONFIG']['disableAlias'] ? '&amp;' . $field . '=' . $value  : '/' . $field . '/' . $value;
+		} else {
+			$strParams = '';
+		}
 
 		// Return link to catalog reader page with item alias
 		return ampersand($this->generateFrontendUrl($pageRow, $strParams));
@@ -2605,7 +2632,6 @@ abstract class ModuleCatalog extends Module
 				{
 					$subitems .= $this->renderCatalogNavigation($objNodes->id, $level);
 				}
-
 			}
 
 			// setup field and value
@@ -2634,30 +2660,37 @@ abstract class ModuleCatalog extends Module
 					'accesskey' => $objJump->accesskey,
 					'tabindex' => $objJump->tabindex
 				);
-
 				continue;
 			}
 
 // !fix trail
 
 			$strClass = trim((strlen($subitems) ? 'submenu' : '') . (strlen($objJump->cssClass) ? ' ' . $objJump->cssClass : '') . (in_array($objJump->id, $objPage->trail) ? ' trail' : ''));
-
-			$items[] = array
-			(
-				'isActive' => false,
-				'subitems' => $subitems,
-				'class' => (strlen($strClass) ? $strClass : ''),
-				'pageTitle' => specialchars($objJump->pageTitle),
-				'title' => specialchars($objNodes->name),
-				'link' => $objNodes->name,
-				'href' => $href,
-				'alias' => $objJump->alias,
-				'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
-				'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
-				'accesskey' => $objJump->accesskey,
-				'tabindex' => $objJump->tabindex
-			);
-
+			// contributed patch by m.reimann@patchwork-webdesign.de attached to issue #72
+			// check's if there are actually items for this navigation entry.
+			$idArray = $this->Database->prepare("SELECT concat(pid,',',group_concat(id)) AS tree FROM  " . $sourceTable . " AS t where pid=? group by pid")
+										->execute($objNodes->id)->next();
+			$objCount = $this->Database->prepare("SELECT id FROM" . $this->strTable . " AS t where " . $this->arrData['catalog_navigation'] . "  in (" . ($idArray->tree ? implode(',', array($objNodes->id, $idArray->tree)) : $objNodes->id) . ")")
+										->execute()->numRows;
+			if($objCount)
+			{
+			// end of contributed patch by m.reimann@patchwork-webdesign.de attached to issue #72
+				$items[] = array
+				(
+					'isActive' => false,
+					'subitems' => $subitems,
+					'class' => (strlen($strClass) ? $strClass : ''),
+					'pageTitle' => specialchars($objJump->pageTitle),
+					'title' => specialchars($objNodes->name),
+					'link' => $objNodes->name,
+					'href' => $href,
+					'alias' => $objJump->alias,
+					'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
+					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
+					'accesskey' => $objJump->accesskey,
+					'tabindex' => $objJump->tabindex
+				);
+			}
 		}
 
 		// Add classes first and last

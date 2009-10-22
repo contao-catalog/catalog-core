@@ -49,7 +49,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legen
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;catalog_subject,catalog_recipients,catalog_notify;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 // catalog edit AND modify list above ^^
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,jumpTo,disableCaptcha;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,jumpTo,disableCaptcha;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
 
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_filter_enable';
@@ -63,6 +63,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_random_
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_thumbnails_override';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_edit_enable';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_show_items';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_edit_use_default';
 
 // Insert new Subpalettes after position 1
 array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
@@ -78,9 +79,13 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
 		'catalog_random_disable' => 'catalog_order',
 		'catalog_edit_enable' => 'catalog_editJumpTo',
 		'catalog_show_items' => 'catalog_show_field',
+		'catalog_edit_use_default' => 'catalog_edit_default,catalog_edit_default_value',
 	)
 );
 
+array_insert($GLOBALS['TL_DCA']['tl_module']['config']['onload_callback'], 1, 
+	array(array('tl_module_catalog', 'onLoadCallback'))
+);
 
 /**
  * Add fields to tl_module
@@ -480,6 +485,30 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'explanation'             => 'jumpTo'
 	),
 
+	'catalog_edit_use_default' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_edit_default'],
+		'exclude'                 => true,
+		'inputType'               => 'checkbox',
+		'eval'                    => array('submitOnChange'=> true)
+	),
+	'catalog_edit_default' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_edit_default'],
+		'exclude'                 => true,
+		'inputType'               => 'checkboxWizard',
+		'options_callback'        => array('tl_module_catalog', 'getCatalogEditFields'),
+		'eval'                    => array('multiple'=> true, 'mandatory'=> true)
+	),
+	'catalog_edit_default_value' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_edit_default_value'],
+		'exclude'                 => true,
+		'inputType'               => 'CatalogMultiWidget',
+		'save_callback' => array(array('tl_module_catalog', 'onSaveColumns_catalog_edit_default_value')),
+		'load_callback' => array(array('tl_module_catalog', 'onLoadColumns_catalog_edit_default_value')),
+		'eval'                    => array('getsubfields_callback' => array('tl_module_catalog', 'catalog_edit_default_value_subfields'), 'doNotSaveEmpty' => true, 'tl_class' => 'clr')
+	),
 
 	'catalog_where' => array
 	(
@@ -775,6 +804,60 @@ class tl_module_catalog extends Backend
 		{
 			$varValue = $GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['default'];
 		}
+		return $varValue;
+	}
+	
+	public function onLoadCallback(DataContainer $dc)
+	{
+		$result = $this->Database->prepare("SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1")
+								->limit(1)
+								->execute($dc->id);
+		if($result->type != 'catalogedit')
+		{
+			return;
+		}
+		$this->import('Catalog');
+		$dca=$this->Catalog->getCatalogDca($result->catalog);
+		$fields=deserialize($result->catalog_edit_default);
+		$subfields=array();
+		if(is_array($fields))
+		{
+			foreach($fields as $field)
+			{
+				$subfields[$field]=$dca['fields'][$field];
+			}
+		}
+		$GLOBALS['TL_DCA']['tl_module']['fields']['catalog_edit_default_value']['subfields']=$subfields;
+	}
+	
+	public function catalog_edit_default_value_subfields($arrOptions)
+	{
+		return $GLOBALS['TL_DCA']['tl_module']['fields']['catalog_edit_default_value']['subfields'];
+	}
+
+	public function onSaveColumns_catalog_edit_default_value($varValue, DataContainer $dc)
+	{
+		$result = $this->Database->prepare("SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1")
+								->limit(1)
+								->execute($dc->id);
+		$fields=deserialize($result->catalog_edit_default);
+		$varValue=deserialize($varValue);
+		if(is_array($fields))
+		{
+			foreach($fields as $field)
+			{
+				$varValue[$field]=(isset($varValue[$field]) ? $varValue[$field] : false);
+			}
+		}
+		$varValue=serialize($varValue);
+		return $varValue;
+	}
+
+	public function onLoadColumns_catalog_edit_default_value($varValue, DataContainer $dc)
+	{
+		$result = $this->Database->prepare("SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1")
+								->limit(1)
+								->execute($dc->id);
 		return $varValue;
 	}
 }

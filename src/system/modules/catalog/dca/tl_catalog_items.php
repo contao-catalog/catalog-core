@@ -47,7 +47,7 @@ $GLOBALS['TL_DCA']['tl_catalog_items'] = array
 		'onload_callback'			=> array
 			(
 				array('tl_catalog_types', 'generateFeed'),
-			)
+			),
 	),
 	
 

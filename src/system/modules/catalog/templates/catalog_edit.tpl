@@ -1,6 +1,6 @@
 <?php echo $this->rteConfig; ?>
  
-<form action="<?php echo $this->action; ?>" method="post">
+<form action="<?php echo $this->action; ?>" method="post" enctype="<?php echo $this->enctype; ?>">
 <div class="formbody">
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>" />
 <table cellspacing="0" cellpadding="0" summary="Table holds form input fields">

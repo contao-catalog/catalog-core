@@ -170,7 +170,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 	'typesOptionSelectors' => array('select', 'tags'),
 	'typesFilterFields' => array('number', 'decimal', 'text', 'longtext', 'date', 'select', 'tags', 'checkbox'),
 	'typesMatchFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'),
-	'typesEditFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url'), /* TODO: add file support later */
+	'typesEditFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'), /* TODO: add file support later */
 	'typesLinkFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'file'),
 	'typesReferenceFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'),
 	'typesCatalogFields' => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'),
@@ -238,4 +238,8 @@ $GLOBALS['TL_CONFIG']['catalog']['csvDelimiter']	= ',';
 $GLOBALS['TL_CONFIG']['catalog']['safeCheck']		= array('/', '\'');
 $GLOBALS['TL_CONFIG']['catalog']['safeReplace']	= array('-slash-', '-apos-');
 
+array_insert($GLOBALS['BE_FFL'], 15, array
+(
+	'CatalogMultiWidget'    => 'CatalogMultiWidget'
+));
 ?>

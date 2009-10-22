@@ -286,7 +286,14 @@ class Catalog extends Backend
 		$this->Database->execute(sprintf($this->dropColumnStatement, $tableName, $colName));
 	}
 
-
+	/**
+	 * Regenerate sitemaps on save.
+	 */
+	 public function generateSitemaps()
+	 {
+		$this->import('Automator');
+		$this->Automator->generateSitemap();
+	 }
 
 /**
  * DCA Update functions 
@@ -312,6 +319,10 @@ class Catalog extends Backend
 					(
 						array('Catalog', 'checkPermission')
 					),
+				'onsubmit_callback'			=> array
+				(
+					array('Catalog', 'generateSitemaps'),
+				),
 			),
 			
 			'list' => array

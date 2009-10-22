@@ -69,7 +69,7 @@ $GLOBALS['TL_LANG']['ERR']['calcInvalid'] = 'Invalid Calculation SQL statement: 
 $GLOBALS['TL_LANG']['ERR']['calcError'] = 'Calculation Error - %s';
 
 $GLOBALS['TL_LANG']['ERR']['catalogItemInvalid'] = 'Catalog Item not Found';
-
+$GLOBALS['TL_LANG']['MSC']['catalogItemEditingDenied'] = 'You are not allowed to edit this item.';
 
 /**
  * Filter Module
@@ -138,5 +138,10 @@ $GLOBALS['TL_LANG']['MSC']['catalogNoFields'] 	= 'No Catalog fields defined!';
 
 $GLOBALS['TL_LANG']['MSC']['com_catalog_subject']  = 'TYPOlight :: New comment in Catalog: %s [%s]';
 $GLOBALS['TL_LANG']['MSC']['com_catalog_message']  			= "Catalog Name: %s\nItem Title: %s\n\n%s has created a new comment on your website.\n\n---\n\n%s\n\n---\n\nView: %s\nEdit: %s\n\nIf you are moderating comments, you have to log in to the back end to publish it.";
+
+/*
+ * Frontend editing.
+ */
+$GLOBALS['TL_LANG']['MSC']['removeImage'] = 'Remove %s';
 
 ?>

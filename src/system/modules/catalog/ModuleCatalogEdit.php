@@ -118,7 +118,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		// check permissions here
 		
 
-		// edit exiting, else present add new screen
+		// edit existing, else present add new screen
 		$blnModeAdd = false;
 		$arrValues = array();
 
@@ -140,26 +140,64 @@ class ModuleCatalogEdit extends ModuleCatalog
 		// Note we are enforcing a "no numeric aliases policy here but we 
 		// can live with that as we would get random results anyway.
 		$value=$this->Input->get('items');
-		$strAlias = $objCatalogType->aliasField ? $objCatalogType->aliasField : (is_numeric($value) ? "id" : '');
-		if(strlen($strAlias))
+		$objCatalog = false;
+		if(strlen($value))
 		{
-			$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE " . $strAlias . "=?")
-										->limit(1)
-										->execute($value);
+			$strAlias = is_numeric($value) ? "id" : ($objCatalogType->aliasField ? $objCatalogType->aliasField : '');
+			if(strlen($strAlias))
+			{
+				$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE " . $strAlias . "=?")
+											->limit(1)
+											->execute($value);
+			}
 		}
-
+	
 		// if no item, then check if add allowed and then show add form
 		if (!$objCatalog || $objCatalog->numRows < 1)
 		{
 			$blnModeAdd = true;
+			// Load defaults.
 			$arrValues = array();
 		} 
 		else
 		{
 			$arrValues = $objCatalog->fetchAssoc();
+			// check if editing of this record is disabled for frontend.
+			foreach ($this->catalog_edit as $key=>$field)
+			{
+				// HOOK: additional permission checks if this field allows editing of this record (for the current user).
+				$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field]['eval']['catalog']['type']];
+				if(is_array($fieldType) && array_key_exists('checkPermissionFERecordEdit', $fieldType) && is_array($fieldType['checkPermissionFERecordEdit']))
+				{
+					foreach ($fieldType['checkPermissionFERecordEdit'] as $callback)
+					{
+						$this->import($callback[0]);
+						// TODO: Do we need more parameters here?
+						if(!($this->$callback[0]->$callback[1]($this->strTable, $field, $arrValues)))
+						{
+							$this->Template->error = $GLOBALS['TL_LANG']['MSC']['catalogItemEditingDenied'];
+							// Send 403 header
+							header('HTTP/1.0 403 Forbidden');
+							return;
+						}
+					}
+				}
+			}
+		}
+		$arrValues=$this->handleOnLoadCallbacks($arrValues);
+
+		// unpack restriction values.
+		$arrValuesDefault=deserialize($this->catalog_edit_default_value);
+		// initialize value to restricted value as we might not be allowed to edit this field but the field shall
+		// revert to some default setting (published flag etc.)
+		// NOTE: This affects all fields mentioned in "catalog_edit_default_value", not just those selected for editing.
+		if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_items')
+		{
+			$arrItem=$arrValuesDefault;
+			$arrItem=$this->handleOnLoadCallbacks($arrItem);
 		}
 
-//		echo "<pre>"; print_r($arrValues); echo "</pre>";
+		//echo "<pre>"; print_r($arrValues); echo "</pre>";
 		
 		// Captcha
 		if (!$this->disableCaptcha)
@@ -187,6 +225,8 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 		$i = 0;
 
+		// we have to determine if we have upload fields for the form enctype.
+		$hasUpload = false;
 		// Build form
 		$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'];
 		foreach ($this->catalog_edit as $field)
@@ -215,7 +255,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 			
 			// HOOK: additional permission checks if this field may be edited (for the current user).
 			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$arrData['eval']['catalog']['type']];
-			if(array_key_exists('checkPermissionFEEdit', $fieldType) && is_array($fieldType['checkPermissionFEEdit']))
+			if(is_array($fieldType) && array_key_exists('checkPermissionFEEdit', $fieldType) && is_array($fieldType['checkPermissionFEEdit']))
 			{
 				foreach ($fieldType['checkPermissionFEEdit'] as $callback)
 				{
@@ -280,18 +320,75 @@ class ModuleCatalogEdit extends ModuleCatalog
 			// Validate input
 			if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_items')
 			{
-
-/*
-				if (strlen($fieldConf[$field]['eval']['rte']) && $GLOBALS['TL_CONFIG']['useRTE'])
+				// We have to handle file inputs differently here, as FormFileUpload does not export a value, it saves to the $_SESSION instead.
+				if($inputType == 'upload')
 				{
-					echo "[".$this->Input->post($field) . "]<br />";
-					$objWidget->value = $this->Input->postHtml($field, $objWidget->decodeEntities);
-					print_r($objWidget->value);
+					// prepare all widget settings as FormFileUpload expects them to be.
+					$objWidget->storeFile = true;
+					if($fieldConf[$field]['eval']['extensions'])
+						$objWidget->extensions = $fieldConf[$field]['eval']['extensions'];
+					else
+						$objWidget->extensions = $fieldConf[$field]['eval']['catalog']['showImage'] ? $GLOBALS['TL_CONFIG']['validImageTypes'] : $GLOBALS['TL_CONFIG']['uploadTypes'];
+					if($fieldConf[$field]['eval']['path'])
+					{
+						$objWidget->uploadFolder = $fieldConf[$field]['eval']['path'] . '/' . $this->strTable;
+					} else {
+						$objWidget->uploadFolder = 'tl_files/catalog_' . $this->strTable;
+					}
+					// ensure folder exists. So we create a Folder object which will create the folder if it 
+					// does not exist and unset it immediately again as we do not need it for anything else. 
+					// Maybe we can find a better solution sometime.
+					$dummyFolder = new Folder($objWidget->uploadFolder);
+					unset($dummyFolder);
+					// Now validate, this will move the file to the folder if everything is ok and store the information
+					// in the session.
+					$objWidget->validate();
+					// use existing value(s) from database as base.
+					$varValue = deserialize($arrValues[$field]);
+					if(!is_array($varValue))
+						$varValue = array($varValue);
+					// was this file uploaded?
+					if(isset($_SESSION['FILES'][$field]))
+					{
+						$filename = $objWidget->uploadFolder . '/' . $_SESSION['FILES'][$field]['name'];
+						// now we have to remove this file from the session as we have processed it.
+						unset($_SESSION['FILES'][$field]);
+						if($fieldConf[$field]['eval']['catalog']['multiple']=='1')
+						{
+							// must allow multiple files, add to existing values from DB.
+							$varValue[] = $filename;
+						} else {
+							// TODO: shall we delete the old file from disk?
+							// overwrite old filename.
+							$varValue = array($filename);
+						}
+					}
+					// now for the deletion of images from the field.
+					$remaining=array();
+					foreach($varValue as $file)
+					{
+						// TODO: shall we delete the file from disk?
+						if(!$this->Input->post('unlink_'.$field.'_' . md5($file)))
+						{
+							$remaining[]=$file;
+						}
+					}
+					// convert back to string for single file fields.
+					if($fieldConf[$field]['eval']['catalog']['multiple'] == '1')
+						$varValue = serialize($remaining);
+					else
+						$varValue = $remaining[0];
+					
+					// set a flag that this input has changed.
+					$isChangedFileField = ($varValue != $arrValues[$field]);
 				}
-*/
-
-				$objWidget->validate();
-				$varValue = $objWidget->value;
+				else
+				{
+					$isChangedFileField = false;
+					$objWidget->validate();
+					$varValue = $objWidget->value;
+				}
+					
 
 				// Convert date formats into timestamps
 				if (strlen($varValue) && in_array($arrData['eval']['rgxp'], array('date', 'time', 'datim')))
@@ -316,10 +413,13 @@ class ModuleCatalogEdit extends ModuleCatalog
 				if ($objWidget->hasErrors())
 				{
 					$doNotSubmit = true;
+					// initialize to old value as otherwise we can not see anything in FE when there was an error in $objWidget->validate();
+					if($inputType == 'upload')
+						$objWidgetUpload->text = $this->formatValue($i, $field, $arrValues[$field], false);
 				}
 
-				// Store current value
-				elseif ($objWidget->submitInput())
+				// Store current value - NOTE: FormfileUpload does not set the flag for submitInput, therefore we can not use submitInput there.
+				elseif ($objWidget->submitInput() || ($inputType == 'upload' && $isChangedFileField))
 				{
 					if ($arrData['eval']['catalog']['type'] == 'tags')
 					{
@@ -333,10 +433,10 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 					$arrItem[$field] = $varValue;
 				}
-			} 
+			} // end: if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_items')
 			elseif (!$blnModeAdd) 
 			{
-
+				// if in editing mode from here on, we have to restrict some values and correct the output.
 				$objWidget->value = $arrValues[$field];
 
 				if ($arrData['eval']['catalog']['type'] == 'checkbox' && count($objWidget->options) == 1)
@@ -353,7 +453,21 @@ class ModuleCatalogEdit extends ModuleCatalog
 				{
 					//$arrUpload = deserialize($arrValues[$field], true);
 					//$strUpload = $this->formatValue($i, $field, $arrValues[$field], false);
-					$objWidgetUpload->text = $this->formatValue($i, $field, $arrValues[$field], false);
+					// TODO: Add delete button to images for frontend editing.
+					//$objWidgetUpload->text = $this->formatValue($i, $field, $arrValues[$field], false);
+					// generate file list and add delete checkboxes.
+					$showImage = $fieldConf[$field]['eval']['catalog']['showImage'];
+					$files=$this->parseFiles($i, $field, $arrValues[$field]);
+					$output ='';
+					$counter = 0;
+					foreach($files['html'] as $file)
+					{
+						$class = (($counter == 0) ? ' first' : '') . ((($counter % 2) == 0) ? ' even' : ' odd');
+						$name = 'unlink_'.$field.'_' . md5($files['files'][$counter]);
+						$output .='<div class="'.($showImage ? 'image' : 'file').$class.'">'.$file.'<span class="delete unlinkcheckbox ' . $class . '"><input class="checkbox unlinkcheckbox ' . $class . '" type="checkbox" name="' . $name . '" id="' . $name . '" value="1" /><label for="'. $name .'">'. sprintf($GLOBALS['TL_LANG']['MSC']['removeImage'], basename($files['files'][$counter])) .'</label></span></div>';
+						$counter++;
+					}
+					$objWidgetUpload->text = $output;
 				}
 
 			}
@@ -385,7 +499,13 @@ class ModuleCatalogEdit extends ModuleCatalog
 				$objWidget->rows = 12;
 			}
 
-			$arrFields[$field] .= (is_object($objWidgetUpload) ? $objWidgetUpload->parse() : ''). $objWidget->parse();// . ($objWidget->datepicker ? $objWidget->datepicker : '') ;
+			if(is_object($objWidgetUpload))
+			{
+				$arrFields[$field] .= $objWidgetUpload->parse();
+				// file uploads need 'multipart/form-data'
+				$hasUpload=true;
+			}
+			$arrFields[$field] .= $objWidget->parse();
 
 			++$i;
 		}
@@ -401,22 +521,23 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 		$this->Template->rowLast = 'row_' . ++$i . ((($i % 2) == 0) ? ' even' : ' odd');
 
-		// Create new user if there are no errors
+		// Create new entry or update the old one if there are no errors
 		if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_items' && !$doNotSubmit)
 		{
 			if ($blnModeAdd)
 			{
-				$this->itemInsert($arrItem);
+				$this->itemInsert($arrItem, $objCatalogType->titleField, $objCatalogType->aliasField);
 			} 
 			else 
 			{
-				$this->itemUpdate($arrItem, $arrValues['id']);
+				$this->itemUpdate($arrItem, $arrValues['id'], $objCatalogType->titleField, $objCatalogType->aliasField);
 			}
 		}
 
 
 		// Set template form
 		$objTemplate = new FrontendTemplate($this->catalog_template);
+		$objTemplate->enctype = $hasUpload ? 'multipart/form-data' : 'application/x-www-form-urlencoded';
 
 		$objTemplate->field = join('',$arrFields);
 		$objTemplate->formId = 'tl_catalog_items';
@@ -438,7 +559,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 			if (!file_exists($strFile))
 			{
-				throw new Exception(sprintf('Cannot find rich text editor configuration file "%s.php"', $GLOBALS['TL_RTE']['type']));
+				throw new Exception(sprintf('Cannot find rich text editor configuration file "%s.php". You can copy system/config/tinyMCE.php to this name. Edit it to fit your needs but to make it render in Frontend you must at least remove the line: save_callback : "TinyCallback.cleanXHTML",', $GLOBALS['TL_RTE']['type']));
 			}
 
 			$this->language = 'en';
@@ -454,11 +575,48 @@ class ModuleCatalogEdit extends ModuleCatalog
 			$objTemplate->rteConfig = ob_get_contents();
 			ob_end_clean();
 		}
-
+		if($doNotSubmit)
+			$this->Template->error = $GLOBALS['TL_LANG']['ERR']['general'];
 		$this->Template->form = $objTemplate->parse();
 	
 	}
 
+	/**
+	 * Autogenerate a catalog alias if it has not been set yet
+	 * @param mixed
+	 * @param object
+	 * @return string
+	 */
+	public function generateAlias(&$arrData, $id, $aliasTitle, $aliasCol)
+	{
+		$autoAlias = false;
+
+		// Generate alias if there is none
+		if (!strlen($arrData[$aliasCol]))
+		{
+			$autoAlias = true;
+			$arrData[$aliasCol] = standardize($arrData[$aliasTitle]);
+		}
+
+		$objAlias = $this->Database->prepare("SELECT id FROM ".$this->strTable." WHERE ".$aliasCol."=? AND id!=?")
+								   ->execute($arrData[$aliasCol], $id);
+
+		// Check whether the catalog alias exists
+		if ($objAlias->numRows && !$autoAlias)
+		{
+			//throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $arrData[$aliasCol]));
+			// TODO: we can not throw an exception here as it would kill the FE => not an option.
+			//       we can not reject saving as we might already have saved it (coming from insert).
+			//       So I simply work as if it was autogenerated. Find a better solution for this! (c.schiffler 2009-09-10)
+			$autoAlias = true;
+		}
+
+		// Add ID to alias
+		if ($objAlias->numRows && $autoAlias)
+		{
+			$arrData[$aliasCol] .= '.' . $id;
+		}
+	}
 
 /*
 
@@ -500,36 +658,99 @@ class ModuleCatalogEdit extends ModuleCatalog
 	}
     
 
+	private function handleOnLoadCallbacks($arrData)
+	{
+		require_once(TL_ROOT . '/system/drivers/DC_DynamicTable.php');
+		$tmptbl=new DC_DynamicTable($this->strTable);
+		foreach($arrData as $field=>$data)
+		{
+			$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
+			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
+			if(is_array($fieldType) && array_key_exists('fieldDef', $fieldType) && array_key_exists('load_callback', $fieldType['fieldDef']) && is_array($fieldType['fieldDef']['load_callback']))
+			{
+				foreach ($fieldType['fieldDef']['save_callback'] as $callback)
+				{
+					$this->import($callback[0]);
+					// TODO: Do we need more parameters here?
+					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl);
+				}
+			}
+		}
+		unset($tmptbl);
+		return $arrData;
+	}
+
+	private function handleOnSaveCallbacks($arrData)
+	{
+		require_once(TL_ROOT . '/system/drivers/DC_DynamicTable.php');
+		$tmptbl=new DC_DynamicTable($this->strTable);
+		foreach($arrData as $field=>$data)
+		{
+			$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
+			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
+			if(array_key_exists('save_callback', $fieldType['fieldDef']) && is_array($fieldType['fieldDef']['save_callback']))
+			{
+				foreach ($fieldType['fieldDef']['save_callback'] as $callback)
+				{
+					$this->import($callback[0]);
+					// TODO: Do we need more parameters here?
+					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl);
+				}
+			}
+		}
+		unset($tmptbl);
+		return $arrData;
+	}
 
 	/**
 	 * Update existing item and redirect
 	 * @param array
 	 */
-	private function itemUpdate($arrData, $id)
+	private function itemUpdate($arrData, $id, $aliasTitle, $aliasCol)
 	{
+		$arrData=$this->handleOnSaveCallbacks($arrData);
 		$arrData['tstamp'] = time();
-
-		// Create user
-		$objNewItem = $this->Database->prepare("UPDATE ".$this->strTable." %s WHERE id=?")
+		$this->generateAlias($arrData, $id, $aliasTitle, $aliasCol);
+		// Update item
+		$objUpdatedItem = $this->Database->prepare("UPDATE ".$this->strTable." %s WHERE id=?")
 				->set($arrData)
 				->execute(intval($id));
-
-		$this->redirect($this->refererUrl);
+		// HOOK: pass data to HOOKs to be able to do something when we updated an item.
+		if (isset($GLOBALS['TL_HOOKS']['catalogFrontendUpdate']) && is_array($GLOBALS['TL_HOOKS']['catalogFrontendUpdate']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['catalogFrontendUpdate'] as $callback)
+			{
+				$this->import($callback[0]);
+				$this->$callback[0]->$callback[1]($arrData);
+			}
+		}
+		// now follow to the jumpTo page that is defined.
+		$this->redirect($this->generateCatalogNavigationUrl('items', $aliasCol ? $arrData[$aliasCol] : $id));
 	}
 
 	/**
 	 * Create a new item and redirect
 	 * @param array
 	 */
-	private function itemInsert($arrData)
+	private function itemInsert($arrData, $aliasTitle, $aliasCol)
 	{
+		$arrData=$this->handleOnSaveCallbacks($arrData);
 		$arrData['tstamp'] = time();
 		$arrData['pid'] = $this->catalog;
-
-		// Create user
+		// Create item
 		$objNewItem = $this->Database->prepare("INSERT INTO ".$this->strTable." %s")->set($arrData)->execute();
 		$insertId = $objNewItem->insertId;
-		
+		// we have to update now, as we need to generate an alias.
+		$this->itemUpdate($arrData, $insertId, $aliasTitle, $aliasCol);
+		// HOOK: pass data to HOOKs to be able to do something when we inserted an item.
+		if (isset($GLOBALS['TL_HOOKS']['catalogFrontendInsert']) && is_array($GLOBALS['TL_HOOKS']['catalogFrontendInsert']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['catalogFrontendInsert'] as $callback)
+			{
+				$this->import($callback[0]);
+				$this->$callback[0]->$callback[1]($arrData);
+			}
+		}
 /*
 		$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 		foreach($arrData as $field=>$data)
@@ -540,10 +761,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 			}
 		}
 */
-
-		$this->redirect($this->refererUrl);
 	}
-
 }
 
 ?>

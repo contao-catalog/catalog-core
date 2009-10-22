@@ -748,6 +748,7 @@ class tl_catalog_types extends Backend
 		$this->import('CatalogExt');
 		$this->CatalogExt->generateFeed(CURRENT_ID);
 	}
+	
 }
 
 ?>
