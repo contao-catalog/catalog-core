@@ -116,7 +116,45 @@ abstract class ModuleCatalog extends Module
 		return parent::generate();
 	}
 
-
+	protected function getModulesForThisPage()
+	{
+		if(!$this->cachePageModules)
+		{
+			global $objPage;
+			$objLayout = $this->Database->prepare("SELECT id,modules FROM tl_layout WHERE id=?")
+								->limit(1)
+								->execute($objPage->layout);
+			// Fallback layout
+			if ($objLayout->numRows < 1)
+			{
+				$objLayout = $this->Database->prepare("SELECT id, modules FROM tl_layout WHERE fallback=?")
+											->limit(1)
+											->execute(1);
+			}
+			// check if there is a layout and fetch modules if so.
+			if ($objLayout->numRows)
+			{
+				$arrModules = deserialize($objLayout->modules);
+			} else {
+				$arrModules = array();
+			}
+			// fetch all content element modules from this page.
+			$objContent = $this->Database->prepare("SELECT module FROM tl_content WHERE pid IN (SELECT id FROM tl_article WHERE pid=?)")
+										->execute($objPage->id);
+			while($objContent->next())
+			{
+				$arrModules[] = array('mod' => $objContent->module);
+			
+			}
+			$ids=array();
+			foreach ($arrModules as $arrModule)
+			{
+				$ids[] = $arrModule['mod'];
+			}
+			$this->cachePageModules=$ids;
+		}
+		return $this->cachePageModules;
+	}
 
 	protected function getCatalogFields($arrTypes=false)
 	{
@@ -722,7 +760,7 @@ abstract class ModuleCatalog extends Module
 		}
 		return array (
 			'query' => (is_array($query) ? join(' AND ', $query) : ''),
-			'params' => (is_array($params) ? $params : ''),
+			'params' => (is_array($params) ? $params : array()),
 		);
 	}
 
@@ -827,6 +865,82 @@ abstract class ModuleCatalog extends Module
 
 
 					case 'select':
+						if(($this instanceof ModuleCatalogFilter) && $this->catalog_filter_cond_from_lister)
+						{
+							$ids=$this->getModulesForThisPage();
+							$objModules = $this->Database->prepare("SELECT * FROM tl_module WHERE id IN (" . join(', ', $ids) . ") AND type='cataloglist'")
+									->execute();
+							while($objModules->next())
+							{
+								$objModules->catalog_search=deserialize($objModules->catalog_search);
+								$filterurl = $this->parseFilterUrl($objModules->catalog_search);
+								if (is_array($objModules->catalog_search) && strlen($objModules->catalog_search[0]) && is_array($filterurl['procedure']['search']))
+								{
+									// reset arrays
+									$searchProcedure = array();
+									$searchValues = array();
+					
+									foreach($this->catalog_search as $searchfield)
+									{
+										if (($searchfield != $field) && array_key_exists($searchfield, $filterurl['current']))
+										{
+											$searchProcedure[] = $filterurl['procedure']['search'][$searchfield];
+											if (is_array($filterurl['values']['search'][$searchfield]))
+											{
+												foreach($filterurl['values']['search'][$searchfield] as $item)
+												{
+													$searchValues[] = $item;
+												}
+											}
+											else
+											{
+												$searchValues[] = $filterurl['values']['search'][$searchfield];
+											}
+										}
+									}
+									$filterurl['procedure']['where'][] = ' ('.join(" OR ", $searchProcedure).')';
+									$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
+								}
+								if(is_array($filterurl['procedure']['where']))
+								{
+									foreach($filterurl['procedure']['where'] as $key=>$value)
+									{
+										if(strpos($value, $field) !== false)
+										{
+											unset($filterurl['procedure']['where'][$key]);
+											unset($filterurl['values']['where'][$key]);
+										}
+									}
+								}
+								if(is_array($filterurl['procedure']['tags']))
+								{
+									foreach($filterurl['procedure']['tags'] as $key=>$value)
+									{
+										if(strpos($value, $field) !== false)
+										{
+											unset($filterurl['procedure']['tags'][$key]);
+											unset($filterurl['values']['tags'][$key]);
+										}
+									}
+								}
+								if (is_array($filterurl['values']['where'])) {
+									$query['params'] = array_merge($query['params'], $filterurl['values']['where']);
+								}
+						
+								if (is_array($filterurl['values']['tags'])) {
+									$query['params'] = array_merge($query['params'], $filterurl['values']['tags']);
+								}
+								
+								if($objModules->catalog_where)
+								{
+									$strCondition = $this->replaceInsertTags($objModules->catalog_where);
+								}
+								$query['query'] .= (strlen($strCondition) ? $strCondition : "")
+											.($filterurl['procedure']['where'] ? " AND ".join(" ".$objModules->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
+											.($filterurl['procedure']['tags'] ? " AND ".join(" ".$objModules->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
+							}
+							
+						}
 
 						// get existing options in DB
 						$objFilter = $this->Database->prepare("SELECT DISTINCT(".$field.") FROM ".$this->strTable . ($query['query'] ? " WHERE ".$query['query'] : '') )

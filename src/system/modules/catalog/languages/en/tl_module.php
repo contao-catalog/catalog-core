@@ -202,5 +202,6 @@ $GLOBALS['TL_LANG']['tl_module']['daterange']['mf'] = 'Next month';
 $GLOBALS['TL_LANG']['tl_module']['daterange']['hf'] = 'Next 6 months';
 $GLOBALS['TL_LANG']['tl_module']['daterange']['yf'] = 'Next year';
 
+$GLOBALS['TL_LANG']['tl_module']['catalog_filter_cond_from_lister'] = array('Use filter condition from lister on same page.', 'If there is at least one catalog lister module on the same page, the filter condition from those cataloglisters is applied to this filter aswell.');
 
 ?>

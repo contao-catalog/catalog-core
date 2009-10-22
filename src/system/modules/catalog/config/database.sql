@@ -244,6 +244,9 @@ CREATE TABLE `tl_module` (
   `catalog_subject` varchar(255) NOT NULL default '',
   `catalog_notify` text NULL,
 
+-- catalog filter
+  `catalog_filter_cond_from_lister` char(1) NOT NULL default '0',
+
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 

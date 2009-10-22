@@ -32,7 +32,7 @@
  */
 
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfilter']    = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,catalog_filtertemplate;catalog_filter_enable;catalog_range_enable;catalog_date_enable;catalog_sort_enable;catalog_search_enable;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfilter']    = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,catalog_filtertemplate;catalog_filter_enable;catalog_range_enable;catalog_date_enable;catalog_sort_enable;catalog_search_enable;catalog_filter_cond_from_lister;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['cataloglist']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override,catalog_search,catalog_condition_enable,perPage;{catalog_filter_legend:hide},catalog_where,catalog_order,catalog_query_mode,catalog_tags_mode;{catalog_thumb_legend:hide},catalog_thumbnails_override;{catalog_edit_legend:hide},catalog_edit_enable;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
@@ -634,6 +634,14 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 			array('tl_module_catalog', 'getDefaultValue')
 		)
 	),
+	
+	'catalog_filter_cond_from_lister' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_filter_cond_from_lister'],
+		'exclude'                 => true,
+		'inputType'               => 'checkbox',
+	),
+	
 )); 
 
 
