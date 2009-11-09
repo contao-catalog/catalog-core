@@ -2784,7 +2784,7 @@ abstract class ModuleCatalog extends Module
 			// check's if there are actually items for this navigation entry.
 			$idArray = $this->Database->prepare("SELECT concat(pid,',',group_concat(id)) AS tree FROM  " . $sourceTable . " AS t where pid=? group by pid")
 										->execute($objNodes->id)->next();
-			$objCount = $this->Database->prepare("SELECT id FROM" . $this->strTable . " AS t where " . $this->arrData['catalog_navigation'] . "  in (" . ($idArray->tree ? implode(',', array($objNodes->id, $idArray->tree)) : $objNodes->id) . ")")
+			$objCount = $this->Database->prepare("SELECT id FROM " . $this->strTable . " AS t where " . $this->arrData['catalog_navigation'] . "  in (" . ($idArray->tree ? implode(',', array($objNodes->id, $idArray->tree)) : $objNodes->id) . ")")
 										->execute()->numRows;
 			if($objCount)
 			{
@@ -2996,10 +2996,22 @@ abstract class ModuleCatalog extends Module
 		$this->Template->submit = $GLOBALS['TL_LANG']['MSC']['com_submit'];
 		$this->Template->action = ampersand($this->Environment->request);
 
+		// Confirmation message when pending comment was added.
+		if ($_SESSION['TL_COMMENT_ADDED'])
+		{
+			$this->Template->confirm = $GLOBALS['TL_LANG']['MSC']['com_confirm'];
+			$_SESSION['TL_COMMENT_ADDED'] = false;
+		}
+
 		// Add comment
 		if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_comment' && !$doNotSubmit)
 		{
 			$this->addComment($objCatalog, $objArchive);
+			// Pending for approval
+			if ($objArchive->moderate)
+			{
+				$_SESSION['TL_COMMENT_ADDED'] = true;
+			}
 			$this->reload();
 		}
 	}
