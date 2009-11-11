@@ -622,7 +622,7 @@ class Catalog extends Backend
 	
 	public function loadTags($varValue, DataContainer $dc)
 	{
-		$values = split(',', trim($varValue));
+		$values = explode(',', trim($varValue));
 		$valueList = array();
 		foreach($values as $value)
 		{
@@ -778,7 +778,7 @@ class Catalog extends Backend
 		//$strFormat = '';
 		foreach ($matches[1] as $match)
 		{
-			$params = split('::', $match);
+			$params = explode('::', $match);
 			$fieldConf = $GLOBALS['TL_DCA'][$tableName]['fields'][$params[0]];
 			if ($fieldConf)
 			{	
@@ -1238,7 +1238,7 @@ class Catalog extends Backend
 				$objParents = $this->Database->prepare("SELECT ".$parentFilter." FROM ". $objTable->tableName . " WHERE id=?")
 										->execute($this->Input->get('id'));
 				$idsFilter = ($objParents->$parentFilter != 0) ? $objParents->$parentFilter : '';
-				$ids = strlen($idsFilter) ? split(',',$idsFilter) : $ids;
+				$ids = strlen($idsFilter) ? explode(',',$idsFilter) : $ids;
 				$ids = is_array($ids) ? $ids : array($ids);
 			}
 		}
