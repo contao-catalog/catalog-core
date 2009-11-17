@@ -90,10 +90,16 @@ class ModuleCatalogList extends ModuleCatalog
 		}
 		if (!$this->catalog_condition_enable || ($this->catalog_condition_enable && $blnCondition) || is_array($filterurl['procedure']['search']))
 		{
-
 			// Query Catalog
 			$limit = null;
 			$offset = 0;
+			// issue #81
+			if($this->catalog_list_use_limit)
+			{
+				$limit = is_numeric($this->catalog_limit)? $this->catalog_limit : 0;
+				if($this->catalog_list_offset)
+					$offset = $this->catalog_list_offset;
+			}
 	
 			// add search as single query using OR, after foreach
 			$this->catalog_search = deserialize($this->catalog_search, true); 

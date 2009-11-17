@@ -247,6 +247,10 @@ CREATE TABLE `tl_module` (
 -- catalog filter
   `catalog_filter_cond_from_lister` char(1) NOT NULL default '0',
 
+-- LIMIT n,m for listings
+   `catalog_list_use_limit` char(1) NOT NULL default '',
+   `catalog_list_offset` smallint(5) NOT NULL default '0',
+
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 

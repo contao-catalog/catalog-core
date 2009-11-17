@@ -155,16 +155,6 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 						),
 					'sqlDefColumn' => "varchar(255) NOT NULL default ''",
 				),
-			'taxonomy' => array
-				(
-					'typeimage'    => 'system/modules/taxonomy/html/icon.gif',
-					'fieldDef'     => array
-						(
-							'inputType' => 'tableTree',
-							'eval'      => array('fieldType' => 'radio', 'tableColumn'=> 'tl_taxonomy.name'),
-						),
-					'sqlDefColumn' => "text NULL",
-				),
 		),
 	'typesCheckboxSelectors' => array('checkbox'),
 	'typesOptionSelectors' => array('select', 'tags'),
@@ -172,8 +162,8 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 	'typesMatchFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'),
 	'typesEditFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'), /* TODO: add file support later */
 	'typesLinkFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'file'),
-	'typesReferenceFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'),
-	'typesCatalogFields' => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'taxonomy'),
+	'typesReferenceFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'),
+	'typesCatalogFields' => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'select', 'tags', 'checkbox', 'url', 'file'),
 	'typesRSSFields' => array('text', 'alias', 'longtext'),
 	'typesWizardFields' => array('date', 'calc', 'url'),
 		

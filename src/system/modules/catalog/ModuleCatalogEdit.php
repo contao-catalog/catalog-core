@@ -541,7 +541,6 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 		$objTemplate->field = join('',$arrFields);
 		$objTemplate->formId = 'tl_catalog_items';
-		$objTemplate->slabel = specialchars($GLOBALS['TL_LANG']['MSC']['saveNclose']);
 		$objTemplate->action = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 
 		// Rich text editor configuration
@@ -688,7 +687,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		{
 			$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
-			if(array_key_exists('save_callback', $fieldType['fieldDef']) && is_array($fieldType['fieldDef']['save_callback']))
+			if(is_array($fieldType) && array_key_exists('save_callback', $fieldType['fieldDef']) && is_array($fieldType['fieldDef']['save_callback']))
 			{
 				foreach ($fieldType['fieldDef']['save_callback'] as $callback)
 				{
@@ -718,14 +717,32 @@ class ModuleCatalogEdit extends ModuleCatalog
 		// HOOK: pass data to HOOKs to be able to do something when we updated an item.
 		if (isset($GLOBALS['TL_HOOKS']['catalogFrontendUpdate']) && is_array($GLOBALS['TL_HOOKS']['catalogFrontendUpdate']))
 		{
+			$objEntry = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE id=?")
+											->limit(1)
+											->execute($id);
+			if($objEntry->numRows)
+				$arrData=$this->handleOnLoadCallbacks($objEntry->fetchAssoc());
 			foreach ($GLOBALS['TL_HOOKS']['catalogFrontendUpdate'] as $callback)
 			{
 				$this->import($callback[0]);
 				$this->$callback[0]->$callback[1]($arrData);
 			}
 		}
-		// now follow to the jumpTo page that is defined.
-		$this->redirect($this->generateCatalogNavigationUrl('items', $aliasCol ? $arrData[$aliasCol] : $id));
+		
+		// check which submit method was used and redirect then.
+		if($this->Input->post('save'))
+		{
+			// stay on this page with current entry.
+			global $objPage;
+			$this->redirect(ampersand($this->generateFrontendUrl($objPage->row(), ($GLOBALS['TL_CONFIG']['disableAlias'] ? '&amp;items=' : '/items/') . ($aliasCol && $arrData[$aliasCol] ? $arrData[$aliasCol] : $id))));
+		} else if($this->Input->post('saveNcreate'))
+		{	// stay on this page but without id.
+			global $objPage;
+			$this->redirect(ampersand($this->generateFrontendUrl($objPage->row())));
+		} else if($this->Input->post('saveNclose'))
+		{	// follow jumpTo
+			$this->redirect($this->generateCatalogNavigationUrl('items', $aliasCol && $arrData[$aliasCol] ? $arrData[$aliasCol] : $id));
+		}
 	}
 
 	/**
@@ -745,6 +762,11 @@ class ModuleCatalogEdit extends ModuleCatalog
 		// HOOK: pass data to HOOKs to be able to do something when we inserted an item.
 		if (isset($GLOBALS['TL_HOOKS']['catalogFrontendInsert']) && is_array($GLOBALS['TL_HOOKS']['catalogFrontendInsert']))
 		{
+			$objEntry = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE id=?")
+											->limit(1)
+											->execute($id);
+			if($objEntry->numRows)
+				$arrData=$this->handleOnLoadCallbacks($objEntry->fetchAssoc());
 			foreach ($GLOBALS['TL_HOOKS']['catalogFrontendInsert'] as $callback)
 			{
 				$this->import($callback[0]);

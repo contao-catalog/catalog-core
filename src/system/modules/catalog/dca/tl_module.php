@@ -34,22 +34,22 @@
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfilter']    = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,catalog_filtertemplate;catalog_filter_enable;catalog_range_enable;catalog_date_enable;catalog_sort_enable;catalog_search_enable;catalog_filter_cond_from_lister;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['cataloglist']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override,catalog_search,catalog_condition_enable,perPage;{catalog_filter_legend:hide},catalog_where,catalog_order,catalog_query_mode,catalog_tags_mode;{catalog_thumb_legend:hide},catalog_thumbnails_override;{catalog_edit_legend:hide},catalog_edit_enable;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['cataloglist']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override,catalog_search,catalog_condition_enable,perPage,catalog_list_use_limit;{catalog_filter_legend:hide},catalog_where,catalog_order,catalog_query_mode,catalog_tags_mode;{catalog_thumb_legend:hide},catalog_thumbnails_override;{catalog_edit_legend:hide},catalog_edit_enable;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreader']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_template,catalog_visible;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfeatured']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfeatured']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogrelated']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;catalog_related,catalog_related_tagcount,catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogrelated']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;catalog_related,catalog_related_tagcount,catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_match,catalog_selected,catalog_reference;jumpTo,catalog_visible,catalog_link_override;catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_match,catalog_selected,catalog_reference;jumpTo,catalog_visible,catalog_link_override;catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_navigation,levelOffset,showLevel,hardLimit;catalog_show_items;{template_legend:hide},navigationTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_navigation,levelOffset,showLevel,hardLimit;catalog_show_items;{template_legend:hide},navigationTpl,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;catalog_subject,catalog_recipients,catalog_notify;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;catalog_subject,catalog_recipients,catalog_notify;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 // catalog edit AND modify list above ^^
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,jumpTo,disableCaptcha;{template_legend:hide},catalog_template;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,jumpTo,disableCaptcha;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
 
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_filter_enable';
@@ -64,6 +64,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_thumbna
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_edit_enable';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_show_items';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_edit_use_default';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_list_use_limit';
 
 // Insert new Subpalettes after position 1
 array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
@@ -80,6 +81,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
 		'catalog_edit_enable' => 'catalog_editJumpTo',
 		'catalog_show_items' => 'catalog_show_field',
 		'catalog_edit_use_default' => 'catalog_edit_default,catalog_edit_default_value',
+		'catalog_list_use_limit' => 'catalog_list_offset,catalog_limit'
 	)
 );
 
@@ -126,7 +128,9 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_layout'],
 		'exclude'                 => true,
 		'inputType'               => 'select',
-		'options'                 => $this->getTemplateGroup('mod_catalog')
+		// fix issue #70 - template selector shall only show relevant templates. See implementation below.
+//		'options'                 => $this->getTemplateGroup('mod_catalog')
+		'options_callback'        => array('tl_module_catalog', 'getModuleTemplates'),
 	),
 
 	'catalog_filtertemplate' => array
@@ -641,9 +645,22 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'exclude'                 => true,
 		'inputType'               => 'checkbox',
 	),
-	
+	'catalog_list_use_limit' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_list_use_limit'],
+		'exclude'                 => true,
+		'inputType'               => 'checkbox',
+		'eval'                    => array('submitOnChange'=> true, 'tl_class' => 'clr'),
+	),
+	'catalog_list_offset' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_list_offset'],
+		'exclude'                 => true,
+		'inputType'               => 'text',
+		'default'                 => '10',
+		'eval'                    => array('rgxp' => 'decimal'),
+	),
 )); 
-
 
 /**
  * Class tl_module_catalog
@@ -814,6 +831,16 @@ class tl_module_catalog extends Backend
 		}
 		return $varValue;
 	}
+
+	public function getModuleTemplates(DataContainer $dc)
+	{
+		// fix issue #70 - template selector shall only show relevant templates.
+		$objModule=$this->Database->prepare("SELECT type FROM tl_module m WHERE m.id=?")
+							->execute($dc->id);
+		$options = $this->getTemplateGroup('mod_' . $objModule->type);
+		return $options;
+	}
+
 	
 	public function onLoadCallback(DataContainer $dc)
 	{

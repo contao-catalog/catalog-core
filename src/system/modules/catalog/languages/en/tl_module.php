@@ -42,6 +42,10 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_filtertemplate'] = array('Filter layou
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_template'] = array('Catalog layout', 'Please choose a catalog layout. You can add custom catalog layouts to folder <em>templates</em>. Catalog template files start with <em>catalog_</em> and require file extension <em>.tpl</em>.');
 $GLOBALS['TL_LANG']['tl_module']['catalog_layout'] = array('Catalog template', 'Please choose template for the module. You can add custom templates to folder <em>templates</em>. Catalog module template files start with <em>mod_catalog</em> and require file extension <em>.tpl</em>.');
+$GLOBALS['TL_LANG']['tl_module']['catalog_list_use_limit'] = array('Use offset and limit for listing', 'Check if you want to limit the amount of items listed.');
+$GLOBALS['TL_LANG']['tl_module']['catalog_list_offset'] = array('List offset', 'Please specify the offset value (i.e. 10 to skip the first 10 items).');
+
+
 /**
  * Catalog Filter
  */
