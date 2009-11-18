@@ -1194,11 +1194,6 @@ class Catalog extends Backend
 				$ids = array(0);
 			}
 
-			if ($objRow->mandatory)
-			{
-				$field['eval']['mandatory'] = true;
-			}
-
 			if ($blnTags) 
 			{
 				$field['inputType'] = 'checkbox';		
@@ -1208,6 +1203,12 @@ class Catalog extends Backend
 			{
 				$field['inputType'] = 'select';
 			}	
+		}
+
+		// we have to keep mandatory no matter if we are a select or tag field.
+		if ($objRow->mandatory)
+		{
+			$field['eval']['mandatory'] = true;
 		}
 
 		// setup new findInSet options
