@@ -113,11 +113,11 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 	// Palettes
 	'palettes' => array
 	(
-		'__selector__' => array('type', 'insertBreak', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree', 'editGroups'),
+		'__selector__' => array('type', 'insertBreak', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree', 'editGroups', 'rte'),
 		'default' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'text' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'alias' => '{title_legend},name,description,colName,type,aliasTitle;{display_legend},insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{feedit_legend},editGroups',
-		'longtext' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory,rte,allowHtml;{feedit_legend},editGroups',
+		'longtext' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory,allowHtml,rte;{feedit_legend},editGroups',
 		'number' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'decimal' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'date' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,includeTime;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
@@ -140,6 +140,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'limitItems'			=> 'items,childrenSelMode,parentFilter',
 		'customFiletree'	=> 'uploadFolder,validFileTypes,filesOnly',
 		'editGroups'		=> 'editGroups',
+		'rte'					=> 'rte_editor',
 	),
 
 	// Fields
@@ -355,7 +356,15 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'rte' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['rte'],
-			'inputType'               => 'checkbox'
+			'inputType'               => 'checkbox',
+			'eval'                    => array('submitOnChange'=>true)
+		),
+		'rte_editor' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['rte_editor'],
+			'inputType'               => 'select',
+			'default'				  => 'tinyMCE',
+			'options_callback'        => array('tl_catalog_fields', 'getRichTextEditors'),
 		),
 		
 		'allowHtml' => array
@@ -589,7 +598,16 @@ class tl_catalog_fields extends Backend
 
 	}
 
-
+	public function getRichTextEditors()
+	{
+		$configs=array();
+		foreach(array_diff(scandir(sprintf('%s/system/config', TL_ROOT)), Array( ".", ".." )) as $name)
+		{
+			if((strpos($name, 'tiny')===0) && (substr($name, -4, 4)=='.php'))
+				$configs[]=substr($name, 0, -4);
+		}
+		return $configs;
+	}
 
 	public function getTables()
 	{

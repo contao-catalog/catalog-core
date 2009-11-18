@@ -1151,7 +1151,7 @@ class Catalog extends Backend
 	
 	private function longtextConfig(&$field, $objRow)
 	{
-		$field['eval']['rte'] = $objRow->rte ? 'tinyMCE' : '';
+		$field['eval']['rte'] = $objRow->rte ? ($objRow->rte_editor ? $objRow->rte_editor : 'tinyMCE') : '';
 		$field['eval']['allowHtml'] = !!$objRow->allowHtml;
 	}
 	

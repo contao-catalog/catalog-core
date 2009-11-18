@@ -101,6 +101,7 @@ CREATE TABLE `tl_catalog_fields` (
   `formatPrePost` varchar(255) NOT NULL default '',
   `uniqueItem` char(1) NOT NULL default '',
   `rte` char(1) NOT NULL default '',
+  `rte_editor` varchar(255) NOT NULL default 'tinyMCE',
   `allowHtml` char(1) NOT NULL default '',
   `itemTable` varchar(255) NOT NULL default '',
   `itemTableValueCol` varchar(255) NOT NULL default '',

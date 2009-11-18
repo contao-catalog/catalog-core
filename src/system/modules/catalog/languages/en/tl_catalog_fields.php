@@ -54,6 +54,7 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['calcValue'] = array('Calculation formu
 $GLOBALS['TL_LANG']['tl_catalog_fields']['minValue'] = array('Minimum', 'Specifies the minimal value user can input.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['maxValue'] = array('Maximum', 'Specifies the maximal value user can input.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['rte'] = array('Rich text', 'If selected, rich text editor is displayed.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['rte_editor'] = array('tinyMCE editor Template', 'Please select the tinyMCE template to use for rich text editing.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['allowHtml'] = array('Allow html', 'If selected, html tags won\'t be stripped.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['itemTable'] = array('Options source table', 'Please select a table where options are stored.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['itemTableIdCol'] = array('Table id column', 'Please select an ID column of the table.');
