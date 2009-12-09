@@ -88,11 +88,21 @@ class ModuleCatalogReader extends ModuleCatalog
 		$this->Template->catalog = '';
 		$this->Template->referer = $this->getReferer(ENCODE_AMPERSANDS);
 		$this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
+		$this->Template->gobackDisable = $this->catalog_goback_disable;
 
 		$objCatalogType = $this->Database->prepare("SELECT aliasField,titleField FROM tl_catalog_types WHERE id=?")
 										->execute($this->catalog);
 
+		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';		
 
+		$arrConverted = $this->processFieldSQL($this->catalog_visible);		
+
+		// Overwrite page title
+		if (strlen($objCatalogType->titleField)) 
+		{
+			$titleField = $objCatalogType->titleField;
+			$this->systemColumns = array_merge($this->systemColumns, array($titleField));
+		}
 		/*
 			$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE (CAST(id AS CHAR)=?".$strAlias.")")
 											->limit(1)
@@ -113,7 +123,7 @@ class ModuleCatalogReader extends ModuleCatalog
 		$strAlias = $objCatalogType->aliasField ? $objCatalogType->aliasField : (is_numeric($value) ? "id" : '');
 		if(strlen($strAlias))
 		{
-			$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE " . $strAlias . "=?")
+			$objCatalog = $this->Database->prepare("SELECT ".join(',',$this->systemColumns).",".join(',',$arrConverted).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE " . $strAlias . "=?")
 										->limit(1)
 										->execute($value);
 		}
@@ -138,16 +148,15 @@ class ModuleCatalogReader extends ModuleCatalog
 		// Overwrite page title
 		if (strlen($objCatalogType->titleField)) 
 		{
-			$titleField = $objCatalogType->titleField;
 			$objPage->pageTitle = $objCatalog->$titleField;
 		}
 
-		// Comments
-		$this->processComments($objCatalog);
-	
+		// Process Comments if not disabled
+		if (!$this->catalog_comments_disable)
+		{
+			$this->processComments($objCatalog);	
+		}
 	}
-
-
 }
 
 ?>

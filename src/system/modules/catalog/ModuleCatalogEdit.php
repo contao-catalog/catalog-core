@@ -161,7 +161,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		} 
 		else
 		{
-			$arrValues = $objCatalog->fetchAssoc();
+			$arrValues = $this->handleOnLoadCallbacks($objCatalog->fetchAssoc());
 			// check if editing of this record is disabled for frontend.
 			foreach ($this->catalog_edit as $key=>$field)
 			{
@@ -184,10 +184,10 @@ class ModuleCatalogEdit extends ModuleCatalog
 				}
 			}
 		}
-		$arrValues=$this->handleOnLoadCallbacks($arrValues);
+		//$arrValues=$this->handleOnLoadCallbacks($arrValues);
 
 		// unpack restriction values.
-		$arrValuesDefault=deserialize($this->catalog_edit_default_value);
+		$arrValuesDefault= strlen($this->catalog_edit_default_value) ? deserialize($this->catalog_edit_default_value) : array();
 		// initialize value to restricted value as we might not be allowed to edit this field but the field shall
 		// revert to some default setting (published flag etc.)
 		// NOTE: This affects all fields mentioned in "catalog_edit_default_value", not just those selected for editing.
@@ -482,8 +482,15 @@ class ModuleCatalogEdit extends ModuleCatalog
 				<script type="text/javascript"><!--//--><![CDATA[//><!--
 				window.addEvent(\'domready\', function() { ' . sprintf($this->getDatePickerString(), 'ctrl_' . $objWidget->id) . ' });
 				//--><!]]></script>';
-				$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/calendar.js" type="text/javascript"></script>';
-				$GLOBALS['TL_CSS'][] = 'plugins/calendar/calendar.css';
+				// files moved in 2.8 RC1
+				if(version_compare('2.8', VERSION, '<'))
+				{
+					$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/calendar.js" type="text/javascript"></script>';
+					$GLOBALS['TL_CSS'][] = 'plugins/calendar/calendar.css';
+				} else {
+					$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/js/calendar.js" type="text/javascript"></script>';
+					$GLOBALS['TL_CSS'][] = 'plugins/calendar/css/calendar.css';
+				}
 			}
 
 
@@ -661,13 +668,18 @@ class ModuleCatalogEdit extends ModuleCatalog
 	{
 		require_once(TL_ROOT . '/system/drivers/DC_DynamicTable.php');
 		$tmptbl=new DC_DynamicTable($this->strTable);
+		if(!is_array($arrData))
+		{
+			var_dump($arrData);
+			return $arrData;
+		}
 		foreach($arrData as $field=>$data)
 		{
 			$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
 			if(is_array($fieldType) && array_key_exists('fieldDef', $fieldType) && array_key_exists('load_callback', $fieldType['fieldDef']) && is_array($fieldType['fieldDef']['load_callback']))
 			{
-				foreach ($fieldType['fieldDef']['save_callback'] as $callback)
+				foreach ($fieldType['fieldDef']['load_callback'] as $callback)
 				{
 					$this->import($callback[0]);
 					// TODO: Do we need more parameters here?
@@ -721,7 +733,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 											->limit(1)
 											->execute($id);
 			if($objEntry->numRows)
-				$arrData=$this->handleOnLoadCallbacks($objEntry->fetchAssoc());
+				$arrData=$this->handleOnLoadCallbacks($objEntry->row());
 			foreach ($GLOBALS['TL_HOOKS']['catalogFrontendUpdate'] as $callback)
 			{
 				$this->import($callback[0]);
@@ -766,7 +778,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 											->limit(1)
 											->execute($id);
 			if($objEntry->numRows)
-				$arrData=$this->handleOnLoadCallbacks($objEntry->fetchAssoc());
+				$arrData=$this->handleOnLoadCallbacks($objEntry->row());
 			foreach ($GLOBALS['TL_HOOKS']['catalogFrontendInsert'] as $callback)
 			{
 				$this->import($callback[0]);

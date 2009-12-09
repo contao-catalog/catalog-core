@@ -191,12 +191,15 @@ CREATE TABLE `tl_module` (
 
 
   `catalog_visible` blob NULL,
+  `catalog_comments_disable` char(1) NOT NULL default '',
 
   `catalog_query_mode` varchar(5) NOT NULL default '',
   `catalog_tags_mode` varchar(5) NOT NULL default '',
 
   `catalog_link_override` char(1) NOT NULL default '',
   `catalog_islink` blob NULL,
+  `catalog_link_window` char(1) NOT NULL default '',
+  `catalog_goback_disable` char(1) NOT NULL default '',
 
   `catalog_condition_enable` char(1) NOT NULL default '',
   `catalog_condition` blob NULL,

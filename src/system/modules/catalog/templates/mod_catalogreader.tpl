@@ -6,7 +6,8 @@
 <?php endif; ?>
 <?php echo $this->catalog; ?>
 
-<p class="back"><a href="<?php echo $this->referer; ?>" title="<?php echo $this->back; ?>"><?php echo $this->back; ?></a></p>
+<?php if (!$this->gobackDisable): ?><p class="back"><a href="<?php echo $this->referer; ?>" title="<?php echo $this->back; ?>"><?php echo $this->back; ?></a></p><?php endif; ?>
+
 <?php if ($this->allowComments): ?>
 
 <div class="ce_comments block">

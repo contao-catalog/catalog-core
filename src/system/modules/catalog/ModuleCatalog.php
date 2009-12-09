@@ -65,6 +65,10 @@ abstract class ModuleCatalog extends Module
 	 */
 	protected	$strOrderBy	= 'orderby';
 
+
+	protected $systemColumns = array('id', 'pid', 'sorting', 'tstamp');
+
+
 	protected	$arrTree;	
 
 	protected	$cacheJumpTo;	
@@ -1836,6 +1840,52 @@ abstract class ModuleCatalog extends Module
 	}
 
 
+	/**
+	 * Translate SQL if needed (needed for calculated fields)
+	 * @param array
+	 * @return array
+	 */
+
+	protected function processFieldSQL($arrVisible)
+	{
+		$arrConverted = array();
+
+		// iterate all catalog fields
+		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields f WHERE f.pid=(SELECT c.id FROM tl_catalog_types c WHERE c.tableName=?)")
+								   ->execute($this->strTable);
+
+		$arrFields = array();
+		if ($objFields->numRows)
+		{
+			while ($objFields->next())
+			{
+				$row = $objFields->row();			
+				$arrFields[$row['colName']] = $row;
+			}
+
+			foreach ($arrVisible as $id=>$field)
+			{
+				if (array_key_exists($field, $arrFields))
+				{
+					switch ($arrFields[$field]['type'])
+					{
+						case 'calc':
+							// set query value to forumla
+							$value = '('.$arrFields[$field]['calcValue'].') AS '.$field; //.'_calc';
+							$arrConverted[$id] = $value;
+							break;
+
+						default:
+							$arrConverted[$id] = $field;
+					}
+
+				}			
+			}	
+		}
+
+		return $arrConverted;
+	}
+
 
 	/**
 	 * Parse one or more items and return them as array
@@ -1879,7 +1929,7 @@ abstract class ModuleCatalog extends Module
 
 			if ($blnLink) 
 			{
-				$arrCatalog[$i]['link'] = $this->generateLink($objCatalog, $aliasField, $this->strTable);
+				$arrCatalog[$i]['link'] = $this->generateLink($objCatalog, $aliasField, $this->strTable, $this->catalog_link_window);
 				$arrCatalog[$i]['url'] = $this->generateCatalogUrl($objCatalog, $aliasField, $this->strTable);
 			}
 
@@ -1908,7 +1958,7 @@ abstract class ModuleCatalog extends Module
 
 			if ($this->catalog_edit_enable && $editingallowedByFields)
 			{
-				$arrCatalog[$i]['linkEdit'] = $this->generateLink($objCatalog, $aliasField, $this->strTable, true);
+				$arrCatalog[$i]['linkEdit'] = $this->generateLink($objCatalog, $aliasField, $this->strTable, $this->catalog_link_window, true);
 				$arrCatalog[$i]['urlEdit'] = $this->generateCatalogEditUrl($objCatalog, $aliasField, $this->strTable);
 			}
 
@@ -1940,7 +1990,7 @@ abstract class ModuleCatalog extends Module
 				$linked = deserialize($this->catalog_islink, true);
 				if ($this->catalog_link_override && is_array($linked) && in_array($k, $linked))
 				{
-					$arrValues['html'] = $this->generateLink($objCatalog, $aliasField, $this->strTable, false, $arrValues['html']);
+					$arrValues['html'] = $this->generateLink($objCatalog, $aliasField, $this->strTable, $this->catalog_link_window, false, $arrValues['html']);
 				}
 
 				$arrCatalog[$i]['data'][$k] = array
@@ -1985,7 +2035,7 @@ abstract class ModuleCatalog extends Module
 									while ($objRef->next())
 									{
 											$objRef->parentJumpTo = $objJump->jumpTo;
-											$objRef->parentLink = $this->generateLink($objRef, $objJump->aliasField, $objJump->tableName);
+											$objRef->parentLink = $this->generateLink($objRef, $objJump->aliasField, $objJump->tableName, $this->catalog_link_window);
 											$objRef->parentUrl = $this->generateCatalogUrl($objRef, $objJump->aliasField, $objJump->tableName);
 									}
 								}
@@ -2058,15 +2108,16 @@ abstract class ModuleCatalog extends Module
 	 * @param boolean
 	 * @return string
 	 */
-	private function generateLink(Database_Result $objCatalog, $aliasField, $strTable, $blnEdit=false, $strLink='')
+	private function generateLink(Database_Result $objCatalog, $aliasField, $strTable, $blnWindow, $blnEdit=false, $strLink='')
 	{
 		$linkUrl = (!$blnEdit ? $this->generateCatalogUrl($objCatalog, $aliasField, $strTable) : $this->generateCatalogEditUrl($objCatalog, $aliasField, $strTable));
 		$strLink = strlen($strLink) ? $strLink : (!$blnEdit ? $GLOBALS['TL_LANG']['MSC']['viewCatalog'] : $GLOBALS['TL_LANG']['MSC']['editCatalog']);
 		$strTitle = (!$blnEdit ? $GLOBALS['TL_LANG']['MSC']['viewCatalog'] : $GLOBALS['TL_LANG']['MSC']['editCatalog']);
 
-		return sprintf('<a href="%s" title="%s">%s</a>',
+		return sprintf('<a href="%s" title="%s"%s>%s</a>',
 						$linkUrl,
 						$strTitle,
+						$blnWindow ? ' onclick="this.blur(); window.open(this.href); return false;"' : '',
 						$strLink
 						);
 	}
@@ -2139,25 +2190,15 @@ abstract class ModuleCatalog extends Module
 						$arrValues[0] = $emailencode;
 						$strHtml = '<a href="mailto:' . $emailencode . '">' . $emailencode . '</a>';
 					}
-					else 
+					elseif (preg_match_all('@^(https?://|ftp://)(\w+([_\.-]*\w+)*\.[a-z]{2,6})(/?)@i', $value, $matches))
 					{
 						$arrValues[0] = $raw;
-						$strHtml = '<a href="'.$raw.'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$raw.'</a>';
+						$website = $matches[2][0];
+						$strHtml = '<a href="'.$raw.'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$website.'</a>';
 					}
+				
 				}
 				break;
-
-			case 'date':
-					if (strlen($raw) && $raw !== 0)
-					{
-						$date = new Date($raw);
-						$value = $this->parseDate((strlen($formatStr) ? $formatStr : $GLOBALS['TL_CONFIG']['dateFormat']), $date->tstamp);
-					}
-					else
-					{
-						$value = '';
-					}
-					break;
 		
 			// Changed by c.schiffler to allow custom fields.
 			default:
@@ -2206,8 +2247,15 @@ abstract class ModuleCatalog extends Module
 */
 						
 				case 'date':
-						$date = new Date($raw);
-						$value = $this->parseDate((strlen($formatStr) ? $formatStr : $GLOBALS['TL_CONFIG']['dateFormat']), $date->tstamp);
+						if (strlen($raw) && $raw !== 0)
+						{
+							$date = new Date($raw);
+							$value = $this->parseDate((strlen($formatStr) ? $formatStr : $GLOBALS['TL_CONFIG']['dateFormat']), $date->tstamp);
+						}
+						else
+						{
+							$value = '';
+						}
 						break;
 				
 				default:;
@@ -2879,7 +2927,8 @@ abstract class ModuleCatalog extends Module
 				$objTemplate->comment = trim($objComments->comment);
 				$objTemplate->datim = date($GLOBALS['TL_CONFIG']['datimFormat'], $objComments->date);
 				$objTemplate->date = date($GLOBALS['TL_CONFIG']['dateFormat'], $objComments->date);
-				$objTemplate->class = (($count++ % 2) == 0) ? ' even' : ' odd';
+				$objTemplate->class = (($count == 0) ? ' first' : '') . ((($count + 1) == $objComments->numRows) ? ' last' : '') . ((($count++ % 2) == 0) ? ' even' : ' odd');
+
 				$objTemplate->by = $GLOBALS['TL_LANG']['MSC']['comment_by'];
 				$objTemplate->id = 'c' . $objComments->id;
 				$objTemplate->ip = $objComments->ip;

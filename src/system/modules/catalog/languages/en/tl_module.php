@@ -87,6 +87,8 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_visible'] = array('Visible Fields', 'P
 $GLOBALS['TL_LANG']['tl_module']['catalog_link_override'] = array('Override default link', 'Select to remove the default link and specify individual linked fields.');
 $GLOBALS['TL_LANG']['tl_module']['catalog_islink'] = array('Linked Fields', 'Please select the catalog fields that should be wrapped automatically with a hyperlink to the catalog reader page.');
 
+$GLOBALS['TL_LANG']['tl_module']['catalog_link_window'] = array('Open link in new window', 'Select to open the catalog link in a new window.');
+
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_query_mode'] = array('Query Mode', 'Select the query mode to combine filters, e.g. <em>ALL</em>   matches for all filters (a AND b), while <em>ANY</em> matches for any filter (a OR b).');
 $GLOBALS['TL_LANG']['tl_module']['catalog_tags_mode'] = array('Tags Mode', 'Select the tags mode to combine tag options, e.g. <em>ALL</em>   matches for all tag options (a AND b), while <em>ANY</em> matches for any tag option (a OR b).');
@@ -110,6 +112,16 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_where']       = array('Condition', 'If
 $GLOBALS['TL_LANG']['tl_module']['catalog_order']        = array('Order by', 'Please enter a comma seperated list of fields that will be used to order the results by default. Add <em>DESC</em> after the fieldname to sort descending (e.g. <em>name, date DESC</em>).');
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit_enable'] = array('Enable Editing', 'Enable editing of the item by providing a jump to a page with the Catalog Edit Module.');
+
+/**
+ * Catalog Reader
+ */
+
+$GLOBALS['TL_LANG']['tl_module']['catalog_goback_disable'] = array('Disable [Go Back] link', 'This option disables the [go back] link from being displayed (useful when you need to render multiple readers).');
+$GLOBALS['TL_LANG']['tl_module']['catalog_comments_disable'] = array('Disable Comments', 'This option disables the comments from being displayed or processed.');
+
+
+
 
 /**
  * Catalog Featured

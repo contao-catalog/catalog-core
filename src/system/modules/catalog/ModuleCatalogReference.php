@@ -122,10 +122,19 @@ class ModuleCatalogReference extends ModuleCatalog
 			if ($this->catalog_reference != 'id')
 			{
 				// retrieve the reference catalog's field type
-				$objCatalogRef = $this->Database->prepare("SELECT colName, type FROM tl_catalog_fields WHERE pid=? AND colName=?")
+				$objCatalogRef = $this->Database->prepare("SELECT colName, type, parentCheckbox FROM tl_catalog_fields WHERE pid=? AND colName=?")
 											->execute($this->catalog_selected, $this->catalog_reference);
+				
+				$fieldRef = '';
+				if ($objCatalogRef->numRows) 
+				{
+					$fieldRef = $objCatalogRef->type;
+					if (strlen($objCatalogRef->parentCheckbox) && !$arrCatalog[$objCatalogRef->parentCheckbox])
+					{
+						return;
+					}
+				}
 
-				$fieldRef = ($objCatalogRef->numRows && $objCatalogRef->type) ? $objCatalogRef->type : '';
 			}
 			else
 			{
@@ -169,8 +178,11 @@ class ModuleCatalogReference extends ModuleCatalog
 			// convert to string
 			$strReference = join(' OR ', $strReference);
 
+
+			$arrQuery = $this->processFieldSQL($this->catalog_visible);		
+
 			// Run Query
-			$objCatalogStmt = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=? ".($strReference ? " AND ".$strReference : "").($strWhere ? " AND ".$strWhere : "").(strlen($strOrder) ? " ORDER BY ".$strOrder : ""));
+			$objCatalogStmt = $this->Database->prepare("SELECT ".join(',',$this->systemColumns).",".join(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=? ".($strReference ? " AND ".$strReference : "").($strWhere ? " AND ".$strWhere : "").(strlen($strOrder) ? " ORDER BY ".$strOrder : ""));
 
 		
 			if ($limit > 0)

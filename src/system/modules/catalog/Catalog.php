@@ -291,8 +291,15 @@ class Catalog extends Backend
 	 */
 	 public function generateSitemaps()
 	 {
-		$this->import('Automator');
-		$this->Automator->generateSitemap();
+		// if we have the GoogleSitemap extension, we have to trigger that one, trigger the core sitemap otherwise.
+		if(in_array('googlesitemap', $this->Config->getActiveModules()))
+		{
+			$this->import('GoogleSitemap');
+			$this->GoogleSitemap->generateSitemap();
+		} else {
+			$this->import('Automator');
+			$this->Automator->generateSitemap();
+		}
 	 }
 
 /**
@@ -788,20 +795,30 @@ class Catalog extends Backend
 					switch ($fieldConf['eval']['catalog']['type'])
 					{
 						case 'file':
-								if ($fieldConf['eval']['catalog']['showImage'])
-								{ 
-									$replace = $this->generateThumbnail($replace, $params[1], $fieldConf['label'][0]);
-								}
-								break;
+							if ($fieldConf['eval']['catalog']['showImage'])
+							{ 
+								$replace = $this->generateThumbnail($replace, $params[1], $fieldConf['label'][0]);
+							}
+							break;
 
 						case 'checkbox':
-								// only use image if checkbox == true
-								$replace = ($replace ? $this->generateThumbnail($replace, $params[1], $fieldConf['label'][0]) : '');
-								break;
+							// only use image if checkbox == true
+							$replace = ($replace ? $this->generateThumbnail($replace, $params[1], $fieldConf['label'][0]) : '');
+							break;
 
-						default:;
+						default:
+							parse_str($params[1], $formats);
+							if (strlen($replace) && array_key_exists('pre', $formats))
+							{
+								$replace = stripslashes(stripslashes($formats['pre'])).$replace;								
+							}
+							if (strlen($replace) && array_key_exists('post', $formats))
+							{
+								$replace = $replace.stripslashes(stripslashes($formats['post']));								
+							}
 
-					}					
+					}
+					
 				}
 				$strFormat = str_replace('{{'.$match.'}}', $replace, $strFormat);
 			}
@@ -1451,6 +1468,8 @@ class Catalog extends Backend
 
 		$field['load_callback'][] = array('Catalog', 'loadCalc');
 		$field['save_callback'][] = array('Catalog', 'saveCalc');
+
+		$this->formatConfig($field, $objRow);
 	}
 
 
