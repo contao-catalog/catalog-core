@@ -2520,20 +2520,25 @@ abstract class ModuleCatalog extends Module
 
 			case 'meta':
 */
-				$files = array();
-				foreach ($this->arrAux as $aux)
+
+		if (count($this->arrAux))
+		{
+			$files = array();
+			foreach ($this->arrAux as $aux)
+			{
+				$k = array_search($aux, $arrFiles);				
+				if ($k !== false)
 				{
-					$k = array_search($aux, $arrFiles);				
-					if ($k !== false)
-					{
-						$files[] = $arrFiles[$k];
-						$source[] = $arrSource[$k];
-						$values[] = $arrValues[$k];
-					}
+					$files[] = $arrFiles[$k];
+					$source[] = $arrSource[$k];
+					$values[] = $arrValues[$k];
 				}
-				$arrFiles = $files;
-				$arrSource = $source;
-				$arrValues = $values;
+			}
+			$arrFiles = $files;
+			$arrSource = $source;
+			$arrValues = $values;
+		}
+
 /*
 				$files = $arrImages;
 				break;
