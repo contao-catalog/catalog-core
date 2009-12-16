@@ -2313,6 +2313,7 @@ abstract class ModuleCatalog extends Module
 
 		// required for parseMetaFile function (in FrontEnd)
 		$this->multiSRC = $files;					
+		$this->arrAux = array();
 
 		$arrFiles = array();
 		$arrSource = array();
@@ -2494,6 +2495,51 @@ abstract class ModuleCatalog extends Module
 				}
 			}
 		}
+
+
+/*
+		// Sort array
+		switch ($objGalleries->sortBy)
+		{
+			default:
+			case 'name_asc':
+				array_multisort($images, SORT_ASC, $auxName);
+				break;
+
+			case 'name_desc':
+				array_multisort($images, SORT_DESC, $auxName);
+				break;
+
+			case 'date_asc':
+				array_multisort($images, SORT_NUMERIC, $auxDate, SORT_ASC);
+				break;
+
+			case 'date_desc':
+				array_multisort($images, SORT_NUMERIC, $auxDate, SORT_DESC);
+				break;
+
+			case 'meta':
+*/
+				$files = array();
+				foreach ($this->arrAux as $aux)
+				{
+					$k = array_search($aux, $arrFiles);				
+					if ($k !== false)
+					{
+						$files[] = $arrFiles[$k];
+						$source[] = $arrSource[$k];
+						$values[] = $arrValues[$k];
+					}
+				}
+				$arrFiles = $files;
+				$arrSource = $source;
+				$arrValues = $values;
+/*
+				$files = $arrImages;
+				break;
+		}
+*/
+
 
 		$return['files']	= $arrFiles;
 		$return['src'] 		= $arrSource;
