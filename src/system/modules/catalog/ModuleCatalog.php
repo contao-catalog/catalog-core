@@ -2308,7 +2308,7 @@ abstract class ModuleCatalog extends Module
 		$files = deserialize($files,true);
 		if (!is_array($files) || count($files) < 1)
 		{
-			continue;
+			return array();
 		}	
 
 		// required for parseMetaFile function (in FrontEnd)
