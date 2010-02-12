@@ -3,26 +3,26 @@
 /**
  * TYPOlight webCMS
  *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
+ * The TYPOlight webCMS is an accessible web content management system that
+ * specializes in accessibility and generates W3C-compliant HTML code. It
+ * provides a wide range of functionality to develop professional websites
+ * including a built-in search engine, form generator, file and user manager,
+ * CSS engine, multi-language support and many more. For more information and
+ * additional TYPOlight applications like the TYPOlight MVC Framework please
  * visit the project website http://www.typolight.org.
- * 
+ *
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
  * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
+ * @author		Martin Komara,
  * 				John Brand <john.brand@thyon.com>,
  * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
 
@@ -31,7 +31,7 @@
  * Class ModuleCatalogEdit
  *
  * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
+ * @author		Martin Komara,
  * 				John Brand <john.brand@thyon.com>,
  * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
  * @package		Controller
@@ -89,11 +89,11 @@ class ModuleCatalogEdit extends ModuleCatalog
 	 */
 	protected function compile()
 	{
-	
+
 		global $objPage;
 
 		$this->refererUrl = $this->getReferer(ENCODE_AMPERSANDS);
-		
+
 		$this->Template->catalog = '';
 		$this->Template->referer = $this->refererUrl;
 		$this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
@@ -112,11 +112,11 @@ class ModuleCatalogEdit extends ModuleCatalog
 			// Send 404 header
 			header('HTTP/1.0 404 Not Found');
 			return;
-					
+
 		}
 
 		// check permissions here
-		
+
 
 		// edit existing, else present add new screen
 		$blnModeAdd = false;
@@ -134,10 +134,10 @@ class ModuleCatalogEdit extends ModuleCatalog
 		// id=15
 		// alias='15-some-alias-beginning-with-digits'
 		// somestring='15'
-		// in MySQL this all(!) matches in the original Query here, therefore we have to change it 
+		// in MySQL this all(!) matches in the original Query here, therefore we have to change it
 		// (and in all other modules aswell).
 		// So, if the input is numeric, do id lookup, otherwise do the alias lookup.
-		// Note we are enforcing a "no numeric aliases policy here but we 
+		// Note we are enforcing a "no numeric aliases policy here but we
 		// can live with that as we would get random results anyway.
 		$value=$this->Input->get('items');
 		$objCatalog = false;
@@ -151,14 +151,14 @@ class ModuleCatalogEdit extends ModuleCatalog
 											->execute($value);
 			}
 		}
-	
+
 		// if no item, then check if add allowed and then show add form
 		if (!$objCatalog || $objCatalog->numRows < 1)
 		{
 			$blnModeAdd = true;
 			// Load defaults.
 			$arrValues = array();
-		} 
+		}
 		else
 		{
 			$arrValues = $this->handleOnLoadCallbacks($objCatalog->fetchAssoc());
@@ -198,7 +198,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		}
 
 		//echo "<pre>"; print_r($arrValues); echo "</pre>";
-		
+
 		// Captcha
 		if (!$this->disableCaptcha)
 		{
@@ -231,7 +231,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'];
 		foreach ($this->catalog_edit as $field)
 		{
-			
+
 			$arrData = $fieldConf[$field];
 			// check permissions here
 			if (!is_object($this->User))
@@ -252,7 +252,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				if(!$allow_field)
 					continue;
 			}
-			
+
 			// HOOK: additional permission checks if this field may be edited (for the current user).
 			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$arrData['eval']['catalog']['type']];
 			if(is_array($fieldType) && array_key_exists('checkPermissionFEEdit', $fieldType) && is_array($fieldType['checkPermissionFEEdit']))
@@ -269,25 +269,25 @@ class ModuleCatalogEdit extends ModuleCatalog
 			unset($objWidgetUpload);
 			//$strUpload = '';
 			$inputType = $arrData['inputType'];
-			if ($inputType == 'fileTree') 
+			if ($inputType == 'fileTree')
 			{
 				$inputType = 'upload';
 				$arrData['eval']['mandatory'] = false;
 			}
 
-			if ($inputType == 'tableTree') 
+			if ($inputType == 'tableTree')
 			{
 				// tags
 				if ($arrData['eval']['fieldType'] == 'checkbox')
 				{
-					$inputType = 'checkbox';			
+					$inputType = 'checkbox';
 					$arrData['eval']['multiple'] = true;
 				}
-				
+
 				// select
 				if ($arrData['eval']['fieldType'] == 'radio')
 				{
-					$inputType = 'select';			
+					$inputType = 'select';
 				}
 			}
 
@@ -335,8 +335,8 @@ class ModuleCatalogEdit extends ModuleCatalog
 					} else {
 						$objWidget->uploadFolder = 'tl_files/catalog_' . $this->strTable;
 					}
-					// ensure folder exists. So we create a Folder object which will create the folder if it 
-					// does not exist and unset it immediately again as we do not need it for anything else. 
+					// ensure folder exists. So we create a Folder object which will create the folder if it
+					// does not exist and unset it immediately again as we do not need it for anything else.
 					// Maybe we can find a better solution sometime.
 					$dummyFolder = new Folder($objWidget->uploadFolder);
 					unset($dummyFolder);
@@ -378,7 +378,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 						$varValue = serialize($remaining);
 					else
 						$varValue = $remaining[0];
-					
+
 					// set a flag that this input has changed.
 					$isChangedFileField = ($varValue != $arrValues[$field]);
 				}
@@ -388,7 +388,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 					$objWidget->validate();
 					$varValue = $objWidget->value;
 				}
-					
+
 
 				// Convert date formats into timestamps
 				if (strlen($varValue) && in_array($arrData['eval']['rgxp'], array('date', 'time', 'datim')))
@@ -434,14 +434,14 @@ class ModuleCatalogEdit extends ModuleCatalog
 					$arrItem[$field] = $varValue;
 				}
 			} // end: if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_items')
-			elseif (!$blnModeAdd) 
+			elseif (!$blnModeAdd)
 			{
 				// if in editing mode from here on, we have to restrict some values and correct the output.
 				$objWidget->value = $arrValues[$field];
 
 				if ($arrData['eval']['catalog']['type'] == 'checkbox' && count($objWidget->options) == 1)
 				{
-					$objWidget->label = '';	
+					$objWidget->label = '';
 				}
 
 				if ($arrData['eval']['catalog']['type'] == 'tags')
@@ -531,13 +531,24 @@ class ModuleCatalogEdit extends ModuleCatalog
 		// Create new entry or update the old one if there are no errors
 		if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_items' && !$doNotSubmit)
 		{
+			// Preferring the fields aliasTitle over the catalog titleField
+			$aliasTitle = $objCatalogType->titleField;
+			if (strlen($objCatalogType->aliasField))
+			{
+				$objCatalogAliasField = $this->Database->prepare("SELECT aliasTitle FROM tl_catalog_fields WHERE tl_catalog_fields.pid=? AND tl_catalog_fields.colName=?")
+										->execute($this->catalog,$objCatalogType->aliasField);
+				if ($objCatalogAliasField->numRows && strlen($objCatalogAliasField->aliasTitle)) {
+					$aliasTitle = $objCatalogAliasField->aliasTitle;
+				}
+			}
+
 			if ($blnModeAdd)
 			{
-				$this->itemInsert($arrItem, $objCatalogType->titleField, $objCatalogType->aliasField);
-			} 
-			else 
+				$this->itemInsert($arrItem, $aliasTitle, $objCatalogType->aliasField);
+			}
+			else
 			{
-				$this->itemUpdate($arrItem, $arrValues['id'], $objCatalogType->titleField, $objCatalogType->aliasField);
+				$this->itemUpdate($arrItem, $arrValues['id'], $aliasTitle, $objCatalogType->aliasField);
 			}
 		}
 
@@ -560,7 +571,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 			{
 				$GLOBALS['TL_RTE']['type'] = 'tinyFrontend';
 			}
-			
+
 			$strFile = sprintf('%s/system/config/%s.php', TL_ROOT, $GLOBALS['TL_RTE']['type']);
 
 			if (!file_exists($strFile))
@@ -584,7 +595,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		if($doNotSubmit)
 			$this->Template->error = $GLOBALS['TL_LANG']['ERR']['general'];
 		$this->Template->form = $objTemplate->parse();
-	
+
 	}
 
 	/**
@@ -595,6 +606,12 @@ class ModuleCatalogEdit extends ModuleCatalog
 	 */
 	public function generateAlias(&$arrData, $id, $aliasTitle, $aliasCol)
 	{
+		// without an aliasCol there is no need for generating an alias
+		if (!strlen($aliasCol))
+		{
+			return;
+		}
+
 		$autoAlias = false;
 
 		// Generate alias if there is none
@@ -639,7 +656,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		if ($fieldId)
 		{
 				$this->Database->prepare("DELETE FROM tl_catalog_rel WHERE item_id=? AND field_id=?")->execute($id, $fieldId);
-				
+
 				foreach ($options as $option)
 				{
 						$this->Database->prepare("INSERT INTO tl_catalog_rel %s")
@@ -647,7 +664,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 								->execute();
 				}
 		}
-		
+
 		return join(',', $options);
 	}
 */
@@ -657,12 +674,12 @@ class ModuleCatalogEdit extends ModuleCatalog
 	{
 		return join(',', deserialize($varValue, true));
 	}
-	
+
 	private function loadTags($varValue)
 	{
 		return split(',', $varValue);
 	}
-    
+
 
 	private function handleOnLoadCallbacks($arrData)
 	{
@@ -722,6 +739,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$arrData=$this->handleOnSaveCallbacks($arrData);
 		$arrData['tstamp'] = time();
 		$this->generateAlias($arrData, $id, $aliasTitle, $aliasCol);
+
 		// Update item
 		$objUpdatedItem = $this->Database->prepare("UPDATE ".$this->strTable." %s WHERE id=?")
 				->set($arrData)
@@ -740,7 +758,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				$this->$callback[0]->$callback[1]($arrData);
 			}
 		}
-		
+
 		// check which submit method was used and redirect then.
 		if($this->Input->post('save'))
 		{
