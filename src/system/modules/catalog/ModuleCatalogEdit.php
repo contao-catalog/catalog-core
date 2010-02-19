@@ -483,7 +483,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				window.addEvent(\'domready\', function() { ' . sprintf($this->getDatePickerString(), 'ctrl_' . $objWidget->id) . ' });
 				//--><!]]></script>';
 				// files moved in 2.8 RC1
-				if(version_compare('2.8', VERSION, '<'))
+				if(version_compare('2.8', VERSION.'.'.BUILD, '<'))
 				{
 					$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/calendar.js" type="text/javascript"></script>';
 					$GLOBALS['TL_CSS'][] = 'plugins/calendar/calendar.css';
