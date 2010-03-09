@@ -48,6 +48,12 @@ abstract class ModuleCatalog extends Module
 	protected	$strTable;
 
 	/**
+	 * Name of the alias field
+	 * @var string
+	 */
+	protected	$strAliasField;
+
+	/**
 	 * Search String
 	 * @var string
 	 */
@@ -81,13 +87,14 @@ abstract class ModuleCatalog extends Module
 		}
 
 		// get DCA
-		$objCatalog = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE id=?")
+		$objCatalog = $this->Database->prepare("SELECT tableName, aliasField FROM tl_catalog_types WHERE id=?")
 				->limit(1)
 				->execute($this->catalog);
 		
 		if ($objCatalog->numRows > 0 && $objCatalog->tableName)
 		{
 			$this->strTable = $objCatalog->tableName;
+			$this->strAliasField=$objCatalog->aliasField;
 
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');

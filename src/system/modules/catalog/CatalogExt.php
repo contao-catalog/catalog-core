@@ -240,7 +240,7 @@ class CatalogExt extends Frontend
 	 * gets called by hook to prevent RSS feeds from deletion by cronjob
 	 * @return array
 	 */
-	public function removeOldFeeds()
+	public function removeOldFeedsHOOK()
 	{
 		$objCatalog = $this->Database->prepare("SELECT id, alias FROM tl_catalog_types WHERE makeFeed=?")
 									  ->limit(1)

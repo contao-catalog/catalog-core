@@ -201,7 +201,7 @@ $GLOBALS['TL_HOOKS']['getSearchablePages'][] = array('CatalogExt', 'getSearchabl
 /**
  * Register hook to preserve feeds 
  */
-$GLOBALS['TL_HOOKS']['removeOldFeeds'][] = array('CatalogExt', 'removeOldFeeds');
+$GLOBALS['TL_HOOKS']['removeOldFeeds'][] = array('CatalogExt', 'removeOldFeedsHOOK');
 
 /**
  * Register hook to add rss feeds to the layout

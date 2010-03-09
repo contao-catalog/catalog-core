@@ -146,8 +146,8 @@ class ModuleCatalogList extends ModuleCatalog
 	
 			$strCondition = $this->replaceInsertTags($this->catalog_where);
 			$strWhere = (strlen($strCondition) ? " AND ".$strCondition : "")
-				.($filterurl['procedure']['where'] ? " AND ".join(" ".$this->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
-				.($filterurl['procedure']['tags'] ? " AND ".join(" ".$this->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
+				.($filterurl['procedure']['where'] ? " AND ".implode(" ".$this->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
+				.($filterurl['procedure']['tags'] ? " AND ".implode(" ".$this->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
 		
 			$strOrder = (strlen($filterurl['procedure']['orderby']) ? $filterurl['procedure']['orderby'] : trim($this->catalog_order));
 
@@ -185,9 +185,12 @@ class ModuleCatalogList extends ModuleCatalog
 			}
 
 			$arrQuery = $this->processFieldSQL($this->catalog_visible);
-	
+			if($this->strAliasField)
+				$arrQuery[] = $this->strAliasField;
 			// Run Query
-			$objCatalogStmt = $this->Database->prepare("SELECT ".join(',',$this->systemColumns).",".join(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=?".$strWhere.(strlen($strOrder) ? " ORDER BY ".$strOrder : "")); 
+			$objCatalogStmt = $this->Database->prepare("SELECT ".implode(',',$this->systemColumns).",".implode(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=?".$strWhere.(strlen($strOrder) ? " ORDER BY ".$strOrder : "")); 
+$GLOBALS['TL_DEBUG']['Query']=$objCatalogStmt;
+
 			
 			// add filter and order later
 
@@ -218,7 +221,7 @@ class ModuleCatalogList extends ModuleCatalog
 			$objTemplate = new FrontendTemplate($this->catalog_template);
 			$objTemplate->entries = array();
 			$objTemplate->catalog_condition = $labels;
-			$objTemplate->condition = sprintf($GLOBALS['TL_LANG']['MSC']['catalogCondition'], join(', ',$labels));
+			$objTemplate->condition = sprintf($GLOBALS['TL_LANG']['MSC']['catalogCondition'], implode(', ',$labels));
 			$this->Template->catalog = $objTemplate->parse();
 
 		}
