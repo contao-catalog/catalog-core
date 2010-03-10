@@ -231,7 +231,7 @@ class DC_CatalogCommentTable extends DC_Table
 			{
 				$subsql[]="(NOT EXISTS (SELECT * FROM " . $ptable . " WHERE " . $this->strTable . ".pid = " . $ptable . ".id))";
 			}
-			$objStmt = $this->Database->execute("DELETE FROM " . $this->strTable . " WHERE " . join(" AND ", $subsql));
+			$objStmt = $this->Database->execute("DELETE FROM " . $this->strTable . " WHERE " . implode(" AND ", $subsql));
 
 			if ($objStmt->affectedRows > 0)
 			{

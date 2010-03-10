@@ -703,7 +703,7 @@ class tl_catalog_fields extends Backend
 		
 		$pid = $objField->pid;
 		
-		$objFields = $this->Database->prepare("SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND id != ? AND type IN ('".join("','", $type)."')")
+		$objFields = $this->Database->prepare("SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND id != ? AND type IN ('".implode("','", $type)."')")
 				->execute($pid, $dc->id);
 		 
 		$result = array();
@@ -754,7 +754,7 @@ class tl_catalog_fields extends Backend
 		$arrAlias = $this->getAliasFields($dc);
 		if ($varValue == 'alias' && count($arrAlias))
 		{
-			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasDuplicate'],join(', ', array_keys($arrAlias))));
+			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasDuplicate'],implode(', ', array_keys($arrAlias))));
 		}
 		return $varValue;
 	}

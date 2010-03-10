@@ -557,7 +557,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$objTemplate = new FrontendTemplate($this->catalog_template);
 		$objTemplate->enctype = $hasUpload ? 'multipart/form-data' : 'application/x-www-form-urlencoded';
 
-		$objTemplate->field = join('',$arrFields);
+		$objTemplate->field = implode('',$arrFields);
 		$objTemplate->formId = 'tl_catalog_items';
 		$objTemplate->action = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 
@@ -672,12 +672,12 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 	private function saveTags($varValue)
 	{
-		return join(',', deserialize($varValue, true));
+		return implode(',', deserialize($varValue, true));
 	}
 
 	private function loadTags($varValue)
 	{
-		return split(',', $varValue);
+		return explode(',', $varValue);
 	}
 
 

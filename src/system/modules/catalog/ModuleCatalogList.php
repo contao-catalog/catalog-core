@@ -129,7 +129,7 @@ class ModuleCatalogList extends ModuleCatalog
 					}
 				}
 
-				$filterurl['procedure']['where'][] = ' ('.join(" OR ", $searchProcedure).')';
+				$filterurl['procedure']['where'][] = ' ('.implode(" OR ", $searchProcedure).')';
 				$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
 
 			}

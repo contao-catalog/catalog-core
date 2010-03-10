@@ -255,7 +255,7 @@ class CatalogExt extends Frontend
 		{
 			$tmp[]=strlen($objCatalog->alias) ? $objCatalog->alias : 'catalog' . $objCatalog->id;
 		}
-		$this->log('Protected catalog feeds ' . join(', ', $tmp) . ' from deletion"', 'Catalog removeOldFeeds()', TL_CRON);
+		$this->log('Protected catalog feeds ' . implode(', ', $tmp) . ' from deletion"', 'Catalog removeOldFeeds()', TL_CRON);
 		return $tmp;
 	}
 

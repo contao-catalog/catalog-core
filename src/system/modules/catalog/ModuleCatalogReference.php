@@ -151,7 +151,7 @@ class ModuleCatalogReference extends ModuleCatalog
 			{
 				if ($fieldRef == 'tags')
 				{
-					$arrRef = split(',', $valueRef);
+					$arrRef = explode(',', $valueRef);
 					foreach ($arrRef as $value)
 					{
 						if (trim($value)) 
@@ -176,7 +176,7 @@ class ModuleCatalogReference extends ModuleCatalog
 			}
 			
 			// convert to string
-			$strReference = join(' OR ', $strReference);
+			$strReference = implode(' OR ', $strReference);
 
 
 			$arrQuery = $this->processFieldSQL($this->catalog_visible);		
@@ -187,7 +187,7 @@ class ModuleCatalogReference extends ModuleCatalog
 			}
 
 			// Run Query
-			$objCatalogStmt = $this->Database->prepare("SELECT ".join(',',$this->systemColumns).",".join(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=? ".($strReference ? " AND ".$strReference : "").($strWhere ? " AND ".$strWhere : "").(strlen($strOrder) ? " ORDER BY ".$strOrder : ""));
+			$objCatalogStmt = $this->Database->prepare("SELECT ".implode(',',$this->systemColumns).",".implode(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=? ".($strReference ? " AND ".$strReference : "").($strWhere ? " AND ".$strWhere : "").(strlen($strOrder) ? " ORDER BY ".$strOrder : ""));
 
 		
 			if ($limit > 0)

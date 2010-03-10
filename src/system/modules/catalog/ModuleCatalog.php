@@ -173,7 +173,7 @@ abstract class ModuleCatalog extends Module
 		if(!$arrTypes)
 			$arrTypes=$GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
 		$fields = array();
-		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? AND type IN ('" . join("','", $arrTypes) . "') ORDER BY sorting")
+		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? AND type IN ('" . implode("','", $arrTypes) . "') ORDER BY sorting")
 							->execute($this->catalog);
 
 		while ($objFields->next())
@@ -282,13 +282,13 @@ abstract class ModuleCatalog extends Module
 							switch ($fieldConf['eval']['catalog']['type'])
 							{
 								case 'tags':
-									$tags = split(',', $v);
+									$tags = explode(',', $v);
 									$newtags = array();
 									foreach($tags as $tag)
 									{
 										$newtags[] = $arrAlias[$tag];
 									}
-									$v = join(',', $newtags);
+									$v = implode(',', $newtags);
 									break;
 									
 								case 'select':
@@ -401,7 +401,7 @@ abstract class ModuleCatalog extends Module
 									$tmpDate[] = "CAST(".$function."(FROM_UNIXTIME(".$field.")) AS CHAR) LIKE ?";
 									$values['search'][$field][] = '%'.$this->Input->get($this->strSearch).'%';
 								}
-								$procedure['search'][$field] = '('.join(' OR ',$tmpDate).')';
+								$procedure['search'][$field] = '('.implode(' OR ',$tmpDate).')';
 							}
 							
 							break;
@@ -418,14 +418,14 @@ abstract class ModuleCatalog extends Module
 
 					case 'select' :
 							list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-							$procedure['search'][$field] = "(".$field." IN (SELECT id FROM ".$itemTable." WHERE ".$valueCol." LIKE ?".($fieldConf['options']? " AND id IN (".join(',',array_keys($fieldConf['options'])).")":"")."))";
+							$procedure['search'][$field] = "(".$field." IN (SELECT id FROM ".$itemTable." WHERE ".$valueCol." LIKE ?".($fieldConf['options']? " AND id IN (".implode(',',array_keys($fieldConf['options'])).")":"")."))";
 							$values['search'][$field] = '%'.$this->Input->get($this->strSearch).'%';
 							break;
 								
 					case 'tags' :
 
 							list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-							$tagQuery = $this->Database->prepare("SELECT id FROM ".$itemTable." WHERE ".$valueCol." LIKE ?".($fieldConf['options']? " AND id IN (".join(',',array_keys($fieldConf['options'])).")":""))
+							$tagQuery = $this->Database->prepare("SELECT id FROM ".$itemTable." WHERE ".$valueCol." LIKE ?".($fieldConf['options']? " AND id IN (".implode(',',array_keys($fieldConf['options'])).")":""))
 									->execute('%'.$this->Input->get($this->strSearch).'%');
 
 							// search only if search string in tag namelist
@@ -437,7 +437,7 @@ abstract class ModuleCatalog extends Module
 									$tmpTags[] = "FIND_IN_SET(?,".$field.")";
 									$values['search'][$field][] = $tagQuery->id;
 								}
-								$procedure['search'][$field] = '('.join(' + ',$tmpTags).' > 0)';
+								$procedure['search'][$field] = '('.implode(' + ',$tmpTags).' > 0)';
 							}
 
 							break;
@@ -509,7 +509,7 @@ abstract class ModuleCatalog extends Module
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'tags':					
-						$tags = split(',', $current[$field]);
+						$tags = explode(',', $current[$field]);
 
 						$tmpTags = array();
 						foreach ($tags as $tag)
@@ -517,11 +517,11 @@ abstract class ModuleCatalog extends Module
 							$tmpTags[] = "FIND_IN_SET(?,".$field.")";
 							$values['tags'][] = $tag;
 						}
-						$procedure['tags'][] = '('.join(($this->catalog_tags_mode == 'AND' ? ' * ' : ' + '),$tmpTags).' > 0)';
+						$procedure['tags'][] = '('.implode(($this->catalog_tags_mode == 'AND' ? ' * ' : ' + '),$tmpTags).' > 0)';
 
 						if ($blnTree && in_array($field, $arrTree)) 
 						{
-							$procedure['tree'][] = '('.join(($this->catalog_tags_mode == 'AND' ? ' * ' : ' + '),$tmpTags).' > 0)';
+							$procedure['tree'][] = '('.implode(($this->catalog_tags_mode == 'AND' ? ' * ' : ' + '),$tmpTags).' > 0)';
 						}
 						break;
 
@@ -670,7 +670,7 @@ abstract class ModuleCatalog extends Module
 		
 		// get existing alias values of options in DB
 		$objList = $this->Database->prepare("SELECT id,".$aliasField." FROM ".$itemTable . 
-						($fieldConf['options'] ? " WHERE id IN (".join(',',array_keys($fieldConf['options'])).")":""))
+						($fieldConf['options'] ? " WHERE id IN (".implode(',',array_keys($fieldConf['options'])).")":""))
 				->execute();
 		
 		$return = array();
@@ -712,13 +712,13 @@ abstract class ModuleCatalog extends Module
 					switch ($fieldConf['eval']['catalog']['type'])
 					{
 						case 'tags':
-							$tags = split(',', $v);
+							$tags = explode(',', $v);
 							$newtags = array();
 							foreach($tags as $tag)
 							{
 								$newtags[] = $arrAlias[$tag];
 							}
-							$v = join(',', $newtags);
+							$v = implode(',', $newtags);
 							break;
 							
 						case 'select':
@@ -771,7 +771,7 @@ abstract class ModuleCatalog extends Module
 			}
 		}
 		return array (
-			'query' => (is_array($query) ? join(' AND ', $query) : ''),
+			'query' => (is_array($query) ? implode(' AND ', $query) : ''),
 			'params' => (is_array($params) ? $params : array()),
 		);
 	}
@@ -889,7 +889,7 @@ abstract class ModuleCatalog extends Module
 						if(($this instanceof ModuleCatalogFilter) && $this->catalog_filter_cond_from_lister)
 						{
 							$ids=$this->getModulesForThisPage();
-							$objModules = $this->Database->prepare("SELECT * FROM tl_module WHERE id IN (" . join(', ', $ids) . ") AND type='cataloglist'")
+							$objModules = $this->Database->prepare("SELECT * FROM tl_module WHERE id IN (" . implode(', ', $ids) . ") AND type='cataloglist'")
 									->execute();
 							while($objModules->next())
 							{
@@ -919,7 +919,7 @@ abstract class ModuleCatalog extends Module
 											}
 										}
 									}
-									$filterurl['procedure']['where'][] = ' ('.join(" OR ", $searchProcedure).')';
+									$filterurl['procedure']['where'][] = ' ('.implode(" OR ", $searchProcedure).')';
 									$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
 								}
 								if(is_array($filterurl['procedure']['where']))
@@ -1063,11 +1063,11 @@ abstract class ModuleCatalog extends Module
 							{
 								if ($row[$field.$id])
 								{
-									$selected = in_array($id, split(',',$current[$field]));
+									$selected = in_array($id, explode(',',$current[$field]));
 									$newcurrent = $current;
-									$newids = strlen($current[$field]) ? split(',', $current[$field]) : array();
+									$newids = strlen($current[$field]) ? explode(',', $current[$field]) : array();
 									$newids = array_unique(!$selected ? array_merge($newids, array($id)) : array_diff($newids, array($id)));
-									$newcurrent[$field] = ($this->catalog_tags_multi ? join(',',$newids) : $id);
+									$newcurrent[$field] = ($this->catalog_tags_multi ? implode(',',$newids) : $id);
 									$this->clearTree($field, $newcurrent, $tree);
 									$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
 									
@@ -1156,7 +1156,7 @@ abstract class ModuleCatalog extends Module
 										break;
 
 									case 'file':
-										$label = join(',',deserialize($row[$field],true));
+										$label = implode(',',deserialize($row[$field],true));
 										$row[$field] = urlencode(urlencode($row[$field]));
 										break;
 
@@ -1831,13 +1831,13 @@ abstract class ModuleCatalog extends Module
 					$arrAlias = $this->getAliasOptionList($fieldConf);
 					if ($fieldConf['eval']['catalog']['type'] == 'tags')
 					{
-						$tags = split(',', $v);
+						$tags = explode(',', $v);
 						$newtags = array();
 						foreach($tags as $tag)
 						{
 							$newtags[] = $arrAlias[$tag];
 						}
-						$v = join(',', $newtags);
+						$v = implode(',', $newtags);
 					}
 					else
 					{
@@ -2180,7 +2180,7 @@ abstract class ModuleCatalog extends Module
 					$arrItems = trimsplit(',',$raw);
 					$selectedValues = array_intersect_key($fieldConf['options'], array_flip($arrItems));
 					$arrValues = $selectedValues;
-					$strHtml = join(', ', $arrValues);
+					$strHtml = implode(', ', $arrValues);
 				}
 				break;
 
@@ -2188,7 +2188,7 @@ abstract class ModuleCatalog extends Module
 				$files = $this->parseFiles($id, $k, $raw);
 				$arrItems = $files['files'];
 				$arrValues = $files['src'];
-				$strHtml = join('', $files['html']);
+				$strHtml = implode('', $files['html']);
 				break;
 
 
@@ -2811,7 +2811,7 @@ abstract class ModuleCatalog extends Module
 		$sort = $this->Database->fieldExists('sorting', $sourceTable) ? 'sorting' : $sourceColumn;
 		if ($treeView)
 		{
-			$objNodes = $this->Database->prepare("SELECT id, ".$valueField.", (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " AS name FROM ". $sourceTable. " o WHERE ".$strRoot." IN (".join(',',$ids).") ORDER BY ". $sort)
+			$objNodes = $this->Database->prepare("SELECT id, ".$valueField.", (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " AS name FROM ". $sourceTable. " o WHERE ".$strRoot." IN (".implode(',',$ids).") ORDER BY ". $sort)
 									 ->execute();
 		}
 		

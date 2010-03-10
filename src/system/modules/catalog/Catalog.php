@@ -622,7 +622,7 @@ class Catalog extends Backend
 			return '';
 		}
 
-		return join(',', $options);
+		return implode(',', $options);
 		
 	}
 	
@@ -639,7 +639,7 @@ class Catalog extends Backend
 		}
 		if (count($valueList))
 		{
-			$GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['eval']['title'] =  join(', ',$valueList);
+			$GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['eval']['title'] =  implode(', ',$valueList);
 		}
 		return serialize($values);
 	}
@@ -867,7 +867,7 @@ class Catalog extends Backend
 						{
 							$arrTags[] = $fieldConf['options'][$tag];
 						}
-						$value = join(', ', $arrTags);
+						$value = implode(', ', $arrTags);
 						break;
 
 				case 'checkbox':
@@ -1394,10 +1394,10 @@ class Catalog extends Backend
 				}
 				else
 				{
-					$arrWhere['items'] = ($blnItems ? 'id' : 'pid')." IN (" . join(',', $ids) . ")";
+					$arrWhere['items'] = ($blnItems ? 'id' : 'pid')." IN (" . implode(',', $ids) . ")";
 				}
 				
-				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? join(' AND ', $arrWhere) : '';
+				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? implode(' AND ', $arrWhere) : '';
 
 				$objNodes = $this->Database->prepare("SELECT id, (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " FROM ". $sourceTable. " o WHERE ".$strWhere." ORDER BY ". $sort)
 										 ->execute();
@@ -1405,7 +1405,7 @@ class Catalog extends Backend
 			
 			if (!$treeView || ($treeView && $objNodes->numRows == 0 && $level == 0))
 			{
-				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? ' WHERE '. join(' AND ', $arrWhere) : '';
+				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? ' WHERE '. implode(' AND ', $arrWhere) : '';
 
 				$objNodes = $this->Database->execute("SELECT id, 0 AS childCount, ". $sourceColumn ." FROM ". $sourceTable . $strWhere . " ORDER BY ".$sort);
 			}
@@ -1533,7 +1533,7 @@ class Catalog extends Backend
 
 		// get records
 		$arrExport = array();
-		$objRow = $this->Database->prepare("SELECT ". join(', ', $arrFields) ." FROM ".$objCatalog->tableName." WHERE pid=?")
+		$objRow = $this->Database->prepare("SELECT ". implode(', ', $arrFields) ." FROM ".$objCatalog->tableName." WHERE pid=?")
 					->execute($objCatalog->id);
 
 		if ($objRow->numRows)
@@ -1552,11 +1552,11 @@ class Catalog extends Backend
 		header('Expires: 0');
 
 		$output = '';
-		$output .= '"'.join('","', array_keys($arrExport[0])).'"'. "\n" ;
+		$output .= '"'.implode('","', array_keys($arrExport[0])).'"'. "\n" ;
 
 		foreach ($arrExport as $export) 
 		{
-			$output .= '"' . join('"'.$GLOBALS['TL_CONFIG']['catalog']['csvDelimiter'].'"', str_replace("\"", "\"\"", $export)).'"' . "\n";
+			$output .= '"' . implode('"'.$GLOBALS['TL_CONFIG']['catalog']['csvDelimiter'].'"', str_replace("\"", "\"\"", $export)).'"' . "\n";
 		}
 
 		echo $output;
@@ -1706,7 +1706,7 @@ class Catalog extends Backend
 			// keep fetching a line from the file until end of file
 			while ($row = fgetcsv($csvFile, 4096, $strSeparator)) 
 			{
-				$objRow = $this->Database->prepare("REPLACE INTO ".$objCatalog->tableName." (pid, tstamp, ".join(',',$headerRow).") VALUES (?,?".str_repeat(',?', $headercount).")")
+				$objRow = $this->Database->prepare("REPLACE INTO ".$objCatalog->tableName." (pid, tstamp, ".implode(',',$headerRow).") VALUES (?,?".str_repeat(',?', $headercount).")")
 													->execute(array_merge(array($this->Input->get('id'), time()), $row));
 
 				$addcount ++;

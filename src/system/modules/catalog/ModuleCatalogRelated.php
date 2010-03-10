@@ -106,26 +106,19 @@ class ModuleCatalogRelated extends ModuleCatalog
 
 			foreach($this->catalog_related as $related)
 			{
-				//if tags split into multiple FIND_IN_SET();
-				// optimized by c.schiffler, we want to have matching on all tags instead of only one match to have a relation.
+				// if tags split into multiple FIND_IN_SET();
+				// we want to have matching on all tags instead of only one match to have a relation.
 				switch ($fieldConf[$related]['eval']['catalog']['type'])
 				{
 					case 'tags':
-						$tags = split(',', $objCatalog->$related);
+						$tags = explode(',', $objCatalog->$related);
 						$tmpRelated = array();
-/*						foreach ($tags as $tag)
-						{
-							$tmpRelated[] = 'FIND_IN_SET(?,'.$related.')>0';
-							$arrRelated[] = $tag;
-						}
-						$strRelated[] = '('.join(' OR ', $tmpRelated).')';
-*/
 						foreach ($tags as $tag)
 						{
 							$tmpRelated[] = '(FIND_IN_SET(?,'.$related.')>0)';
 							$arrRelated[] = $tag;
 						}
-						$strRelated[] = '(('.join('+', $tmpRelated).')>=' . $this->catalog_related_tagcount . ')';
+						$strRelated[] = '(('.implode('+', $tmpRelated).')>=' . $this->catalog_related_tagcount . ')';
 						break;
 
 					default:
