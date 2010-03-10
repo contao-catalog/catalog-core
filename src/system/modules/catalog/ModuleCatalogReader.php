@@ -123,7 +123,7 @@ class ModuleCatalogReader extends ModuleCatalog
 		$strAlias = $objCatalogType->aliasField ? $objCatalogType->aliasField : (is_numeric($value) ? "id" : '');
 		if(strlen($strAlias))
 		{
-			$objCatalog = $this->Database->prepare("SELECT ".join(',',$this->systemColumns).",".join(',',$arrConverted).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE " . $strAlias . "=?")
+			$objCatalog = $this->Database->prepare('SELECT '.implode(',',$this->systemColumns).','.implode(',',$arrConverted).', (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : ''). $strAlias . '=?')
 										->limit(1)
 										->execute($value);
 		}

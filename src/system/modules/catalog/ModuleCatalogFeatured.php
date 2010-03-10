@@ -83,8 +83,10 @@ class ModuleCatalogFeatured extends ModuleCatalog
 		$limit = is_numeric($this->catalog_limit)? $this->catalog_limit : 0;
 	
 		$strWhere = trim($this->replaceInsertTags($this->catalog_where));
-		// Bugfix c.schiffler. The name is catalog_order not list_sort :(
-		// $strOrder = ($this->catalog_random_disable) ? trim($this->list_sort) : "RAND()";
+		if(!BE_USER_LOGGED_IN && $this->publishField)
+		{
+			$strWhere .= (strlen($strWhere)?' AND ':'').$this->publishField.'=1';
+		}
 		$strOrder = ($this->catalog_random_disable) ? trim($this->catalog_order) : "RAND()";
 
 

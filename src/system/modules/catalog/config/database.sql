@@ -27,6 +27,7 @@ CREATE TABLE `tl_catalog_types` (
 
   `jumpTo` smallint(5) unsigned NOT NULL default '0',
   `aliasField` varchar(64) NOT NULL default '',
+  `publishField` varchar(64) NOT NULL default '',
 
   `import` char(1) NOT NULL default '',
   `importAdmin` char(1) NOT NULL default '',

@@ -130,7 +130,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 	'palettes' => array
 	(
 		'__selector__'		=> array('addImage', 'import', 'searchable', 'allowComments', 'makeFeed'),
-		'default'					=> '{title_legend},name,tableName,aliasField,jumpTo;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed',
+		'default'					=> '{title_legend},name,tableName,aliasField,publishField,jumpTo;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed',
 	),
 
 	// Subpalettes
@@ -215,6 +215,15 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'exclude'                 => true,
 			'inputType'               => 'select',
 			'options_callback'        => array('tl_catalog_types', 'getAliasFields'),
+			'eval'                    => array('mandatory' => false, 'includeBlankOption' => true),
+			'doNotCopy'               => true,
+		),
+		'publishField' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['publishField'],
+			'exclude'                 => true,
+			'inputType'               => 'select',
+			'options_callback'        => array('tl_catalog_types', 'getCheckBoxFields'),
 			'eval'                    => array('mandatory' => false, 'includeBlankOption' => true),
 			'doNotCopy'               => true,
 		),
@@ -453,8 +462,6 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 
 class tl_catalog_types extends Backend
 {
-
-
 	/**
 	 * Check if old split Catalog, then call auto-upgrade
 	 */
@@ -468,7 +475,6 @@ class tl_catalog_types extends Backend
 			$this->CatalogUpgrade->checkUpgrade();
 		}
 	}
-
 
 	/**
 	 * Check permissions to edit table tl_catalog_types
@@ -528,8 +534,6 @@ class tl_catalog_types extends Backend
 		}
 	}
 
-
-
   public function getRowLabel($row, $label, $dc)
   {
 		// add image
@@ -568,7 +572,6 @@ class tl_catalog_types extends Backend
 		return '<a href="'.$this->addToUrl($href.'&amp;id='.$row['id']).'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
 	}
 
-
 	/**
 	 * Return the delete archive button
 	 * @param array
@@ -585,7 +588,6 @@ class tl_catalog_types extends Backend
 		{
 			return '';
 		}
-
 		return '<a href="'.$this->addToUrl($href.'&amp;id='.$row['id']).'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
 	}
 	
@@ -648,41 +650,33 @@ class tl_catalog_types extends Backend
 		}
 	}
    
-
 	public function getAliasFields(DataContainer $dc)
 	{
-
 		$objFields = $this->Database->prepare("SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND (type=? OR uniqueItem=?)")
 				->execute($dc->id, 'alias', 1);
-
-		 
 		$result = array();
 		while ($objFields->next())
 		{
 			$result[$objFields->colName] = $objFields->name;
 		}
-		
 		return $result;
 	}
 
 	public function getTitleFields(DataContainer $dc)
 	{
-
 		$objFields = $this->Database->prepare("SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND type=? AND titleField=?")
 				->execute($dc->id, 'text', 1);
-		 
 		$result = array();
 		while ($objFields->next())
 		{
 			$result[$objFields->colName] = $objFields->name;
 		}
-		
 		return $result;
 	}
 
 	public function getRSSFields(DataContainer $dc)
 	{
-		$rssfieldtypes = join(',', $GLOBALS['BE_MOD']['content']['catalog']['typesRSSFields']);
+		$rssfieldtypes = implode(',', $GLOBALS['BE_MOD']['content']['catalog']['typesRSSFields']);
 		$objFields = $this->Database->prepare('SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND (FIND_IN_SET(type,"' . $rssfieldtypes . '")>0)')
 				->execute($dc->id);
 		$result = array();
@@ -696,6 +690,18 @@ class tl_catalog_types extends Backend
 	public function getDateFields(DataContainer $dc)
 	{
 		$objFields = $this->Database->prepare('SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND type="date"')
+				->execute($dc->id);
+		$result = array();
+		while ($objFields->next())
+		{
+			$result[$objFields->colName] = $objFields->name;
+		}
+		return $result;
+	}
+
+	public function getCheckBoxFields(DataContainer $dc)
+	{
+		$objFields = $this->Database->prepare('SELECT name, colName FROM tl_catalog_fields WHERE pid=? AND type="checkbox"')
 				->execute($dc->id);
 		$result = array();
 		while ($objFields->next())

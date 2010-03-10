@@ -139,18 +139,17 @@ class Catalog extends Backend
  */
 
 	protected $systemColumns = array('id', 'pid', 'sorting', 'tstamp');
-	
-	protected $renameColumnStatement = "ALTER TABLE %s CHANGE COLUMN %s %s %s";
-	
-	protected $createColumnStatement = "ALTER TABLE %s ADD %s %s";
-	
-	protected $dropColumnStatement = "ALTER TABLE %s DROP COLUMN %s";
-	
 
+	protected $renameColumnStatement = "ALTER TABLE %s CHANGE COLUMN %s %s %s";
+
+	protected $createColumnStatement = "ALTER TABLE %s ADD %s %s";
+
+	protected $dropColumnStatement = "ALTER TABLE %s DROP COLUMN %s";
+
+	protected $publishField = '';
 
 	protected function checkCatalogFields($pid, $newTableName)
 	{
-	
 		$objFields = $this->Database->prepare("SELECT t.tableName, t.id, f.type, f.colName FROM tl_catalog_fields f INNER JOIN tl_catalog_types t ON f.pid=t.id WHERE t.id=? ORDER BY sorting")
 			->execute($pid);
 			
@@ -1000,6 +999,25 @@ class Catalog extends Backend
 			}
 		}
 
+		if($objCatalog->publishField && version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
+		{
+			$this->publishField=$objCatalog->publishField;
+			array_insert($dca['list']['operations'], 0, array('toggle' => array
+						(
+						'label'               => &$GLOBALS['TL_LANG']['tl_catalog_items']['toggle'],
+						'icon'                => 'visible.gif',
+						'attributes'          => 'onclick="Backend.getScrollOffset(); return AjaxRequest.toggleVisibility(this, %s);"',
+						'button_callback'     => array('Catalog', 'toggleIcon')
+						))
+					);
+			if($this->Input->post('action')=='toggleVisibility')
+			{
+				// Update database
+				$this->Database->prepare('UPDATE '.$objCatalog->tableName.' SET ' . $this->publishField . '=? WHERE id=?')
+							   ->execute($this->Input->post('state'), $this->Input->post('id'));
+				exit;
+			}
+		}
 
 		while ($objFields->next())
 		{
@@ -1763,7 +1781,30 @@ class Catalog extends Backend
 </form>';
 	}   
 
-	
+	/**
+	 * Return the "toggle visibility" button
+	 * @param array
+	 * @param string
+	 * @param string
+	 * @param string
+	 * @param string
+	 * @param string
+	 * @return string
+	 */
+	public function toggleIcon($row, $href, $label, $title, $icon, $attributes)
+	{
+		if(!$this->publishField)
+		{
+			return;
+		}
+		$GLOBALS['TL_DEBUG']['info'][]=$row;
+		$href .= '&amp;tid='.$row['id'].'&amp;state='.($row[$this->publishField] ? '0' : '1');
+		if (!$row[$this->publishField])
+		{
+			$icon = 'invisible.gif';
+		}		
+		return '<a href="'.$this->addToUrl($href).'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
+	}
 }
 
 ?>

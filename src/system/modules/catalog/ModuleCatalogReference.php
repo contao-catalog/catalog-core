@@ -80,12 +80,12 @@ class ModuleCatalogReference extends ModuleCatalog
 	protected function compile()
 	{
 		// get parent catalog aliasfield
-		$objCatalogSelected = $this->Database->prepare("SELECT aliasField,titleField,tableName FROM tl_catalog_types WHERE id=?")
+		$objCatalogSelected = $this->Database->prepare('SELECT aliasField,titleField,tableName FROM tl_catalog_types WHERE id=?')
 										->execute($this->catalog_selected);
 
-		$strAlias = $objCatalogSelected->aliasField ? " OR ".$objCatalogSelected->aliasField."=?" : '';		
+		$strAlias = $objCatalogSelected->aliasField ? ' OR '.$objCatalogSelected->aliasField.'=?' : '';		
 		
-		$objCatalog = $this->Database->prepare("SELECT * FROM ".$objCatalogSelected->tableName." WHERE (id=?".$strAlias.")")
+		$objCatalog = $this->Database->prepare('SELECT * FROM '.$objCatalogSelected->tableName.' WHERE (id=?'.$strAlias.')')
 										->limit(1)
 										->execute($this->Input->get('items'), $this->Input->get('items'));
 
@@ -180,6 +180,11 @@ class ModuleCatalogReference extends ModuleCatalog
 
 
 			$arrQuery = $this->processFieldSQL($this->catalog_visible);		
+
+			if(!BE_USER_LOGGED_IN && $this->publishField)
+			{
+				$strWhere .= (strlen($strWhere)?' AND ':'').$this->publishField.'=1';
+			}
 
 			// Run Query
 			$objCatalogStmt = $this->Database->prepare("SELECT ".join(',',$this->systemColumns).",".join(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=? ".($strReference ? " AND ".$strReference : "").($strWhere ? " AND ".$strWhere : "").(strlen($strOrder) ? " ORDER BY ".$strOrder : ""));

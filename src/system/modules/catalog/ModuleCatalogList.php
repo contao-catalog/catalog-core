@@ -148,7 +148,12 @@ class ModuleCatalogList extends ModuleCatalog
 			$strWhere = (strlen($strCondition) ? " AND ".$strCondition : "")
 				.($filterurl['procedure']['where'] ? " AND ".implode(" ".$this->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
 				.($filterurl['procedure']['tags'] ? " AND ".implode(" ".$this->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
-		
+
+			if(!BE_USER_LOGGED_IN && $this->publishField)
+			{
+				$strWhere.=' AND '.$this->publishField.'=1';
+			}
+
 			$strOrder = (strlen($filterurl['procedure']['orderby']) ? $filterurl['procedure']['orderby'] : trim($this->catalog_order));
 
 			$this->perPage = strlen($this->Input->post('per_page')) ? $this->Input->post('per_page') : $this->perPage;
@@ -189,7 +194,6 @@ class ModuleCatalogList extends ModuleCatalog
 				$arrQuery[] = $this->strAliasField;
 			// Run Query
 			$objCatalogStmt = $this->Database->prepare("SELECT ".implode(',',$this->systemColumns).",".implode(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=?".$strWhere.(strlen($strOrder) ? " ORDER BY ".$strOrder : "")); 
-$GLOBALS['TL_DEBUG']['Query']=$objCatalogStmt;
 
 			
 			// add filter and order later
@@ -201,6 +205,7 @@ $GLOBALS['TL_DEBUG']['Query']=$objCatalogStmt;
 			}
 		
 			$objCatalog = $objCatalogStmt->execute($params);
+$GLOBALS['TL_DEBUG']['Query']=$objCatalogStmt->query;
 	
 	
 			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);

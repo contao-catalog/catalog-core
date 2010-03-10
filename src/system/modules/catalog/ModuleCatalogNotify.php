@@ -94,7 +94,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 
 		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';		
 		
-		$objCatalog = $this->Database->prepare("SELECT * FROM ".$this->strTable." WHERE (id=?".$strAlias.")")
+		$objCatalog = $this->Database->prepare('SELECT * FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '').'(id=?'.$strAlias.')')
 										->limit(1)
 										->execute($this->Input->get('items'), $this->Input->get('items'));
 

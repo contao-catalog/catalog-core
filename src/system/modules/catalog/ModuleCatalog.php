@@ -87,7 +87,7 @@ abstract class ModuleCatalog extends Module
 		}
 
 		// get DCA
-		$objCatalog = $this->Database->prepare("SELECT tableName, aliasField FROM tl_catalog_types WHERE id=?")
+		$objCatalog = $this->Database->prepare("SELECT tableName, aliasField, publishField FROM tl_catalog_types WHERE id=?")
 				->limit(1)
 				->execute($this->catalog);
 		
@@ -95,6 +95,7 @@ abstract class ModuleCatalog extends Module
 		{
 			$this->strTable = $objCatalog->tableName;
 			$this->strAliasField=$objCatalog->aliasField;
+			$this->publishField=$objCatalog->publishField;
 
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');
@@ -112,7 +113,7 @@ abstract class ModuleCatalog extends Module
 				if ($fieldConf['eval']['catalog']['type'] == 'file' && !$fieldConf['eval']['catalog']['showImage'])
 				{
 					// check file in Catalog
-					$objDownload = $this->Database->prepare("SELECT id FROM ".$this->strTable." WHERE LOCATE(?,".$k.")>0 OR LOCATE(?,".$k.")>0")
+					$objDownload = $this->Database->prepare('SELECT id FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '').'(LOCATE(?,'.$k.')>0 OR LOCATE(?,'.$k.')>0)')
 							->limit(1)
 							->execute($this->Input->get('file'), dirname($this->Input->get('file')));
 					
@@ -824,6 +825,15 @@ abstract class ModuleCatalog extends Module
 				$blnLast = $this->lastInTree($field, $current, $tree);
 
 				$query = $this->buildTreeQuery($field, $filterurl, $tree);
+				if(!BE_USER_LOGGED_IN && $this->publishField)
+				{
+					if(strlen($query['query']))
+					{
+						$query['query'].=' AND '.$this->publishField.'=1';
+					} else {
+						$query['query']=$this->publishField.'=1';
+					}
+				}
 
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 				$options = array();
@@ -947,10 +957,9 @@ abstract class ModuleCatalog extends Module
 									$strCondition = $this->replaceInsertTags($objModules->catalog_where);
 								}
 								$query['query'] .= (strlen($strCondition) ? $strCondition : "")
-											.($filterurl['procedure']['where'] ? " AND ".join(" ".$objModules->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
-											.($filterurl['procedure']['tags'] ? " AND ".join(" ".$objModules->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
+											.($filterurl['procedure']['where'] ? " AND ".implode(" ".$objModules->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
+											.($filterurl['procedure']['tags'] ? " AND ".implode(" ".$objModules->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
 							}
-							
 						}
 
 						// get existing options in DB
@@ -1039,14 +1048,12 @@ abstract class ModuleCatalog extends Module
 						}
 						array_push($options, $addOption);
 
-						// Changed by c.schiffler seemed like a bug to me as it threw an Exception.
-						// $tmpTags = '';
 						$tmpTags = array();
 						foreach ($fieldConf['options'] as $id=>$option)
 						{
 								$tmpTags[] = "SUM(FIND_IN_SET(".$id.",".$field.")) AS ".$field.$id;
 						}
-						$objFilter = $this->Database->prepare("SELECT ".join(', ',$tmpTags)." FROM ".$this->strTable. ($query['query'] ? " WHERE ". $query['query'] : ''))
+						$objFilter = $this->Database->prepare("SELECT ".implode(', ',$tmpTags)." FROM ".$this->strTable. ($query['query'] ? " WHERE ". $query['query'] : ''))
 								->execute($query['params']);
 						if ($objFilter->numRows)
 						{
@@ -2658,6 +2665,10 @@ abstract class ModuleCatalog extends Module
 		$aliasField = $this->getAliasField($this->strTable);
 
 		$strWhere = $blnTags ? "FIND_IN_SET(?,".$this->catalog_navigation.")" : $this->catalog_navigation."=?";
+		if(!BE_USER_LOGGED_IN && $this->publishField)
+		{
+			$strWhere .=' AND '.$this->publishField.'=1';
+		}
 
 		// query database
 		$objNodes = $this->Database->prepare("SELECT * FROM ".$this->strTable." WHERE ".$strWhere)
@@ -2890,7 +2901,7 @@ abstract class ModuleCatalog extends Module
 			// check's if there are actually items for this navigation entry.
 			$idArray = $this->Database->prepare("SELECT concat(pid,',',group_concat(id)) AS tree FROM  " . $sourceTable . " AS t where pid=? group by pid")
 										->execute($objNodes->id)->next();
-			$objCount = $this->Database->prepare("SELECT id FROM " . $this->strTable . " AS t where " . $this->arrData['catalog_navigation'] . "  in (" . ($idArray->tree ? implode(',', array($objNodes->id, $idArray->tree)) : $objNodes->id) . ")")
+			$objCount = $this->Database->prepare('SELECT id FROM ' . $this->strTable . ' AS t WHERE ' . (!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '') . $this->arrData['catalog_navigation'] . '  IN (' . ($idArray->tree ? implode(',', array($objNodes->id, $idArray->tree)) : $objNodes->id). ')')
 										->execute()->numRows;
 			if($objCount)
 			{
@@ -2954,8 +2965,8 @@ abstract class ModuleCatalog extends Module
 			$offset = ($page - 1) * $objArchive->perPage;
 
 			// Get total number of comments
-			$objTotal = $this->Database->prepare("SELECT COUNT(*) AS count FROM tl_catalog_comments WHERE pid=? AND catid=?" . (!BE_USER_LOGGED_IN ? " AND published=?" : ""))
-									   ->execute($objCatalog->id, $objCatalog->pid, 1);
+			$objTotal = $this->Database->prepare('SELECT COUNT(*) AS count FROM tl_catalog_comments WHERE pid=? AND catid=?' . (!BE_USER_LOGGED_IN ? ' AND published=1' : ''))
+									   ->execute($objCatalog->id, $objCatalog->pid);
 
 			// Add pagination menu
 			$objPagination = new PaginationCustom($objTotal->count, $objArchive->perPage, 7, 'com_page');
@@ -2963,14 +2974,14 @@ abstract class ModuleCatalog extends Module
 		}
 
 		// Get all published comments
-		$objCommentsStmt = $this->Database->prepare("SELECT * FROM tl_catalog_comments WHERE pid=? AND catid=?" . (!BE_USER_LOGGED_IN ? " AND published=?" : "") . " ORDER BY date" . (($objArchive->sortOrder == 'descending') ? " DESC" : ""));
+		$objCommentsStmt = $this->Database->prepare('SELECT * FROM tl_catalog_comments WHERE pid=? AND catid=?' . (!BE_USER_LOGGED_IN ? ' AND published=1' : '') . ' ORDER BY date' . (($objArchive->sortOrder == 'descending') ? ' DESC' : ''));
 
 		if ($limit)
 		{
 			$objCommentsStmt->limit($limit, $offset);
 		}
 
-		$objComments = $objCommentsStmt->execute($objCatalog->id, $objCatalog->pid, 1);
+		$objComments = $objCommentsStmt->execute($objCatalog->id, $objCatalog->pid);
 
 		if ($objComments->numRows)
 		{
