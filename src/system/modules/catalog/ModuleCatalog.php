@@ -956,12 +956,11 @@ abstract class ModuleCatalog extends Module
 								{
 									$strCondition = $this->replaceInsertTags($objModules->catalog_where);
 								}
-								$query['query'] .= (strlen($strCondition) ? $strCondition : '')
+								$query['query'] .= (strlen($query['query'])?' AND ' : ''). (strlen($strCondition) ? $strCondition : '')
 											.($filterurl['procedure']['where'] ? ' AND '.implode(' '.$objModules->catalog_query_mode.' ', $filterurl['procedure']['where']) : '')
 											.($filterurl['procedure']['tags'] ? ' AND '.implode(' '.$objModules->catalog_tags_mode.' ', $filterurl['procedure']['tags']) : '');
 							}
 						}
-
 						// get existing options in DB
 						$objFilter = $this->Database->prepare('SELECT DISTINCT('.$field.') FROM '.$this->strTable . ($query['query'] ? ' WHERE '.$query['query'] : '') )
 								->execute($query['params']);
