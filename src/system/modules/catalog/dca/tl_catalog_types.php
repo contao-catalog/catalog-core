@@ -346,7 +346,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['searchCondition'],
 			'exclude'                 => true,
 			'inputType'               => 'text',
-			'eval'                    => array('decodeEntities'=>true),
+			'eval'                    => array('preserveTags'=>true),
 			'doNotCopy'               => true,
 			'eval'                    => array('tl_class'=>'w50')
 		),

@@ -829,7 +829,7 @@ abstract class ModuleCatalog extends Module
 				{
 					if(strlen($query['query']))
 					{
-						$query['query'].=' AND '.$this->publishField.'=1';
+						$query['query'].=' AND '.$this->publishField.'=1 ';
 					} else {
 						$query['query']=$this->publishField.'=1';
 					}
@@ -2762,6 +2762,8 @@ abstract class ModuleCatalog extends Module
 	}
 
 
+	protected $arrTrail=array();
+
 	/**
 	 * Recursively compile the catalog navigation menu and return it as HTML string
 	 * @param integer
@@ -2770,6 +2772,10 @@ abstract class ModuleCatalog extends Module
 	 */
 	protected function renderCatalogNavigation($pid, $level=1)
 	{
+		if($level==0)
+		{
+			$this->arrTrail=array();
+		}
 
 		$this->getJumpTo($this->jumpTo, false);
 
@@ -2814,7 +2820,7 @@ abstract class ModuleCatalog extends Module
 			$objNodes = $this->Database->prepare("SELECT id, ".$valueField.", (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " AS name FROM ". $sourceTable. " o WHERE ".$strRoot." IN (".implode(',',$ids).") ORDER BY ". $sort)
 									 ->execute();
 		}
-		
+
 		if (!$treeView || ($objNodes->numRows == 0 && $level == 1))  // 0 => 1 ??
 		{
 			$objNodes = $this->Database->execute("SELECT id, ".$valueField.", 0 AS childCount, ". $sourceColumn ." AS name FROM ". $sourceTable ." ORDER BY ".$sort);
@@ -2891,12 +2897,17 @@ abstract class ModuleCatalog extends Module
 					'accesskey' => $objJump->accesskey,
 					'tabindex' => $objJump->tabindex
 				);
+				$this->arrTrail[]=$objNodes->pid;
 				continue;
 			}
 
 // !fix trail
+			if(in_array($objNodes->id, $this->arrTrail))
+			{
+				$this->arrTrail[]=$objNodes->pid;
+			}
 
-			$strClass = trim((strlen($subitems) ? 'submenu' : '') . (strlen($objJump->cssClass) ? ' ' . $objJump->cssClass : '') . (in_array($objJump->id, $objPage->trail) ? ' trail' : ''));
+			$strClass = trim((strlen($subitems) ? 'submenu' : '') . (strlen($objJump->cssClass) ? ' ' . $objJump->cssClass : '') . (in_array($objNodes->id, $this->arrTrail) || in_array($objJump->id, $objPage->trail) ? ' trail' : ''));
 			// contributed patch by m.reimann@patchwork-webdesign.de attached to issue #72
 			// check's if there are actually items for this navigation entry.
 			$idArray = $this->Database->prepare("SELECT concat(pid,',',group_concat(id)) AS tree FROM  " . $sourceTable . " AS t where pid=? group by pid")
