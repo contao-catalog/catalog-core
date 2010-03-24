@@ -831,7 +831,7 @@ abstract class ModuleCatalog extends Module
 					{
 						$query['query'].=' AND '.$this->publishField.'=1 ';
 					} else {
-						$query['query']=$this->publishField.'=1';
+						$query['query']=$this->publishField.'=1 ';
 					}
 				}
 
@@ -919,7 +919,7 @@ abstract class ModuleCatalog extends Module
 											}
 										}
 									}
-									$filterurl['procedure']['where'][] = ' ('.implode(" OR ", $searchProcedure).')';
+									$filterurl['procedure']['where'][] = ' ('.implode(' OR ', $searchProcedure).')';
 									$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
 								}
 								if(is_array($filterurl['procedure']['where']))
@@ -956,14 +956,14 @@ abstract class ModuleCatalog extends Module
 								{
 									$strCondition = $this->replaceInsertTags($objModules->catalog_where);
 								}
-								$query['query'] .= (strlen($strCondition) ? $strCondition : "")
-											.($filterurl['procedure']['where'] ? " AND ".implode(" ".$objModules->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
-											.($filterurl['procedure']['tags'] ? " AND ".implode(" ".$objModules->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
+								$query['query'] .= (strlen($strCondition) ? $strCondition : '')
+											.($filterurl['procedure']['where'] ? ' AND '.implode(' '.$objModules->catalog_query_mode.' ', $filterurl['procedure']['where']) : '')
+											.($filterurl['procedure']['tags'] ? ' AND '.implode(' '.$objModules->catalog_tags_mode.' ', $filterurl['procedure']['tags']) : '');
 							}
 						}
 
 						// get existing options in DB
-						$objFilter = $this->Database->prepare("SELECT DISTINCT(".$field.") FROM ".$this->strTable . ($query['query'] ? " WHERE ".$query['query'] : '') )
+						$objFilter = $this->Database->prepare('SELECT DISTINCT('.$field.') FROM '.$this->strTable . ($query['query'] ? ' WHERE '.$query['query'] : '') )
 								->execute($query['params']);
 
 						if ($objFilter->numRows) 
