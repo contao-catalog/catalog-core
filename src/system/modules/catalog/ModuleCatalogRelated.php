@@ -133,7 +133,8 @@ class ModuleCatalogRelated extends ModuleCatalog
 
 
 			$arrQuery = $this->processFieldSQL($this->catalog_visible);		
-	
+			if($this->strAliasField)
+				$arrQuery[] = $this->strAliasField;
 			// Run Query
 			$objCatalogStmt = $this->Database->prepare('SELECT '.implode(',',$this->systemColumns).','.implode(',',$arrQuery).', (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '').'pid=? AND id!=?'.($strRelated ? ' AND '.$strRelated : '').($strWhere ? ' AND '.$strWhere : '').(strlen($strOrder) ? ' ORDER BY '.$strOrder : ''));
 			

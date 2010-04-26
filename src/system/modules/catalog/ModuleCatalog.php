@@ -373,6 +373,24 @@ abstract class ModuleCatalog extends Module
 				{
 					case 'text':
 					case 'longtext':
+							// explode the search by spaces and add the result to the query.
+							// this allows us to search for multiple words which do not have to be in the same order as searched by.
+							// Drawback is, we now can not search for exact phrases anymore (which is less required than searching for
+							// multiple words IMO).
+							$words=explode(' ', $this->Input->get($this->strSearch));
+							$proc=array();
+							$vals=array();
+							if(count($words))
+							{
+								$values['search'][$field]=array();
+								foreach($words as $word)
+								{
+									$proc[] = '('.$field.' LIKE ?)';
+									$values['search'][$field][] =  '%'.$word.'%';
+								}
+								$procedure['search'][$field] = '('.implode(' AND ', $proc).')';
+							}
+							break;
 					case 'number':
 					case 'decimal':
 							$procedure['search'][$field] = '('.$field.' LIKE ?)';

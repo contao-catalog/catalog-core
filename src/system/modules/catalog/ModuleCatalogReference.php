@@ -180,6 +180,8 @@ class ModuleCatalogReference extends ModuleCatalog
 
 
 			$arrQuery = $this->processFieldSQL($this->catalog_visible);		
+			if($this->strAliasField)
+				$arrQuery[] = $this->strAliasField;
 
 			if(!BE_USER_LOGGED_IN && $this->publishField)
 			{
