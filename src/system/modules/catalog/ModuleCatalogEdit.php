@@ -84,6 +84,28 @@ class ModuleCatalogEdit extends ModuleCatalog
 	}
 
 
+	protected function editFieldAllowed($field, $arrValues)
+	{
+		// HOOK: additional permission checks if this field allows editing of this record (for the current user).
+		$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field]['eval']['catalog']['type']];
+		if(is_array($fieldType) && array_key_exists('checkPermissionFERecordEdit', $fieldType) && is_array($fieldType['checkPermissionFERecordEdit']))
+		{
+			foreach ($fieldType['checkPermissionFERecordEdit'] as $callback)
+			{
+				$this->import($callback[0]);
+				// TODO: Do we need more parameters here?
+				if(!($this->$callback[0]->$callback[1]($this->strTable, $field, $arrValues)))
+				{
+					$this->Template->error = $GLOBALS['TL_LANG']['MSC']['catalogItemEditingDenied'];
+					// Send 403 header
+					header('HTTP/1.0 403 Forbidden');
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 	/**
 	 * Generate module
 	 */
@@ -146,14 +168,14 @@ class ModuleCatalogEdit extends ModuleCatalog
 			$strAlias = is_numeric($value) ? "id" : ($objCatalogType->aliasField ? $objCatalogType->aliasField : '');
 			if(strlen($strAlias))
 			{
-				$objCatalog = $this->Database->prepare('SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=' . $this->strTable . '.pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : ''). $strAlias . '=?')
+				$objCatalog = $this->Database->prepare('SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=' . $this->strTable . '.pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo FROM '.$this->strTable.' WHERE '. $strAlias . '=?')
 											->limit(1)
 											->execute($value);
 			}
 		}
 
 		// if no item, then check if add allowed and then show add form
-		if (!$objCatalog || $objCatalog->numRows < 1)
+		if (!$objCatalog || $objCatalog->numRows < 1 )
 		{
 			$blnModeAdd = true;
 			// Load defaults.
@@ -162,26 +184,14 @@ class ModuleCatalogEdit extends ModuleCatalog
 		else
 		{
 			$arrValues = $this->handleOnLoadCallbacks($objCatalog->fetchAssoc());
+			// would be nice but disables the workflow (editors can edit & only admin can publish)
+			//	if(!BE_USER_LOGGED_IN && ($this->publishField && !$arrValues[$this->publishField] && !$this->editFieldAllowed($this->publishField, $arrValues)))
+			//		return;
 			// check if editing of this record is disabled for frontend.
 			foreach ($this->catalog_edit as $key=>$field)
 			{
-				// HOOK: additional permission checks if this field allows editing of this record (for the current user).
-				$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field]['eval']['catalog']['type']];
-				if(is_array($fieldType) && array_key_exists('checkPermissionFERecordEdit', $fieldType) && is_array($fieldType['checkPermissionFERecordEdit']))
-				{
-					foreach ($fieldType['checkPermissionFERecordEdit'] as $callback)
-					{
-						$this->import($callback[0]);
-						// TODO: Do we need more parameters here?
-						if(!($this->$callback[0]->$callback[1]($this->strTable, $field, $arrValues)))
-						{
-							$this->Template->error = $GLOBALS['TL_LANG']['MSC']['catalogItemEditingDenied'];
-							// Send 403 header
-							header('HTTP/1.0 403 Forbidden');
-							return;
-						}
-					}
-				}
+				if(!$this->editFieldAllowed($field, $arrValues))
+					return;
 			}
 		}
 		//$arrValues=$this->handleOnLoadCallbacks($arrValues);
@@ -238,7 +248,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				$this->import('FrontendUser', 'User');
 
 			// check if editing of this field is restricted to a certain user group.
-			if(isset($arrData['eval']['catalog']['editGroups']))
+			if(is_array($arrData['eval']['catalog']['editGroups']) && count($arrData['eval']['catalog']['editGroups']))
 			{
 				$allow_field = false;
 				foreach($arrData['eval']['catalog']['editGroups'] as $group)
@@ -290,8 +300,14 @@ class ModuleCatalogEdit extends ModuleCatalog
 					$inputType = 'select';
 				}
 			}
-
 			$strClass = $GLOBALS['TL_FFL'][$inputType];
+			// some things are only present in the backend for now, like the timePeriod, but 
+			// are safe to be called also in FE. So we do here.
+			// TODO: We should export this to some other location instead of hardcoding it here.
+			if((!$strClass) && in_array($inputType, array('timePeriod')))
+			{
+				$strClass = $GLOBALS['BE_FFL'][$inputType];
+			}
 
 			// Continue if the class is not defined
 			if (!$this->classFileExists($strClass))
