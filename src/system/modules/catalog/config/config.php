@@ -227,6 +227,10 @@ $GLOBALS['TL_PERMISSIONS'][] = 'catalogs';
 $GLOBALS['TL_CONFIG']['catalog']['csvDelimiter']	= ',';
 $GLOBALS['TL_CONFIG']['catalog']['safeCheck']		= array('/', '\'');
 $GLOBALS['TL_CONFIG']['catalog']['safeReplace']	= array('-slash-', '-apos-');
+$GLOBALS['TL_CONFIG']['catalog']['keywordsInvalid'] = array( ' ','.','?','!',';',':','-','/','&','"','\'','Õ');
+$GLOBALS['TL_CONFIG']['catalog']['keywordCount'] = 15;
+
+
 
 array_insert($GLOBALS['BE_FFL'], 15, array
 (

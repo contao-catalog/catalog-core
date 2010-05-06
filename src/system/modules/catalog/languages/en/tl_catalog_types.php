@@ -42,10 +42,14 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['size']        = array('Image width and 
 $GLOBALS['TL_LANG']['tl_catalog_types']['format'] = array('Format title string', 'Enter the format string for each catalog item (optional). Images support resize and checkbox images are displayed if TRUE.<br /><strong>Example:</strong> <br /><em>&lt;strong&gt;{{title_field}}&lt;/strong&gt; &lt;em&gt;({{alias_field}})&lt;/em&gt; {{checkbox_field::src=imagefile.gif}} {{checkbox_field}}&lt;br /&gt;<br />{{image_field::w=100&h=80}}</em>');
 
 $GLOBALS['TL_LANG']['tl_catalog_types']['jumpTo'] = array('Jump to page', 'Please select the page to which visitors will be redirected when clicking a catalog item.');
-$GLOBALS['TL_LANG']['tl_catalog_types']['aliasField'] = array('Alias field', 'Select the alias field to use instead of using the id when creating the jumpTo link.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['aliasField'] = array('Alias field', 'Select the field to use instead of using the id when creating the jumpTo link.');
+
+$GLOBALS['TL_LANG']['tl_catalog_types']['publishField'] = array('Publish field', 'Select the field that controls the visibility of a catalog item.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['titleField'] = array('Meta title field', 'Select the field that overrides the default meta title on the reader page.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['descriptionField'] = array('Meta description field', 'Select the field that overrides the default meta description on the reader page.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['keywordsField'] = array('Meta keywords field', 'Select the field that overrides the default meta keywords on the reader page.');
 
 $GLOBALS['TL_LANG']['tl_catalog_types']['searchable'] = array('Searchable', 'If you choose this option, the catalog will be indexed for website searching.');
-$GLOBALS['TL_LANG']['tl_catalog_types']['titleField'] = array('Page title field', 'Select the field to use as the page title when performing a search index.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['searchCondition'] = array('Condition', 'If you want to include or exclude certain records from being indexed, you can enter a condition here (e.g. <em>published=1</em> or <em>type!=\'admin\'</em>).');
 
 $GLOBALS['TL_LANG']['tl_catalog_types']['fieldlist'] = array('Field List', 'Select which fields to display and in what order they should appear.');
@@ -88,6 +92,7 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['feedTitle']    = array('Feed title', 'P
  */
 $GLOBALS['TL_LANG']['tl_catalog_types']['title_legend']			= 'Name, table and redirect page';
 $GLOBALS['TL_LANG']['tl_catalog_types']['display_legend']		= 'Display format';
+$GLOBALS['TL_LANG']['tl_catalog_types']['page_legend']			= 'Page override settings';
 $GLOBALS['TL_LANG']['tl_catalog_types']['comments_legend']	= 'Comments';
 $GLOBALS['TL_LANG']['tl_catalog_types']['search_legend']		= 'Search';
 $GLOBALS['TL_LANG']['tl_catalog_types']['import_legend']		= 'Import';

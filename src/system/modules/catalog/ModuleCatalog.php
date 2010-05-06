@@ -823,7 +823,7 @@ abstract class ModuleCatalog extends Module
 		$current 	= $filterurl['current'];
 		
 		$arrFilters = deserialize($this->catalog_filters, true);
-		if ($this->catalog_filter_enable && count($arrFilters) && strlen($arrFilters[0]))
+		if ($this->catalog_filter_enable && count($arrFilters))
 		{
 			// Get Tree View
 			$tree = $this->getTree();
@@ -1311,8 +1311,9 @@ abstract class ModuleCatalog extends Module
 
 		// Setup date values
 		$arrDates = deserialize($this->catalog_dates,true);
+
 		$arrRanges = deserialize($this->catalog_date_ranges,true);
-		if ($this->catalog_date_enable && count($arrDates) && strlen($arrDates[0]))
+		if ($this->catalog_date_enable && count($arrDates))
 		{
 			foreach ($arrDates as $fieldconfig)
 			{
@@ -1428,7 +1429,7 @@ abstract class ModuleCatalog extends Module
 
 
 		$arrSort = deserialize($this->catalog_sort,true);
-		if ($this->catalog_sort_enable && count($arrSort) && strlen($arrSort[0]))
+		if ($this->catalog_sort_enable && count($arrSort))
 		{
 			// Setup sort values
 			$options = array();

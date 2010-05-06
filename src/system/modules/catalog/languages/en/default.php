@@ -136,12 +136,18 @@ $GLOBALS['TL_LANG']['MSC']['catalogCondition']	= 'Please first select the follow
 $GLOBALS['TL_LANG']['MSC']['catalogInvalid'] 		= 'Invalid Catalog!';
 $GLOBALS['TL_LANG']['MSC']['catalogNoFields'] 	= 'No Catalog fields defined!';
 
+$GLOBALS['TL_LANG']['MSC']['keywordsBlacklist'] = array(
+	'the','i','me','you','he','she','it','we','you','they','their','his','her','its','a','us','there','out','on','over','at','before','after','as','and','or','from','for','with','without','are','is'
+	);
+
 $GLOBALS['TL_LANG']['MSC']['com_catalog_subject']  = 'TYPOlight :: New comment in Catalog: %s [%s]';
-$GLOBALS['TL_LANG']['MSC']['com_catalog_message']  			= "Catalog Name: %s\nItem Title: %s\n\n%s has created a new comment on your website.\n\n---\n\n%s\n\n---\n\nView: %s\nEdit: %s\n\nIf you are moderating comments, you have to log in to the back end to publish it.";
+$GLOBALS['TL_LANG']['MSC']['com_catalog_message']  = "Catalog Name: %s\nItem Title: %s\n\n%s has created a new comment on your website.\n\n---\n\n%s\n\n---\n\nView: %s\nEdit: %s\n\nIf you are moderating comments, you have to log in to the back end to publish it.";
+
 
 /*
  * Frontend editing.
  */
 $GLOBALS['TL_LANG']['MSC']['removeImage'] = 'Remove %s';
+
 
 ?>

@@ -28,6 +28,9 @@ CREATE TABLE `tl_catalog_types` (
   `jumpTo` smallint(5) unsigned NOT NULL default '0',
   `aliasField` varchar(64) NOT NULL default '',
   `publishField` varchar(64) NOT NULL default '',
+  `titleField` varchar(64) NOT NULL default '',
+  `descriptionField` varchar(64) NOT NULL default '',
+  `keywordsField` varchar(64) NOT NULL default '',
 
   `import` char(1) NOT NULL default '',
   `importAdmin` char(1) NOT NULL default '',
@@ -56,8 +59,8 @@ CREATE TABLE `tl_catalog_types` (
   `maxItems` smallint(5) unsigned NOT NULL default '0',
   `feedBase` varchar(255) NOT NULL default '',
   `alias` varbinary(128) NOT NULL default '',
+  `feedTitle` varchar(255) NOT NULL default '',
   `description` text NULL,
-  `feedTitle` text NULL,
   
   PRIMARY KEY  (`id`),
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -104,6 +107,7 @@ CREATE TABLE `tl_catalog_fields` (
   `rte` char(1) NOT NULL default '',
   `rte_editor` varchar(255) NOT NULL default 'tinyMCE',
   `allowHtml` char(1) NOT NULL default '',
+  `textHeight` int(10) unsigned NOT NULL default '0',
   `itemTable` varchar(255) NOT NULL default '',
   `itemTableValueCol` varchar(255) NOT NULL default '',
   `itemSortCol` varchar(255) NOT NULL default '',

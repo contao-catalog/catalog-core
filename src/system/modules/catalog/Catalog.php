@@ -1188,6 +1188,10 @@ class Catalog extends Backend
 	{
 		$field['eval']['rte'] = $objRow->rte ? ($objRow->rte_editor ? $objRow->rte_editor : 'tinyMCE') : '';
 		$field['eval']['allowHtml'] = !!$objRow->allowHtml;
+		if ($objRow->textHeight) 
+		{
+			$field['eval']['style'] .= 'height:'.$objRow->textHeight.'px;';
+		}
 	}
 	
 	private function selectConfig(&$field, $objRow)

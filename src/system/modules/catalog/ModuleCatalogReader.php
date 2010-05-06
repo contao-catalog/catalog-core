@@ -90,7 +90,7 @@ class ModuleCatalogReader extends ModuleCatalog
 		$this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
 		$this->Template->gobackDisable = $this->catalog_goback_disable;
 
-		$objCatalogType = $this->Database->prepare("SELECT aliasField,titleField FROM tl_catalog_types WHERE id=?")
+		$objCatalogType = $this->Database->prepare("SELECT aliasField,titleField,descriptionField,keywordsField FROM tl_catalog_types WHERE id=?")
 										->execute($this->catalog);
 
 		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';		
@@ -103,6 +103,21 @@ class ModuleCatalogReader extends ModuleCatalog
 			$titleField = $objCatalogType->titleField;
 			$this->systemColumns = array_merge($this->systemColumns, array($titleField));
 		}
+
+		// Overwrite page description
+		if (strlen($objCatalogType->descriptionField)) 
+		{
+			$descriptionField = $objCatalogType->descriptionField;
+			$this->systemColumns = array_merge($this->systemColumns, array($descriptionField));
+		}
+
+		// Overwrite page keywords
+		if (strlen($objCatalogType->keywordsField)) 
+		{
+			$keywordsField = $objCatalogType->keywordsField;
+			$this->systemColumns = array_merge($this->systemColumns, array($keywordsField));
+		}
+
 		/*
 			$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE (CAST(id AS CHAR)=?".$strAlias.")")
 											->limit(1)
@@ -145,11 +160,25 @@ class ModuleCatalogReader extends ModuleCatalog
 		$this->Template->catalog = $this->parseCatalog($objCatalog, false, $this->catalog_template, $this->catalog_visible);
 		$this->Template->visible = $this->catalog_visible;
 
+
 		// Overwrite page title
 		if (strlen($objCatalogType->titleField)) 
 		{
 			$objPage->pageTitle = $objCatalog->$titleField;
 		}
+
+		// Overwrite page description
+		if (strlen($objCatalogType->descriptionField)) 
+		{
+			$objPage->description = strip_tags($objCatalog->$descriptionField);
+		}
+
+		// Overwrite page keywords
+		if (strlen($objCatalogType->keywordsField)) 
+		{
+			$GLOBALS['TL_KEYWORDS'] .= $this->gererateKeywords($objCatalog->$keywordsField);
+		}
+
 
 		// Process Comments if not disabled
 		if (!$this->catalog_comments_disable)
@@ -157,6 +186,48 @@ class ModuleCatalogReader extends ModuleCatalog
 			$this->processComments($objCatalog);	
 		}
 	}
+	
+	/**
+	 * Generate keywords from a raw string
+	 * @param string
+	 * @return string
+	 */
+	protected function gererateKeywords($strInput)
+	{
+
+		$strKeywords = '';
+
+		// remove html
+		$strInput = strip_tags($strInput);
+
+		// remove special characters
+		$strInput = str_replace($GLOBALS['TL_CONFIG']['catalog']['keywordsInvalid'], ',', $strInput);
+
+		// remove linebreaks
+		$strInput = preg_replace('/(\n|\r|\r\n)+/', ' ', $strInput);
+
+		// divide input string into single words
+		$arrKeywords = explode(',', $strInput);
+
+		foreach($arrKeywords as $strKeyword)
+		{
+			// ignore unimportant words, empty strings and words shorter than 3 chars
+			if (in_array($strKeyword, $GLOBALS['TL_LANG']['MSC']['keywordsBlacklist']) || strlen($strKeyword) < 3)
+				continue;
+
+			// add nice keywords to output string
+			else $strKeywords .= (strlen($strKeywords) ? ', ' : '') . $strKeyword;
+		}
+
+		// reduce to max. keywords
+		if (count($arrKeywords)>$GLOBALS['TL_CONFIG']['catalog']['keywordCount'])
+			$arrKeywords = array_slice($arrKeywords, 0, $GLOBALS['TL_CONFIG']['catalog']['keywordCount']);
+
+
+		return($strKeywords);
+	}
+	
+	
 }
 
 ?>

@@ -114,19 +114,19 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 	'palettes' => array
 	(
 		'__selector__' => array('type', 'insertBreak', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree', 'editGroups', 'rte'),
-		'default' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
-		'text' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
-		'alias' => '{title_legend},name,description,colName,type,aliasTitle;{display_legend},insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{feedit_legend},editGroups',
-		'longtext' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory,allowHtml,rte;{feedit_legend},editGroups',
-		'number' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
-		'decimal' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
-		'date' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,includeTime;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
-		'select' => 'name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField;{advanced_legend:hide},mandatory,includeBlankOption;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
-		'tags' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
-		'checkbox' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField;{feedit_legend},editGroups',
-		'url' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory;{feedit_legend},editGroups',
-		'file' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,insertBreak,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,multiple,customFiletree;{format_legend},showImage,showLink;{feedit_legend},editGroups',
-		'calc' => '{title_legend},name,description,colName,type,calcValue;{display_legend},parentCheckbox,insertBreak,width50,titleField;{filter_legend:hide},sortingField,filteredField,searchableField;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
+		'default' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
+		'text' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
+		'alias' => '{title_legend},name,description,colName,type,aliasTitle;{display_legend},titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{feedit_legend},editGroups',
+		'longtext' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox;{legend_legend:hide},insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory,allowHtml,textHeight,rte;{feedit_legend},editGroups',
+		'number' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
+		'decimal' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
+		'date' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,includeTime;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
+		'select' => 'name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{advanced_legend:hide},mandatory,includeBlankOption;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
+		'tags' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
+		'checkbox' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{feedit_legend},editGroups',
+		'url' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory;{feedit_legend},editGroups',
+		'file' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,multiple,customFiletree;{format_legend},showImage,showLink;{feedit_legend},editGroups',
+		'calc' => '{title_legend},name,description,colName,type,calcValue;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		
 	),
 
@@ -197,7 +197,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['aliasTitle'],
 			'inputType'               => 'select',
 			'options_callback'        => array('tl_catalog_fields', 'getTitleFields'),
-			'eval'                    => array('mandatory'=> true),
+			'eval'                    => array('mandatory'=> true, 'tl_class'=>'w50'),
 		),
 
 		'insertBreak' => array
@@ -211,13 +211,14 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['legendTitle'],
 			'inputType'               => 'text',
-			'eval'                    => array('maxlength'=>255)
+			'eval'                    => array('maxlength'=>255, 'tl_class'=>'w50')
 		),
 
 		'legendHide' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['legendHide'],
 			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50 m12')
 		),		
 
 		'width50' => array
@@ -231,13 +232,14 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['titleField'],
 			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50')
 		),		
 
 		'filteredField' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['filteredField'],
 			'inputType'               => 'checkbox',
-			'eval'                    => array('tl_class'=>'w50'),
+			'eval'                    => array('tl_class'=>'w50')
 		),
 		
 		'searchableField' => array
@@ -295,7 +297,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['calcValue'],
 			'inputType'               => 'textarea',
-			'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;', 'mandatory'=>true),
+			'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;', 'mandatory'=>true, 'tl_class'=>'long clr'),
 			'save_callback'           => array
 			(
 				array('tl_catalog_fields', 'checkCalc')
@@ -371,6 +373,14 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['allowHtml'],
 			'inputType'               => 'checkbox'
+		),
+
+		'textHeight' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['textHeight'],
+			'exclude'                 => true,
+			'inputType'               => 'text',
+			'eval'                    => array('maxlength'=>10, 'rgxp' => 'digit')
 		),
 		
 		'itemTable' => array
@@ -467,6 +477,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['showLink'],
 			'inputType'               => 'checkbox',
+			'eval'                    => array('tl_class'=>'w50 m12')
 		),
 		
 		'showImage' => array
@@ -479,8 +490,11 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'imageSize' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['imageSize'],
-			'inputType'               => 'text',
-			'eval'                    => array('multiple'=>true, 'size'=>2, 'rgxp'=>'digit', 'nospace'=>true),
+			'exclude'                 => true,
+			'inputType'               => 'imageSize',
+			'options'                 => array('crop', 'proportional', 'box'),
+			'reference'               => &$GLOBALS['TL_LANG']['MSC'],
+			'eval'                    => array('rgxp'=>'digit', 'nospace'=>true, 'tl_class'=>'w50')
 		),
 		
 		'customFiletree' => array
@@ -494,7 +508,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['uploadFolder'],
 			'exclude'                 => true,
 			'inputType'               => 'fileTree',
-			'eval'                    => array('fieldType'=>'radio')
+			'eval'                    => array('fieldType'=>'radio', 'tl_class'=>'clr')
 		),
 		'validFileTypes' => array
 		(
@@ -506,7 +520,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['filesOnly'],
 			'inputType'               => 'checkbox',
-			'eval'                    => array('tl_class'=>'w50')
+			'eval'                    => array('tl_class'=>'w50 m12')
 		),
 		'editGroups' => array
 		(
