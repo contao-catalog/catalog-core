@@ -139,6 +139,8 @@ class ModuleCatalogList extends ModuleCatalog
 				$params = array_merge($params, $filterurl['values']['where']);
 			}
 	
+// add tags combination here...
+
 			if (is_array($filterurl['values']['tags'])) {
 				$params = array_merge($params, $filterurl['values']['tags']);
 			}

@@ -187,9 +187,13 @@ $GLOBALS['TL_LANG']['tl_module']['catalogNotifyText'] = array('Catalog Notificat
 /**
  * Legends
  */
-$GLOBALS['TL_LANG']['tl_module']['catalog_thumb_legend'] 	= 'Catalog Thumbnails';
+$GLOBALS['TL_LANG']['tl_module']['catalog_filter_legend']	= 'Field filters';
+$GLOBALS['TL_LANG']['tl_module']['catalog_date_legend'] 	= 'Date filters';
+$GLOBALS['TL_LANG']['tl_module']['catalog_range_legend'] 	= 'Range filters';
+$GLOBALS['TL_LANG']['tl_module']['catalog_search_legend'] 	= 'Search filters';
+$GLOBALS['TL_LANG']['tl_module']['catalog_sort_legend'] 	= 'Sort controls';
+$GLOBALS['TL_LANG']['tl_module']['catalog_thumb_legend'] 	= 'Thumbnails override';
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit_legend'] 	= 'Catalog Edit';
-$GLOBALS['TL_LANG']['tl_module']['catalog_filter_legend']	= 'Catalog Filtering';
 $GLOBALS['TL_LANG']['tl_module']['restrict_to_defaults_legend']	= 'Restrict to default values';
 
 
