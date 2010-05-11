@@ -2391,7 +2391,7 @@ abstract class ModuleCatalog extends Module
 							$w = ($newsize[0] ? $newsize[0] : '');
 							$h = ($newsize[1] ? $newsize[1] : '');
 						}
-						$src = $this->getImage($this->urlEncode($file), $w, $h);
+						$src = $this->getImage($this->urlEncode($file), $w, $h, $fieldConf['eval']['catalog']['imageSize'][2]);
 						$size = getimagesize(TL_ROOT . '/' . $src);
 						$arrSource[] = array
 						(
@@ -2474,7 +2474,7 @@ abstract class ModuleCatalog extends Module
 									$w = ($newsize[0] ? $newsize[0] : '');
 									$h = ($newsize[1] ? $newsize[1] : '');
 								}
-								$src = $this->getImage($this->urlEncode($file . '/' . $subfile), $w, $h);
+								$src = $this->getImage($this->urlEncode($file . '/' . $subfile), $w, $h, $fieldConf['eval']['catalog']['imageSize'][2]);
 								$size = getimagesize(TL_ROOT . '/' . $src);
 								$arrSource[] = array
 								(

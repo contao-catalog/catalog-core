@@ -843,7 +843,7 @@ class Catalog extends Backend
 		}
 
 		//$size = getimagesize(TL_ROOT.'/'.$src);
-		return '<img src="' . $this->getImage($src, $params['w'], $params['h']) . '" alt="'.specialchars($label).'" />';
+		return '<img src="' . $this->getImage($src, $params['w'], $params['h'], $params['mode']) . '" alt="'.specialchars($label).'" />';
 
 	}
     

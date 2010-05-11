@@ -568,7 +568,7 @@ class tl_catalog_types extends Backend
 		if ($row['addImage'])
 		{
 			$size = deserialize($row['size']);
-			$image = '<div class="image" style="padding-top:3px"><img src="'.$this->getImage($row['singleSRC'], $size[0], $size[1]).'" alt="'.htmlspecialchars($label).'" /></div> ';
+			$image = '<div class="image" style="padding-top:3px"><img src="'.$this->getImage($row['singleSRC'], $size[0], $size[1], $size[2]).'" alt="'.htmlspecialchars($label).'" /></div> ';
  		}
   
 		// count items
