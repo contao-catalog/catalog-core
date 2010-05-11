@@ -202,6 +202,7 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_search_legend'] 	= 'Search filters';
 $GLOBALS['TL_LANG']['tl_module']['catalog_sort_legend'] 	= 'Sort controls';
 $GLOBALS['TL_LANG']['tl_module']['catalog_thumb_legend'] 	= 'Thumbnails override';
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit_legend'] 	= 'Catalog Edit';
+$GLOBALS['TL_LANG']['tl_module']['catalog_notify_legend']	= 'Notification email';
 $GLOBALS['TL_LANG']['tl_module']['restrict_to_defaults_legend']	= 'Restrict to default values';
 
 

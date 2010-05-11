@@ -40,13 +40,13 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreader']  = '{title_legend},
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfeatured']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override,catalog_link_window;{catalog_filter_legend:hide},catalog_query_mode,catalog_tags_mode,catalog_where,catalog_list_use_limit,catalog_random_disable;{catalog_thumb_legend:hide},catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogrelated']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;catalog_related,catalog_related_tagcount,catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogrelated']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override;{catalog_filter_legend:hide},catalog_related,catalog_related_tagcount,catalog_where,catalog_limit,catalog_random_disable;{catalog_thumb_legend:hide},catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_match,catalog_selected,catalog_reference;jumpTo,catalog_visible,catalog_link_override;catalog_where,catalog_limit,catalog_random_disable;catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_selected,catalog_match,catalog_reference,jumpTo,catalog_visible,catalog_link_override;{catalog_filter_legend:hide},catalog_where,catalog_limit,catalog_random_disable;{catalog_thumb_legend:hide},catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_navigation,levelOffset,showLevel,hardLimit;catalog_show_items;{template_legend:hide},navigationTpl,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;catalog_subject,catalog_recipients,catalog_notify;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_recipients,catalog_notify;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 // catalog edit AND modify list above ^^
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,jumpTo,disableCaptcha;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
@@ -605,7 +605,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'exclude'                 => true,
 		'inputType'               => 'select',
 		'options_callback'        => array('tl_module_catalog', 'getCatalogMatchFields'),
-		'eval'                    => array('mandatory'=> true, 'includeBlankOption'=>true)
+		'eval'                    => array('mandatory'=> true, 'includeBlankOption'=>true, 'tl_class'=>'w50')
 	),
 
 
