@@ -78,6 +78,7 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['showImage'] = array('Enable as image f
 $GLOBALS['TL_LANG']['tl_catalog_fields']['imageSize'] = array('Image width and height', 'Please enter either the image width, the image height or both measures to resize the image. If you leave both fields blank, the original image size will be displayed.');
 
 $GLOBALS['TL_LANG']['tl_catalog_fields']['multiple'] = array('Multiple selection', 'If selected, user will be able to select more than one item.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['sortBy'] = array('Order by', 'Please choose the sort order.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['customFiletree'] = array('Customize the file Ttree', 'Allows you to set custom options for the Filetree.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['uploadFolder'] = array('Set file root folder', 'Selects the root point from which the user will select this file field.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['validFileTypes'] = array('Valid file types', 'Please enter a comma separated list of extensions of valid file types for this field.');
@@ -127,6 +128,13 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunctionOptions']['string']	= 'S
 $GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunctionOptions']['number']	= 'Number';
 $GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunctionOptions']['date']		= 'Date';
 //$GLOBALS['TL_LANG']['tl_catalog_fields']['formatFunctionOptions']['money']	= 'Money';
+
+$GLOBALS['TL_LANG']['tl_catalog_fields']['name_asc']  = 'File name (ascending)';
+$GLOBALS['TL_LANG']['tl_catalog_fields']['name_desc'] = 'File name (descending)';
+$GLOBALS['TL_LANG']['tl_catalog_fields']['date_asc']  = 'Date (ascending)';
+$GLOBALS['TL_LANG']['tl_catalog_fields']['date_desc'] = 'Date (descending)';
+$GLOBALS['TL_LANG']['tl_catalog_fields']['meta']      = 'Meta file (meta.txt)';
+$GLOBALS['TL_LANG']['tl_catalog_fields']['random']    = 'Random order';
 
 
 /**

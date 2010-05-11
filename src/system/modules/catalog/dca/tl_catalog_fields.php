@@ -113,7 +113,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 	// Palettes
 	'palettes' => array
 	(
-		'__selector__' => array('type', 'insertBreak', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree', 'editGroups', 'rte'),
+		'__selector__' => array('type', 'insertBreak', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree', 'editGroups', 'rte', 'multiple'),
 		'default' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'text' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'alias' => '{title_legend},name,description,colName,type,aliasTitle;{display_legend},titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{feedit_legend},editGroups',
@@ -125,7 +125,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'tags' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
 		'checkbox' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{feedit_legend},editGroups',
 		'url' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory;{feedit_legend},editGroups',
-		'file' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,multiple,customFiletree;{format_legend},showImage,showLink;{feedit_legend},editGroups',
+		'file' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,customFiletree,multiple;{format_legend},showImage,showLink;{feedit_legend},editGroups',
 		'calc' => '{title_legend},name,description,colName,type,calcValue;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		
 	),
@@ -139,8 +139,9 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'format'					=> 'formatFunction,formatStr',
 		'limitItems'			=> 'items,childrenSelMode,parentFilter',
 		'customFiletree'	=> 'uploadFolder,validFileTypes,filesOnly',
-		'editGroups'		=> 'editGroups',
-		'rte'					=> 'rte_editor',
+		'editGroups'			=> 'editGroups',
+		'rte'							=> 'rte_editor',
+		'multiple'				=> 'sortBy',
 	),
 
 	// Fields
@@ -391,16 +392,6 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'eval'                    => array('submitOnChange'=>true)
 		),
 		
-/*
-		'itemTableIdCol' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemTableIdCol'],
-			'inputType'               => 'select',
-			'options_callback'        => array('tl_catalog_fields', 'getTableKeys'),
-			'eval'                    => array('submitOnChange'=>true)
-		),
-*/
-		
 		'itemTableValueCol' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemTableValueCol'],
@@ -471,6 +462,17 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['multiple'],
 			'inputType'               => 'checkbox',
+			'eval'                    => array('submitOnChange'=>true, 'tl_class'=>'clr')
+		),
+
+		'sortBy' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['sortBy'],
+			'exclude'                 => true,
+			'inputType'               => 'select',
+			'options'                 => array('name_asc', 'name_desc', 'date_asc', 'date_desc', 'meta', 'random'),
+			'reference'               => &$GLOBALS['TL_LANG']['tl_catalog_fields'],
+			'eval'                    => array('tl_class'=>'w50')
 		),
 		
 		'showLink' => array
@@ -501,7 +503,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['customFiletree'],
 			'inputType'               => 'checkbox',
-			'eval'                    => array('submitOnChange'=>true)
+			'eval'                    => array('submitOnChange'=>true, 'tl_class'=>'clr')
 		),
 		'uploadFolder' => array
 		(

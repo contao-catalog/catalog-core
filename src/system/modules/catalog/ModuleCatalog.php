@@ -2326,7 +2326,6 @@ abstract class ModuleCatalog extends Module
 
 		$blnThumnailOverride = $this->catalog_thumbnails_override && ($this instanceof ModuleCatalogList || $this instanceof ModuleCatalogFeatured || $this instanceof ModuleCatalogRelated || $this instanceof ModuleCatalogReference);
 
-
 		// setup standard linking
 		$showLink = $fieldConf['eval']['catalog']['showLink'];
 		
@@ -2336,6 +2335,8 @@ abstract class ModuleCatalog extends Module
 			$showLink = $this->catalog_imagemain_field == $k ? $this->catalog_imagemain_fullsize : 
 					($this->catalog_imagegallery_field == $k ? $this->catalog_imagegallery_fullsize : ''); // override default
 		}
+
+		$sortBy = $blnThumnailOverride ? $this->sortBy : $fieldConf['eval']['catalog']['sortBy'];
 		
 		$files = deserialize($files,true);
 		if (!is_array($files) || count($files) < 1)
@@ -2350,6 +2351,7 @@ abstract class ModuleCatalog extends Module
 		$arrFiles = array();
 		$arrSource = array();
 		$arrValues = array();
+		$auxDate = array();
 
 		$counter = 0; 
 		$allowedDownload = trimsplit(',', strtolower($GLOBALS['TL_CONFIG']['allowedDownload']));
@@ -2378,6 +2380,8 @@ abstract class ModuleCatalog extends Module
 					$this->parseMetaFile(dirname($file), true);
 					$strBasename = strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : specialchars($objFile->basename);
 					$alt = (strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : ucfirst(str_replace('_', ' ', preg_replace('/^[0-9]+_/', '', $objFile->filename))));
+
+					$auxDate[] = $objFile->mtime;
 					
 					// images
 					if ($showImage)
@@ -2421,7 +2425,7 @@ abstract class ModuleCatalog extends Module
 && count($_GET) || strlen($_GET['page'])) ? '&amp;' : '?'). 'file=' . $this->urlEncode($file);
 						$icon = 'system/themes/' . $this->getTheme() . '/images/' . $objFile->icon;
 						$sizetext = '('.number_format(($objFile->filesize/1024), 1, $GLOBALS['TL_LANG']['MSC']['decimalSeparator'], $GLOBALS['TL_LANG']['MSC']['thousandsSeparator']).' kB)';
-						$arrSource[] = array
+						$arrSource[$file] = array
 						(
 							'title' => $strBasename,
 							'url' => $url,
@@ -2436,8 +2440,8 @@ abstract class ModuleCatalog extends Module
 						$tmpFile = $iconfile.' <a href="'.$url.'" title="'.$alt.'">'.$text.' '.$sizetext.'</a>';
 					}
 
-					$arrFiles[] = $file;
-					$arrValues[] = '<span class="'.($showImage ? 'image' : 'file').$class.'">'.$tmpFile.'</span>';
+					$arrFiles[$file] = $file;
+					$arrValues[$file] = '<span class="'.($showImage ? 'image' : 'file').$class.'">'.$tmpFile.'</span>';
 					$counter ++;
 				}
 				continue;
@@ -2462,6 +2466,8 @@ abstract class ModuleCatalog extends Module
 
 							$strBasename = strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : specialchars($objFile->basename);
 							$alt = (strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : ucfirst(str_replace('_', ' ', preg_replace('/^[0-9]+_/', '', $objFile->filename))));
+
+							$auxDate[] = $objFile->mtime;
 			
 							if ($showImage)
 							{
@@ -2476,7 +2482,8 @@ abstract class ModuleCatalog extends Module
 								}
 								$src = $this->getImage($this->urlEncode($file . '/' . $subfile), $w, $h, $fieldConf['eval']['catalog']['imageSize'][2]);
 								$size = getimagesize(TL_ROOT . '/' . $src);
-								$arrSource[] = array
+
+								$arrSource[$file . '/' . $subfile] = array
 								(
 									'src'	=> $src,
 									'alt'	=> $alt,
@@ -2487,6 +2494,7 @@ abstract class ModuleCatalog extends Module
 									'caption' => (strlen($this->arrMeta[$objFile->basename][2]) ? $this->arrMeta[$objFile->basename][2] : ''),
 									'metafile' => $this->arrMeta[$objFile->basename],
 								);
+
 								$tmpFile = '<img src="'.$src.'" alt="'.$alt.'" '.$size[3].' />';
 								if ($showLink)	
 								{
@@ -2495,6 +2503,7 @@ abstract class ModuleCatalog extends Module
 									$tmpFile = '<a rel="lightbox[lb' . $this->strTable . $id . ']" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
 
 								}
+
 							}
 							// files
 							elseif ($showLink)
@@ -2504,7 +2513,8 @@ abstract class ModuleCatalog extends Module
 && count($_GET) || strlen($_GET['page'])) ? '&amp;' : '?'). 'file=' . $this->urlEncode($file . '/' . $subfile);
 								$icon = 'system/themes/' . $this->getTheme() . '/images/' . $objFile->icon;
 								$sizetext = '('.number_format(($objFile->filesize/1024), 1, $GLOBALS['TL_LANG']['MSC']['decimalSeparator'], $GLOBALS['TL_LANG']['MSC']['thousandsSeparator']).' kB)';
-								$arrSource[] = array
+								
+								$arrSource[$file . '/' . $subfile] = array
 								(
 									'title' => $strBasename,
 									'url' => $url,
@@ -2519,8 +2529,8 @@ abstract class ModuleCatalog extends Module
 								$tmpFile = $iconfile.' <a href="'.$url.'" title="'.$alt.'">'.$text.' '.$sizetext.'</a>';
 							}
 							
-							$arrFiles[] = $file . '/' . $subfile;
-							$arrValues[] = '<span class="'.($showImage ? 'image' : 'file').$class.'">'.$tmpFile.'</span>';
+							$arrFiles[$file . '/' . $subfile] = $file . '/' . $subfile;
+							$arrValues[$file . '/' . $subfile] = '<span class="'.($showImage ? 'image' : 'file').$class.'">'.$tmpFile.'</span>';
 							$counter ++;
 						}
 					}
@@ -2529,58 +2539,69 @@ abstract class ModuleCatalog extends Module
 		}
 
 
-/*
 		// Sort array
-		switch ($objGalleries->sortBy)
+		$files = array();
+		$source = array();
+		$values = array();
+
+		switch ($sortBy)
 		{
 			default:
 			case 'name_asc':
-				array_multisort($images, SORT_ASC, $auxName);
+				uksort($arrFiles, 'basename_natcasecmp');
 				break;
 
 			case 'name_desc':
-				array_multisort($images, SORT_DESC, $auxName);
+				uksort($arrFiles, 'basename_natcasercmp');
 				break;
 
 			case 'date_asc':
-				array_multisort($images, SORT_NUMERIC, $auxDate, SORT_ASC);
+				array_multisort($arrFiles, SORT_NUMERIC, $auxDate, SORT_ASC);
 				break;
 
 			case 'date_desc':
-				array_multisort($images, SORT_NUMERIC, $auxDate, SORT_DESC);
+				array_multisort($arrFiles, SORT_NUMERIC, $auxDate, SORT_DESC);
 				break;
 
 			case 'meta':
-*/
-
-		if (count($this->arrAux))
-		{
-			$files = array();
-			foreach ($this->arrAux as $aux)
-			{
-				$k = array_search($aux, $arrFiles);				
-				if ($k !== false)
+				foreach ($this->arrAux as $aux)
 				{
-					$files[] = $arrFiles[$k];
-					$source[] = $arrSource[$k];
-					$values[] = $arrValues[$k];
+					$k = array_search($aux, $arrFiles);				
+					if ($k !== false)
+					{
+						$files[] = $arrFiles[$k];
+						$source[] = $arrSource[$k];
+						$values[] = $arrValues[$k];
+					}
 				}
-			}
-			$arrFiles = $files;
-			$arrSource = $source;
-			$arrValues = $values;
-		}
+				break;
 
-/*
-				$files = $arrImages;
+			case 'random':
+        $keys = array_keys($arrFiles);
+        shuffle($keys);
+        foreach($keys as $key) {
+            $files[$key] = $arrFiles[$key];
+        }
+        $arrFiles = $files;
 				break;
 		}
-*/
 
 
-		$return['files']	= $arrFiles;
-		$return['src'] 		= $arrSource;
-		$return['html']		= $arrValues;
+		if ($sortBy != 'meta')
+		{
+			// re-sort the values
+			foreach($arrFiles as $k=>$v)
+			{
+				$files[] = $arrFiles[$k];
+				$source[] = $arrSource[$k];
+				$values[] = $arrValues[$k];
+			}
+		}
+
+		$return['files']	= $files;
+		$return['src'] 		= $source;
+		$return['html']		= $values;
+
 
 		return $return;
 	}

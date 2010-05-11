@@ -76,7 +76,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
 		'catalog_sort_enable' => 'catalog_sort_headline,catalog_sort,catalog_sort_type',
 		'catalog_link_override' => 'catalog_islink',
 		'catalog_condition_enable' => 'catalog_condition',
-		'catalog_thumbnails_override'	=> 'catalog_imagemain_field,catalog_imagemain_size,catalog_imagemain_fullsize,catalog_imagegallery_field,catalog_imagegallery_size,catalog_imagegallery_fullsize',
+		'catalog_thumbnails_override'	=> 'catalog_imagemain_field,catalog_imagemain_size,catalog_imagemain_fullsize,catalog_imagegallery_field,catalog_imagegallery_size,catalog_imagegallery_fullsize,sortBy',
 		'catalog_random_disable' => 'catalog_order',
 		'catalog_edit_enable' => 'catalog_editJumpTo',
 		'catalog_show_items' => 'catalog_show_field',
@@ -676,6 +676,19 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'default'                 => '10',
 		'eval'                    => array('rgxp' => 'decimal', 'tl_class'=>'w50'),
 	),
+
+	'sortBy' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['sortBy'],
+		'exclude'                 => true,
+		'inputType'               => 'select',
+		'options'                 => array('name_asc', 'name_desc', 'date_asc', 'date_desc', 'meta', 'random'),
+		'reference'               => &$GLOBALS['TL_LANG']['tl_module'],
+		'eval'                    => array('tl_class'=>'w50')
+	),
+	
+
+
 )); 
 
 /**

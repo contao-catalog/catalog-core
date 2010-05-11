@@ -45,6 +45,8 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_layout'] = array('Catalog template', '
 $GLOBALS['TL_LANG']['tl_module']['catalog_list_use_limit'] = array('Use offset and limit for listing', 'Check if you want to limit the amount of items listed.');
 $GLOBALS['TL_LANG']['tl_module']['catalog_list_offset'] = array('List offset', 'Please specify the offset value (i.e. 10 to skip the first 10 items).');
 
+$GLOBALS['TL_LANG']['tl_module']['sortBy'] = array('Order by', 'Please choose the sort order.');
+
 
 /**
  * Catalog Filter
@@ -113,6 +115,8 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_order']        = array('Order by', 'Pl
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit_enable'] = array('Enable Editing', 'Enable editing of the item by providing a jump to a page with the Catalog Edit Module.');
 
+
+
 /**
  * Catalog Reader
  */
@@ -172,6 +176,10 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_edit_use_default'] = array('Enable res
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit_default'] = array('Restricted fields', 'Select all the fields that shall be restricted (make sure to provide the proper default value below).');
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit_default_value'] = array('Restricted fields default values', 'These are the default values for the above defined fields.');
 
+$GLOBALS['TL_LANG']['tl_module']['catalog_filter_cond_from_lister'] = array('Use filter condition from lister on same page.', 'If there is at least one catalog lister module on the same page, the filter condition from those cataloglisters is applied to this filter aswell.');
+
+
+
 /**
  * Catalog Notify
  */
@@ -222,6 +230,11 @@ $GLOBALS['TL_LANG']['tl_module']['daterange']['mf'] = 'Next month';
 $GLOBALS['TL_LANG']['tl_module']['daterange']['hf'] = 'Next 6 months';
 $GLOBALS['TL_LANG']['tl_module']['daterange']['yf'] = 'Next year';
 
-$GLOBALS['TL_LANG']['tl_module']['catalog_filter_cond_from_lister'] = array('Use filter condition from lister on same page.', 'If there is at least one catalog lister module on the same page, the filter condition from those cataloglisters is applied to this filter aswell.');
+$GLOBALS['TL_LANG']['tl_module']['name_asc']  = 'File name (ascending)';
+$GLOBALS['TL_LANG']['tl_module']['name_desc'] = 'File name (descending)';
+$GLOBALS['TL_LANG']['tl_module']['date_asc']  = 'Date (ascending)';
+$GLOBALS['TL_LANG']['tl_module']['date_desc'] = 'Date (descending)';
+$GLOBALS['TL_LANG']['tl_module']['meta']      = 'Meta file (meta.txt)';
+$GLOBALS['TL_LANG']['tl_module']['random']    = 'Random order';
 
 ?>

@@ -1456,6 +1456,8 @@ class Catalog extends Backend
 					 
 		$field['eval']['catalog']['imageSize'] = deserialize($objRow->imageSize, true);
 		$field['eval']['catalog']['multiple'] = $objRow->multiple;
+		$field['eval']['catalog']['sortBy'] = $objRow->sortBy;
+
 
 		$field['eval']['fieldType'] = $objRow->multiple ? 'checkbox' : 'radio';
 

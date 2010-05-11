@@ -117,6 +117,7 @@ CREATE TABLE `tl_catalog_fields` (
   `itemFilter` text NULL,
   `includeTime` char(1) NOT NULL default '',
   `multiple` char(1) NOT NULL default '',
+  `sortBy` varchar(32) NOT NULL default '',
   `showLink` char(1) NOT NULL default '',
   `showImage` char(1) NOT NULL default '',
   `imageSize` varchar(255) NOT NULL default '',
@@ -194,7 +195,6 @@ CREATE TABLE `tl_module` (
   `catalog_sort` blob NULL,
   `catalog_sort_type` varchar(15) NOT NULL default '',
 
-
   `catalog_visible` blob NULL,
   `catalog_comments_disable` char(1) NOT NULL default '',
 
@@ -216,7 +216,7 @@ CREATE TABLE `tl_module` (
   `catalog_imagegallery_field` varchar(64) NOT NULL default '',
   `catalog_imagegallery_size` varchar(255) NOT NULL default '',
   `catalog_imagegallery_fullsize` char(1) NOT NULL default '',
-
+  `sortBy` varchar(32) NOT NULL default '',
 
   `catalog_limit` varchar(32) NOT NULL default '',
   `catalog_random_disable` char(1) NOT NULL default '',
