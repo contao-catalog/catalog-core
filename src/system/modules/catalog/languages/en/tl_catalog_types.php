@@ -71,7 +71,13 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['importAdmin'] = array('Restrict to only
 $GLOBALS['TL_LANG']['tl_catalog_types']['importDelete'] = array('Allow feature: [Remove existing data]', 'Select to allow the feature that enables removal of all current data in the catalog (use with caution). This is intended for people who want to montly update the entire catalog from an external source.');
 
 
-$GLOBALS['TL_LANG']['tl_catalog_types']['upgrade'] = array('Upgrade Catalog Installation', 'In order to complete the upgrade process to the new merged Catalog application, you will need to manually remove a previous folder from your installation. The contents of this folder is now merged into the catalog folder and therefore no longer required. However, due to some permission restrictions, it\'s not directly possible to delete the folder automatically. <br /><br />Once you have removed this folder, you will have access to the catalog application.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['upgrade'] = array('Upgrade Catalog Installation', 'In order to complete the upgrade process to the new merged Catalog application, you will need to remove the Catalog Ext extension, which is now merged into the Catalog extension and therefore no longer required:
+<br />
+<ul>
+<li>If you installed this via the Extension Repository, simply now uninstall <strong>[catalog_ext]</strong>.</li>
+<li>If you manually installed it, remove  the <strong>catalog_ext/</strong> folder and its contents, manually.</li>
+</ul>
+Once you have removed this extension/folder, you will have access to the catalog application.');
 
 /**
  * RSS Feeds.
