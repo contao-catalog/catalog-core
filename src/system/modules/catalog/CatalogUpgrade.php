@@ -40,11 +40,11 @@ class CatalogUpgrade extends Backend
 {
 
 
-	private $checkFolder = 'system/modules/catalog_ex';
+	private $checkFolder = 'system/modules/catalog_ext';
 
 
 /**
- * Check if upgrade from Catalog Extension (catalog_ex) 
+ * Check if upgrade from Catalog Extension (catalog_ext) 
  */
 
 	public function checkUpgrade()

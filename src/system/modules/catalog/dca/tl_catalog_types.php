@@ -494,7 +494,7 @@ class tl_catalog_types extends Backend
 	 */
 	public function checkUpgrade()
 	{
-		$checkFolder = TL_ROOT . '/system/modules/catalog_ex';
+		$checkFolder = TL_ROOT . '/system/modules/catalog_ext';
 
 		if (file_exists($checkFolder) && is_dir($checkFolder))
 		{
