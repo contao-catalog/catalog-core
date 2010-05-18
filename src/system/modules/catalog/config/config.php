@@ -198,6 +198,9 @@ $GLOBALS['FE_MOD']['catalog'] = array
  */
 $GLOBALS['TL_HOOKS']['getSearchablePages'][] = array('CatalogExt', 'getSearchablePages');
 
+if (TL_MODE == 'FE')
+{
+
 /**
  * Register hook to preserve feeds 
  */
@@ -207,6 +210,9 @@ $GLOBALS['TL_HOOKS']['removeOldFeeds'][] = array('CatalogExt', 'removeOldFeedsHO
  * Register hook to add rss feeds to the layout
  */
 $GLOBALS['TL_HOOKS']['parseFrontendTemplate'][] = array('CatalogExt', 'parseFrontendTemplate');
+
+}
+
 
 /**
  * Cron jobs
