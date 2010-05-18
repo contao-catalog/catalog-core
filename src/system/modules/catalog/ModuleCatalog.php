@@ -2397,7 +2397,7 @@ abstract class ModuleCatalog extends Module
 						}
 						$src = $this->getImage($this->urlEncode($file), $w, $h, $fieldConf['eval']['catalog']['imageSize'][2]);
 						$size = getimagesize(TL_ROOT . '/' . $src);
-						$arrSource[] = array
+						$arrSource[$file] = array
 						(
 							'src'	=> $src,
 							'alt'	=> $alt,
