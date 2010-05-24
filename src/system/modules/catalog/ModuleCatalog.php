@@ -2100,7 +2100,7 @@ abstract class ModuleCatalog extends Module
 	}
 
 
-	private function generateCatalogUrl(Database_Result $objCatalog, $aliasField='alias', $strTable)
+	protected function generateCatalogUrl(Database_Result $objCatalog, $aliasField='alias', $strTable)
 	{
 
 		if (!strlen($aliasField))
@@ -2140,7 +2140,7 @@ abstract class ModuleCatalog extends Module
 	 * @param boolean
 	 * @return string
 	 */
-	private function generateLink(Database_Result $objCatalog, $aliasField, $strTable, $blnWindow, $blnEdit=false, $strLink='')
+	protected function generateLink(Database_Result $objCatalog, $aliasField, $strTable, $blnWindow, $blnEdit=false, $strLink='')
 	{
 		$linkUrl = (!$blnEdit ? $this->generateCatalogUrl($objCatalog, $aliasField, $strTable) : $this->generateCatalogEditUrl($objCatalog, $aliasField, $strTable));
 		$strLink = strlen($strLink) ? $strLink : (!$blnEdit ? $GLOBALS['TL_LANG']['MSC']['viewCatalog'] : $GLOBALS['TL_LANG']['MSC']['editCatalog']);
