@@ -99,9 +99,11 @@ abstract class ModuleCatalog extends Module
 
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');
-			$GLOBALS['TL_DCA'][$objCatalog->tableName] = $this->Catalog->getCatalogDca($this->catalog);
+			$GLOBALS['TL_DCA'][$objCatalog->tableName] = 
+				isset($GLOBALS['TL_DCA'][$objCatalog->tableName])
+					? array_merge($this->Catalog->getCatalogDca($this->catalog), $GLOBALS['TL_DCA'][$objCatalog->tableName])
+					: $this->Catalog->getCatalogDca($this->catalog);
 		}
-
 
 		// Send file to the browser
 		$blnDownload = ($this instanceof ModuleCatalogList || $this instanceof ModuleCatalogFeatured || $this instanceof ModuleCatalogRelated || $this instanceof ModuleCatalogReference || $this instanceof ModuleCatalogReader); 
@@ -821,7 +823,7 @@ abstract class ModuleCatalog extends Module
 	{
 		$filterurl = $this->parseFilterUrl();		
 		$current 	= $filterurl['current'];
-		
+
 		$arrFilters = deserialize($this->catalog_filters, true);
 		if ($this->catalog_filter_enable && count($arrFilters))
 		{
@@ -918,8 +920,7 @@ abstract class ModuleCatalog extends Module
 									// reset arrays
 									$searchProcedure = array();
 									$searchValues = array();
-					
-									foreach($this->catalog_search as $searchfield)
+									foreach($objModules->catalog_search as $searchfield)
 									{
 										if (($searchfield != $field) && array_key_exists($searchfield, $filterurl['current']))
 										{
