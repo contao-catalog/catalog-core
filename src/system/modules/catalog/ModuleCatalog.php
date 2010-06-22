@@ -975,9 +975,12 @@ abstract class ModuleCatalog extends Module
 								{
 									$strCondition = $this->replaceInsertTags($objModules->catalog_where);
 								}
-								$query['query'] .= (strlen($query['query'])?' AND ' : ''). (strlen($strCondition) ? $strCondition : '')
-											.($filterurl['procedure']['where'] ? ' AND '.implode(' '.$objModules->catalog_query_mode.' ', $filterurl['procedure']['where']) : '')
-											.($filterurl['procedure']['tags'] ? ' AND '.implode(' '.$objModules->catalog_tags_mode.' ', $filterurl['procedure']['tags']) : '');
+								if(strlen($strCondition))
+									$query['query'] .= (strlen($query['query'])?' AND ':'').$strCondition;
+								if(strlen($filterurl['procedure']['where']))
+									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_query_mode.' ', $filterurl['procedure']['where']);
+								if(strlen($filterurl['procedure']['tags']))
+									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_tags_mode.' ', $filterurl['procedure']['tags']);
 							}
 						}
 						// get existing options in DB

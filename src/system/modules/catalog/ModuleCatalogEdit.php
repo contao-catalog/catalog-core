@@ -197,7 +197,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		//$arrValues=$this->handleOnLoadCallbacks($arrValues);
 
 		// unpack restriction values.
-		$arrValuesDefault= strlen($this->catalog_edit_default_value) ? deserialize($this->catalog_edit_default_value) : array();
+		$arrValuesDefault= ($this->catalog_edit_use_default && strlen($this->catalog_edit_default_value)) ? deserialize($this->catalog_edit_default_value) : array();
 		// initialize value to restricted value as we might not be allowed to edit this field but the field shall
 		// revert to some default setting (published flag etc.)
 		// NOTE: This affects all fields mentioned in "catalog_edit_default_value", not just those selected for editing.
@@ -703,7 +703,6 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$tmptbl=new DC_DynamicTable($this->strTable);
 		if(!is_array($arrData))
 		{
-			var_dump($arrData);
 			return $arrData;
 		}
 		foreach($arrData as $field=>$data)
