@@ -32,7 +32,7 @@
  */
 
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfilter']    = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,catalog_filter_cond_from_lister;{catalog_filter_legend},catalog_filter_enable;{catalog_range_legend:hide},catalog_range_enable;{catalog_date_legend:hide},catalog_date_enable;{catalog_search_legend:hide},catalog_search_enable;{catalog_sort_legend:hide},catalog_sort_enable;{template_legend:hide},catalog_filtertemplate;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfilter']    = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,catalog_filter_cond_from_lister;{catalog_filter_legend},catalog_filter_enable;{catalog_range_legend:hide},catalog_range_enable;{catalog_date_legend:hide},catalog_date_enable;{catalog_search_legend:hide},catalog_search_enable;{catalog_sort_legend:hide},catalog_sort_enable;{template_legend:hide},catalog_filtertemplate,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['cataloglist']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override,catalog_link_window;{catalog_filter_legend:hide},catalog_condition_enable,catalog_search,catalog_query_mode,catalog_tags_mode,catalog_where,perPage,catalog_list_use_limit,catalog_order;{catalog_thumb_legend:hide},catalog_thumbnails_override;{catalog_edit_legend:hide},catalog_edit_enable;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
@@ -44,7 +44,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogrelated']  = '{title_legend}
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_selected,catalog_match,catalog_reference,jumpTo,catalog_visible,catalog_link_override;{catalog_filter_legend:hide},catalog_where,catalog_limit,catalog_random_disable;{catalog_thumb_legend:hide},catalog_thumbnails_override;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_navigation,levelOffset,showLevel,hardLimit;catalog_show_items;{template_legend:hide},navigationTpl,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,jumpTo,catalog_navigation,levelOffset,showLevel,hardLimit;catalog_show_items;{template_legend:hide},catalog_layout,navigationTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_recipients,catalog_notify;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
@@ -110,8 +110,8 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_jumpTo'],
 		'exclude'                 => true,
 		'inputType'               => 'pageTree',
+		'explanation'							=> &$GLOBALS['TL_LANG']['tl_module']['catalog_jumpTo'][1],
 		'eval'                    => array('fieldType'=>'radio', 'helpwizard'=>true),
-		'explanation'             => 'jumpTo'
 	),
 
 	'catalog_template' => array
@@ -132,6 +132,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		// fix issue #70 - template selector shall only show relevant templates. See implementation below.
 //		'options'                 => $this->getTemplateGroup('mod_catalog')
 		'options_callback'        => array('tl_module_catalog', 'getModuleTemplates'),
+		'eval'                    => array('tl_class'=>'w50')
 	),
 
 	'catalog_filtertemplate' => array
@@ -140,7 +141,8 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'default'                 => 'filter_default',
 		'exclude'                 => true,
 		'inputType'               => 'select',
-		'options'                 => $this->getTemplateGroup('filter_')
+		'options'                 => $this->getTemplateGroup('filter_'),
+		'eval'                    => array('tl_class'=>'w50')
 	),
 
 	'catalog_filter_enable' => array
