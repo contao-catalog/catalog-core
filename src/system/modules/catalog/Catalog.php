@@ -59,9 +59,9 @@ class Catalog extends Backend
 				->execute(CURRENT_ID);
 				
 		// load default language
-		$GLOBALS['TL_LANG'][$objType->tableName] = $GLOBALS['TL_LANG']['tl_catalog_items'];
+		$GLOBALS['TL_LANG'][$objType->tableName] = array_merge_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName]);
 		// load dca
-		$GLOBALS['TL_DCA'][$objType->tableName] = $this->getCatalogDca(CURRENT_ID);
+		$GLOBALS['TL_DCA'][$objType->tableName] = array_merge_recursive($this->getCatalogDca(CURRENT_ID), $GLOBALS['TL_DCA'][$objType->tableName]);
 		
 		return $objType->tableName;
 	}

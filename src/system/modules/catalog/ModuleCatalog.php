@@ -2938,7 +2938,8 @@ abstract class ModuleCatalog extends Module
 					'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
 					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
 					'accesskey' => $objJump->accesskey,
-					'tabindex' => $objJump->tabindex
+					'tabindex' => $objJump->tabindex,
+					'itemAlias' => $value
 				);
 				$this->arrTrail[]=$objNodes->pid;
 				continue;
@@ -2973,7 +2974,8 @@ abstract class ModuleCatalog extends Module
 					'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
 					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
 					'accesskey' => $objJump->accesskey,
-					'tabindex' => $objJump->tabindex
+					'tabindex' => $objJump->tabindex,
+					'itemAlias' => $value
 				);
 			}
 		}

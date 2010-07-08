@@ -149,6 +149,9 @@ class ModuleCatalogList extends ModuleCatalog
 			$strCondition = $this->replaceInsertTags($this->catalog_where);
 			$strWhere = (strlen($strCondition) ? " AND ".$strCondition : "")
 				.($filterurl['procedure']['where'] ? " AND ".implode(" ".$this->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
+				// TODO: changing the catalog_tags_mode to catalog_query_mode here will allow us to filter multiple tags.
+				// 		 but this beares side kicks in ModuleCatalog aswell. Therefore we might rather want to add another combination method
+				//		 here?
 				.($filterurl['procedure']['tags'] ? " AND ".implode(" ".$this->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
 
 			if(!BE_USER_LOGGED_IN && $this->publishField)
