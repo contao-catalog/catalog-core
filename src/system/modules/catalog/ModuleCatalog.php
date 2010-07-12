@@ -977,9 +977,9 @@ abstract class ModuleCatalog extends Module
 								}
 								if(strlen($strCondition))
 									$query['query'] .= (strlen($query['query'])?' AND ':'').$strCondition;
-								if(strlen($filterurl['procedure']['where']))
+								if(count($filterurl['procedure']['where']))
 									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_query_mode.' ', $filterurl['procedure']['where']);
-								if(strlen($filterurl['procedure']['tags']))
+								if(count($filterurl['procedure']['tags']))
 									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_tags_mode.' ', $filterurl['procedure']['tags']);
 							}
 						}
