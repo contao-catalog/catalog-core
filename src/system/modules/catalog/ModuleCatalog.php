@@ -2097,7 +2097,15 @@ abstract class ModuleCatalog extends Module
 			
 			$i++;
 		}
-
+		// HOOK: allow other extensions to manipulate the items before passing it to the template
+		if(is_array($GLOBALS['TL_HOOKS']['parseCatalog']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['parseCatalog'] as $callback)
+			{
+				$this->import($callback[0]);
+				$arrCatalog = $this->$callback[0]->$callback[1]($arrCatalog, $objTemplate, $this);
+			}
+		}
 		$objTemplate->entries = $arrCatalog;
 
 		return $objTemplate->parse();
