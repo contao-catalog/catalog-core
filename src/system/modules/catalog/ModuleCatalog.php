@@ -938,8 +938,11 @@ abstract class ModuleCatalog extends Module
 											}
 										}
 									}
-									$filterurl['procedure']['where'][] = ' ('.implode(' OR ', $searchProcedure).')';
-									$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
+									if(count($searchProcedure))
+									{
+										$filterurl['procedure']['where'][] = ' ('.implode(' OR ', $searchProcedure).')';
+										$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
+									}
 								}
 								if(is_array($filterurl['procedure']['where']))
 								{
