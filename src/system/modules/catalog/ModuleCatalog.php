@@ -451,13 +451,14 @@ abstract class ModuleCatalog extends Module
 							// search only if search string in tag namelist
 							if ($tagQuery->numRows)
 							{
-								$tmpTags = '';
+								$tmpTags = array();
 								while($tagQuery->next())
 								{
 									$tmpTags[] = "FIND_IN_SET(?,".$field.")";
 									$values['search'][$field][] = $tagQuery->id;
 								}
-								$procedure['search'][$field] = '('.implode(' + ',$tmpTags).' > 0)';
+								if(count($tmpTags))
+									$procedure['search'][$field] = '('.implode(' + ',$tmpTags).' > 0)';
 							}
 
 							break;
@@ -922,7 +923,9 @@ abstract class ModuleCatalog extends Module
 									$searchValues = array();
 									foreach($objModules->catalog_search as $searchfield)
 									{
-										if (($searchfield != $field) && array_key_exists($searchfield, $filterurl['current']))
+										if (($searchfield != $field)
+											&& array_key_exists($searchfield, $filterurl['current'])
+											&& array_key_exists($searchfield, $filterurl['procedure']['search']))
 										{
 											$searchProcedure[] = $filterurl['procedure']['search'][$searchfield];
 											if (is_array($filterurl['values']['search'][$searchfield]))
@@ -977,9 +980,9 @@ abstract class ModuleCatalog extends Module
 								if($objModules->catalog_where)
 								{
 									$strCondition = $this->replaceInsertTags($objModules->catalog_where);
+									if(strlen($strCondition))
+										$query['query'] .= (strlen($query['query'])?' AND ':'').$strCondition;
 								}
-								if(strlen($strCondition))
-									$query['query'] .= (strlen($query['query'])?' AND ':'').$strCondition;
 								if(count($filterurl['procedure']['where']))
 									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_query_mode.' ', $filterurl['procedure']['where']);
 								if(count($filterurl['procedure']['tags']))
