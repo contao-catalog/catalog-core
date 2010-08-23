@@ -120,7 +120,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'default'                 => 'catalog_full',
 		'exclude'                 => true,
 		'inputType'               => 'select',
-		'options'                 => $this->getTemplateGroup('catalog_'),
+		'options_callback'        => array('tl_module_catalog','getCatalogTemplates'),
 		'eval'                    => array('tl_class'=>'w50')
 	),
 
@@ -129,8 +129,6 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_layout'],
 		'exclude'                 => true,
 		'inputType'               => 'select',
-		// fix issue #70 - template selector shall only show relevant templates. See implementation below.
-//		'options'                 => $this->getTemplateGroup('mod_catalog')
 		'options_callback'        => array('tl_module_catalog', 'getModuleTemplates'),
 		'eval'                    => array('tl_class'=>'w50')
 	),
@@ -141,7 +139,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'default'                 => 'filter_default',
 		'exclude'                 => true,
 		'inputType'               => 'select',
-		'options'                 => $this->getTemplateGroup('filter_'),
+		'options_callback'        => array('tl_module_catalog','getFilterTemplates'),
 		'eval'                    => array('tl_class'=>'w50')
 	),
 
@@ -697,8 +695,10 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
  * Class tl_module_catalog
  *
  * Provide miscellaneous methods that are used by the data configuration array.
- * @copyright  Leo Feyer 2005
- * @author     Leo Feyer <leo@typolight.org>
+ * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
+ * @author		Martin Komara, 
+ * 				John Brand <john.brand@thyon.com>,
+ * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
  * @package    Controller
  */
 class tl_module_catalog extends Backend
@@ -882,13 +882,72 @@ class tl_module_catalog extends Backend
 	public function getModuleTemplates(DataContainer $dc)
 	{
 		// fix issue #70 - template selector shall only show relevant templates.
-		$objModule=$this->Database->prepare("SELECT type FROM tl_module m WHERE m.id=?")
-							->execute($dc->id);
-		$options = $this->getTemplateGroup('mod_' . $objModule->type);
-		return $options;
+		if (version_compare(VERSION.BUILD, '2.9.0', '>='))
+		{
+			return $this->getTemplateGroup('mod_' . $dc->activeRecord->type, $dc->activeRecord->pid);
+		}
+		else
+		{
+			// backwards compatibility only
+			if (version_compare(VERSION.BUILD, '2.8.0', '>='))
+				$type = $dc->activeRecord->type;
+			else
+			{
+				// 2.7 and below do not have activeRecord.
+				$objModule=$this->Database->prepare("SELECT type FROM tl_module m WHERE m.id=?")
+									->execute($dc->id);
+				$type = $objModule->type;
+			}
+			return $this->getTemplateGroup('mod_' . $type);
+		}
 	}
 
-	
+	public function getCatalogTemplates(DataContainer $dc)
+	{
+		// fix issue #70 - template selector shall only show relevant templates.
+		if (version_compare(VERSION.BUILD, '2.9.0', '>='))
+		{
+			return $this->getTemplateGroup('catalog_' . $dc->activeRecord->type, $dc->activeRecord->pid);
+		}
+		else
+		{
+			// backwards compatibility only
+			if (version_compare(VERSION.BUILD, '2.8.0', '>='))
+				$type = $dc->activeRecord->type;
+			else
+			{
+				// 2.7 and below do not have activeRecord.
+				$objModule=$this->Database->prepare("SELECT type FROM tl_module m WHERE m.id=?")
+									->execute($dc->id);
+				$type = $objModule->type;
+			}
+			return $this->getTemplateGroup('catalog_' . $type);
+		}
+	}
+
+	public function getFilterTemplates(DataContainer $dc)
+	{
+		// fix issue #70 - template selector shall only show relevant templates.
+		if (version_compare(VERSION.BUILD, '2.9.0', '>='))
+		{
+			return $this->getTemplateGroup('filter_' . $dc->activeRecord->type, $dc->activeRecord->pid);
+		}
+		else
+		{
+			// backwards compatibility only
+			if (version_compare(VERSION.BUILD, '2.8.0', '>='))
+				$type = $dc->activeRecord->type;
+			else
+			{
+				// 2.7 and below do not have activeRecord.
+				$objModule=$this->Database->prepare("SELECT type FROM tl_module m WHERE m.id=?")
+									->execute($dc->id);
+				$type = $objModule->type;
+			}
+			return $this->getTemplateGroup('filter_' . $type);
+		}
+	}
+
 	public function onLoadCallback(DataContainer $dc)
 	{
 		$result = $this->Database->prepare("SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1")

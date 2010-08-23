@@ -132,6 +132,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 					'fieldDef'     => array
 						(
 							'inputType' => 'text',
+							'eval'      => array('rgxp' => 'url')
 						),
 					'sqlDefColumn' => "varchar(255) NOT NULL default ''",
 				),

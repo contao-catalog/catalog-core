@@ -54,7 +54,7 @@ class CatalogExt extends Frontend
 			$arrRoot = $this->getChildRecords($intRoot, 'tl_page', true);
 		}
 
-		$objArchive = $this->Database->prepare("SELECT id,tableName,jumpTo,aliasField,searchable,searchCondition,titleField FROM tl_catalog_types")
+		$objArchive = $this->Database->prepare("SELECT id,tableName,jumpTo,aliasField,publishField,searchable,searchCondition,titleField FROM tl_catalog_types")
 									 ->execute();
 
 		// Walk through each archive
@@ -93,7 +93,11 @@ class CatalogExt extends Frontend
 			// Get items
 			$this->import('String');
 			$where = $this->String->decodeEntities($objArchive->searchCondition);
-			$objCatalog = $this->Database->prepare("SELECT * FROM ".$objArchive->tableName." WHERE pid=?".(strlen($where)? " AND ".$where : "")." ORDER BY tstamp DESC")
+			if(strlen($objArchive->publishField))
+			{
+				$where.=(strlen($where)? ' AND ':'').$objArchive->publishField.'=1';
+			}
+			$objCatalog = $this->Database->prepare("SELECT * FROM ".$objArchive->tableName." WHERE pid=? ".(strlen($where)? " AND ".$where : "")." ORDER BY tstamp DESC")
 										 ->execute($objArchive->id);
 
 			// Add items to the indexer
@@ -161,6 +165,10 @@ class CatalogExt extends Frontend
 		// Get items
 		$this->import('String');
 		$where = $this->String->decodeEntities($objArchive->searchCondition);
+		if(strlen($arrCatalog->publishField))
+		{
+			$where.=(strlen($where)? ' AND ':'').$arrCatalog->publishField.'=1';
+		}
 		$datefield=(strlen($arrCatalog->datesource) ? $arrCatalog->datesource : 'tstamp');
 		$objArticleStmt = $this->Database->prepare("SELECT * FROM " . $arrCatalog->tableName . " WHERE pid=? ".(strlen($where)? " AND ".$where : "")." ORDER BY " . $datefield . " DESC");
 

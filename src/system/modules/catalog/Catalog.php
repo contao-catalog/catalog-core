@@ -66,7 +66,9 @@ class Catalog extends Backend
 		$GLOBALS['TL_DCA'][$objType->tableName] = is_array($GLOBALS['TL_DCA'][$objType->tableName])
 												? array_merge_recursive($this->getCatalogDca(CURRENT_ID), $GLOBALS['TL_DCA'][$objType->tableName])
 												: $this->getCatalogDca(CURRENT_ID);
-		
+
+		$this->purgeInvalidFields($objType->tableName);
+
 		return $objType->tableName;
 	}
 
@@ -186,6 +188,25 @@ class Catalog extends Backend
 		
 	}
 
+	public function purgeInvalidFields($tableName)
+	{
+		// only in backend!
+		if(TL_MODE != 'BE')
+			return;
+		$columns = $this->Database->listFields($tableName, true);
+		$invalid=array();
+		$valid=array_merge(array_keys($GLOBALS['TL_DCA'][$tableName]['fields']), $this->systemColumns);
+		foreach($columns as $col)
+		{
+			if(!in_array($col['name'], $valid))
+				$invalid[] = $col['name'];
+		}
+		if(count($invalid)>0)
+		{
+			// TODO: loop over the invalid array and drop the columns or rather redirect to some maintenance screen? see issue #59
+			throw new Exception('INVALID COLUMNS DETECTED: '.implode(', ', $invalid));
+		}
+	}
 	
 	public function renameColumn($varValue, DataContainer $dc)
 	{
@@ -256,14 +277,8 @@ class Catalog extends Backend
 		
 		if ($varValue != $fieldType)
 		{
-			// TODO: I think we need something better here, like trying to convert the column first and if that fails backup to drop'ing and recreating.
-			// Otherwise existing data in the catalog will get lost when accidently changing the column type and changing it back (2009-04-24 c.schiffler).
-			//$this->dropColumn($tableName, $colName);
-			//$this->Database->execute(sprintf($this->createColumnStatement, $tableName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$varValue]['sqlDefColumn']));
-
 			$this->Database->execute(sprintf($this->renameColumnStatement, $tableName, $colName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$varValue]['sqlDefColumn']));
 		}
-		
 		return $varValue;
 	}
 	
@@ -1006,7 +1021,7 @@ class Catalog extends Backend
 		if($objCatalog->publishField && version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
 		{
 			$this->publishField=$objCatalog->publishField;
-			array_insert($dca['list']['operations'], 0, array('toggle' => array
+			array_insert($dca['list']['operations'], 3, array('toggle' => array
 						(
 						'label'               => &$GLOBALS['TL_LANG']['tl_catalog_items']['toggle'],
 						'icon'                => 'visible.gif',
@@ -1064,7 +1079,7 @@ class Catalog extends Backend
 			// Added by c.schiffler to allow custom editors to register themselves.
 			// HOOK: try to format the fieldtype as it might be a custom added one.
 			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType];
-			if(array_key_exists('generateFieldEditor', $fieldType) && is_array($fieldType['generateFieldEditor']))
+			if(is_array($fieldType) && array_key_exists('generateFieldEditor', $fieldType) && is_array($fieldType['generateFieldEditor']))
 			{
 				foreach ($fieldType['generateFieldEditor'] as $callback)
 				{

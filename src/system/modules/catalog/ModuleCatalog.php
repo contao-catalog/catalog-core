@@ -267,20 +267,29 @@ abstract class ModuleCatalog extends Module
 						{
 							$current[$field] = $min.'__'.$max;
 						}
+						if (in_array($fieldConf['eval']['catalog']['type'],array('number', 'decimal')))
+						{
+							$min='';
+							$max='';
+							if (strlen($range[0]))							
+								$min=$range[0];
+							if (strlen($range[1]))
+								$max=$range[1];
+							if (strlen($max) || strlen($min))
+							{
+								$current[$field] = $min.'__'.$max;
+							}
+						}
 					}
-					
 					// regular filter value
 					else 
 					{
-
 						// use TL safe function
 						$v = $this->Input->post($field);
-		
 						$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 						if (strlen($v) && $this->getAliasFieldConf($fieldConf) != 'id')
 						{
 							$arrAlias = array_flip($this->getAliasOptionList($fieldConf));
-		
 							switch ($fieldConf['eval']['catalog']['type'])
 							{
 								case 'tags':
@@ -495,38 +504,52 @@ abstract class ModuleCatalog extends Module
 				$rangeOptions[$field]['label'] = $fieldConf['label'][0];
 				$rangeOptions[$field]['min'] = 	$rangeValues[0];
 				$rangeOptions[$field]['max'] = $rangeValues[1];
-				
-				$procedure['where'][] = '('.$field.' BETWEEN ? AND ?)';
+				$minValue =	$rangeValues[0];
+				$maxValue = $rangeValues[1];
+				//$procedure['where'][] = '('.$field.' BETWEEN ? AND ?)';
+				$strSqlWhereClause = '('.$field.' BETWEEN ? AND ?)';
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'number':
-						$values['where'][] = intval($rangeValues[0]);
-						$values['where'][] = intval($rangeValues[1]);
+						//$values['where'][] = intval($rangeValues[0]);
+						//$values['where'][] = intval($rangeValues[1]);
+						if ($minValue!='')
+							$values['where'][] = intval($rangeValues[0]);
+						else
+							$strSqlWhereClause = '('.$field.' < ?)';
+						if ($maxValue!='')
+							$values['where'][] = intval($rangeValues[1]);
+						else
+							$strSqlWhereClause = '('.$field.' > ?)';
 						break;
-
 					case 'decimal':
-						$values['where'][] = floatval($rangeValues[0]);
-						$values['where'][] = floatval($rangeValues[1]);
+						//$values['where'][] = floatval($rangeValues[0]);
+						//$values['where'][] = floatval($rangeValues[1]);
+						if ($minValue!='')
+							$values['where'][] = floatval($rangeValues[0]);
+						else
+							$strSqlWhereClause = '('.$field.' < ?)';
+						if ($maxValue!='')
+							$values['where'][] = floatval($rangeValues[1]);
+						else
+							$strSqlWhereClause = '('.$field.' > ?)';
 						break;
-
 					case 'date':
 						$values['where'][] = strtotime($rangeValues[0]);
 						$values['where'][] = strtotime($rangeValues[1]);
 						break;
-
 					default:
 						$values['where'][] = $rangeValues[0];
 						$values['where'][] = $rangeValues[1];
 				}
-				
+				$rangeOptions[$field]['min'] = 	$minValue;
+				$rangeOptions[$field]['max'] = $maxValue;
+				$procedure['where'][] = $strSqlWhereClause;
 				$current[$field] = $this->Input->get($field);
-
 			}
-			
 			//GET filter values
 			elseif (strlen($this->Input->get($field)))
 			{
-
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'tags':					
@@ -535,7 +558,7 @@ abstract class ModuleCatalog extends Module
 						$tmpTags = array();
 						foreach ($tags as $tag)
 						{
-							$tmpTags[] = "FIND_IN_SET(?,".$field.")";
+							$tmpTags[] = 'FIND_IN_SET(?,'.$field.')';
 							$values['tags'][] = $tag;
 						}
 						$procedure['tags'][] = '('.implode(($this->catalog_tags_mode == 'AND' ? ' * ' : ' + '),$tmpTags).' > 0)';
@@ -545,39 +568,31 @@ abstract class ModuleCatalog extends Module
 							$procedure['tree'][] = '('.implode(($this->catalog_tags_mode == 'AND' ? ' * ' : ' + '),$tmpTags).' > 0)';
 						}
 						break;
-
 					case 'checkbox':
 						$procedure['where'][] = $field."=?";
 						$values['where'][] = ($this->Input->get($field) == 'true' ? 1 : 0);
 						//$current[$field] = $this->Input->get($field);
-
 						if ($blnTree && in_array($field, $arrTree)) 
 						{
 							$procedure['tree'][$field] = $field."=?";
 							$values['tree'][$field] = ($this->Input->get($field) == 'true' ? 1 : 0);
 						}
-
 						break;
-
 					case 'text':
 					case 'longtext':
 					case 'number':
 					case 'decimal':
 					case 'select':
 					case 'checkbox':
-
 						$value = $current[$field];
-						
 						$procedure['where'][] = $field."=?";
 						$values['where'][] = $value;
-
 						if ($blnTree && in_array($field, $arrTree)) 
 						{
 							$procedure['tree'][$field] = $field."=?";
 							$values['tree'][$field] = $value;
 						}
 						break;
-
 					case 'date':
 						$procedure['where'][] = $field."=?";
 						$values['where'][] = strtotime($this->Input->get($field));
@@ -589,7 +604,6 @@ abstract class ModuleCatalog extends Module
 							$values['tree'][$field] = strtotime($this->Input->get($field));
 						}
 						break;
-
 					case 'file':
 					case 'url':
 						$procedure['where'][] = $field."=?";
@@ -602,11 +616,8 @@ abstract class ModuleCatalog extends Module
 							$values['tree'][$field] = urldecode($this->Input->get($field));
 						}
 						break;
-
 				}
-				
 			} // filter
-
 
 			// GET sort values
 			if ($this->Input->get($this->strOrderBy) == $field && in_array($this->Input->get($this->strSort), array('asc','desc')))
@@ -617,29 +628,31 @@ abstract class ModuleCatalog extends Module
 						list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
 						$procedure['orderby'] = '(SELECT '.$valueCol.' from '.$itemTable.' WHERE id='.$field.') '.$this->Input->get($this->strSort);
 						break;
-						
 					default:
 						$procedure['orderby'] = $field.' '.$this->Input->get($this->strSort);
 				}
-				
 				$current[$this->strOrderBy] = $this->Input->get($this->strOrderBy);
 				$current[$this->strSort] = $this->Input->get($this->strSort);
-			
 			} //sort
 
 		} // foreach $filter
-		
-
 		$settings = array 
 			(
 				'current' 	=> $current,
 				'procedure' => $procedure,
-				'values' 		=> $values,
+				'values' 	=> $values,
 			);
-		
+		// HOOK: allow other extensions to manipulate the filter settings before passing it to the template
+		if(is_array($GLOBALS['TL_HOOKS']['filterCatalog']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['filterCatalog'] as $callback)
+			{
+				$this->import($callback[0]);
+				$settings = $this->$callback[0]->$callback[1]($settings);
+			}
+		}
 		return $settings;
 	}
-
 
 	/**
 	 * Retrieve Alias field from table, checks if catalog
@@ -1203,7 +1216,10 @@ abstract class ModuleCatalog extends Module
 
 								$addOption = array();
 								$addOption['value'] = $url;
-								$addOption['label'] = $label;
+								if($this->showOccurrences)
+									$addOption['label'] = '{{CATALOG_OCCURENCE::'.$field.'||'.htmlspecialchars($row[$field]).'}}';
+								else
+									$addOption['label'] = $label;
 								$addOption['id'] = $row[$field];
 								if ($selected)
 								{
@@ -1842,45 +1858,44 @@ abstract class ModuleCatalog extends Module
 
 
 
-	private function generateFilterUrl($arrGet = array(), $blnRoot=false, $blnJumpTo=true)
+	public function generateFilterUrl($arrGet = array(), $blnRoot=false, $blnJumpTo=true)
 	{
 		$this->getJumpTo($this->catalog_jumpTo, $blnJumpTo);
-
 		$strParams = '';
-
-		foreach ($arrGet as $k=>$v)
+		if (is_array($arrGet) && ($arrGet))
 		{
-			if (strlen($v)) 
+			foreach ($arrGet as $k=>$v)
 			{
-				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
-				if (in_array($fieldConf['eval']['catalog']['type'], array('select', 'tags')) 
-						&& $this->getAliasFieldConf($fieldConf) != 'id')
+				if (strlen($v)) 
 				{
-					$arrAlias = $this->getAliasOptionList($fieldConf);
-					if ($fieldConf['eval']['catalog']['type'] == 'tags')
+					$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
+					if (in_array($fieldConf['eval']['catalog']['type'], array('select', 'tags')) 
+							&& $this->getAliasFieldConf($fieldConf) != 'id')
 					{
-						$tags = explode(',', $v);
-						$newtags = array();
-						foreach($tags as $tag)
+						$arrAlias = $this->getAliasOptionList($fieldConf);
+						if ($fieldConf['eval']['catalog']['type'] == 'tags')
 						{
-							$newtags[] = $arrAlias[$tag];
+							$tags = explode(',', $v);
+							$newtags = array();
+							foreach($tags as $tag)
+							{
+								$newtags[] = $arrAlias[$tag];
+							}
+							$v = implode(',', $newtags);
 						}
-						$v = implode(',', $newtags);
+						else
+						{
+							$v = $arrAlias[$v]; 
+						}
 					}
-					else
-					{
-						$v = $arrAlias[$v]; 
-					}
+					$v = str_replace($GLOBALS['TL_CONFIG']['catalog']['safeCheck'], $GLOBALS['TL_CONFIG']['catalog']['safeReplace'], $v);
+	
+					$strParams .= $GLOBALS['TL_CONFIG']['disableAlias'] ? '&amp;' . $k . '=' . $v  : '/' . $k . '/' . $v;
 				}
-				$v = str_replace($GLOBALS['TL_CONFIG']['catalog']['safeCheck'], $GLOBALS['TL_CONFIG']['catalog']['safeReplace'], $v);
-
-				$strParams .= $GLOBALS['TL_CONFIG']['disableAlias'] ? '&amp;' . $k . '=' . $v  : '/' . $k . '/' . $v;
 			}
 		}
-
 		return ($blnRoot ? $this->Environment->base : '') . $this->generateFrontEndUrl($this->cacheJumpTo['page'], $strParams);		
 	}
-
 
 	/**
 	 * Translate SQL if needed (needed for calculated fields)
@@ -2061,7 +2076,7 @@ abstract class ModuleCatalog extends Module
 							$sortOrder = $this->Database->fieldExists($sortCol, $refTable) ? $sortCol : $refCol;
 
 							// Get referenced fields
-							$objRef = $this->Database->prepare("SELECT * FROM ".$refTable." WHERE id IN (".trim($v).") ORDER BY ".$sortOrder)
+							$objRef = $this->Database->prepare('SELECT * FROM '.$refTable.' WHERE id IN ('.trim($v).')'.(strlen($sortOrder)?' ORDER BY '.$sortOrder:''))
 													->execute();
 
 							if ($objRef->numRows)
@@ -2261,7 +2276,7 @@ abstract class ModuleCatalog extends Module
 						foreach ($fieldType['parseValue'] as $callback)
 						{
 							$this->import($callback[0]);
-							$ret=$this->$callback[0]->$callback[1]($id, $k, $value, $blnImageLink, $objCatalog, $this);
+							$ret=$this->$callback[0]->$callback[1]($id, $k, $value, $blnImageLink, $objCatalog, $this, $fieldConf);
 							$arrItems = $ret['items'];
 							$arrValues = $ret['values'];
 							$strHtml = $ret['html'];
@@ -2363,8 +2378,11 @@ abstract class ModuleCatalog extends Module
 		}	
 
 		// required for parseMetaFile function (in FrontEnd)
-		$this->multiSRC = $files;					
+		$this->multiSRC = $files;
 		$this->arrAux = array();
+		// TODO: we also have to clean the array of already processed files here as otherwise $arrAux will not get populated again.
+		// We might find some better approach to this in the future rather than cleaning the cache arrays.
+		$this->arrProcessed=array();
 
 		$arrFiles = array();
 		$arrSource = array();
@@ -2556,7 +2574,6 @@ abstract class ModuleCatalog extends Module
 			}
 		}
 
-
 		// Sort array
 		$files = array();
 		$source = array();
@@ -2584,7 +2601,7 @@ abstract class ModuleCatalog extends Module
 			case 'meta':
 				foreach ($this->arrAux as $aux)
 				{
-					$k = array_search($aux, $arrFiles);				
+					$k = array_search($aux, $arrFiles);
 					if ($k !== false)
 					{
 						$files[] = $arrFiles[$k];
@@ -2595,16 +2612,15 @@ abstract class ModuleCatalog extends Module
 				break;
 
 			case 'random':
-        $keys = array_keys($arrFiles);
-        shuffle($keys);
-        foreach($keys as $key) {
-            $files[$key] = $arrFiles[$key];
-        }
-        $arrFiles = $files;
+				$keys = array_keys($arrFiles);
+				shuffle($keys);
+				foreach($keys as $key)
+				{
+					$files[$key] = $arrFiles[$key];
+				}
+				$arrFiles = $files;
 				break;
 		}
-
-
 		if ($sortBy != 'meta')
 		{
 			// re-sort the values
@@ -2829,92 +2845,61 @@ abstract class ModuleCatalog extends Module
 	 */
 	protected function renderCatalogNavigation($pid, $level=1)
 	{
-		if($level==0)
-		{
+		if($level==1)
 			$this->arrTrail=array();
-		}
-
 		$this->getJumpTo($this->jumpTo, false);
-
-
 		// Get internal page (from parent catalog)
-		$objJump = $this->Database->prepare("SELECT * FROM tl_page WHERE id=?")
+		$objJump = $this->Database->prepare('SELECT * FROM tl_page WHERE id=?')
 							 	  ->limit(1)
 								  ->execute($this->jumpTo);
-
 		if ($objJump->numRows < 1)
-		{
 			return '';
-		}
-
 		$arrJump = $objJump->fetchAssoc();
-
-	
 		// get reference table and column		
-		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? AND colName=?")
+		$objFields = $this->Database->prepare('SELECT * FROM tl_catalog_fields WHERE pid=? AND colName=?')
 											->limit(1)
 											->execute($this->catalog, $this->catalog_navigation);
-		
 		if (!$objFields->numRows)
-		{
 			return '';
-		}
-
 		$sourceTable = $objFields->itemTable;
 		$sourceColumn = $objFields->itemTableValueCol;
 		$blnChildren = $objFields->childrenSelMode;
-
 		$ids = ($pid == 0) ? ($objFields->limitItems && strlen($objFields->items) ? deserialize($objFields->items) : array(0)) : array($pid);
 		$strRoot = ((!$blnChildren && $level == 1) ? 'id' : 'pid');
-
 		$valueField = $this->getAliasField($sourceTable);
-								
 		// check if this tree has a pid or a flat table
 		$treeView = $this->Database->fieldExists('pid', $sourceTable);
 		$sort = $this->Database->fieldExists('sorting', $sourceTable) ? 'sorting' : $sourceColumn;
 		if ($treeView)
 		{
-			$objNodes = $this->Database->prepare("SELECT id, ".$valueField.", (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " AS name FROM ". $sourceTable. " o WHERE ".$strRoot." IN (".implode(',',$ids).") ORDER BY ". $sort)
+			$objNodes = $this->Database->prepare('SELECT '.$strRoot.', id, '.$valueField.', (SELECT COUNT(*) FROM '. $sourceTable .' i WHERE i.pid=o.id) AS childCount, ' . $sourceColumn . ' AS name FROM '. $sourceTable. ' o WHERE '.$strRoot.' IN ('.implode(',',$ids).') ORDER BY '. $sort)
 									 ->execute();
 		}
-
-		if (!$treeView || ($objNodes->numRows == 0 && $level == 1))  // 0 => 1 ??
+		if (!$treeView || ($objNodes->numRows == 0 && $level == 1))
 		{
-			$objNodes = $this->Database->execute("SELECT id, ".$valueField.", 0 AS childCount, ". $sourceColumn ." AS name FROM ". $sourceTable ." ORDER BY ".$sort);
+			$objNodes = $this->Database->execute('SELECT id, '.$valueField.', 0 AS childCount, '. $sourceColumn .' AS name FROM '. $sourceTable .' ORDER BY '.$sort);
 		}
-
-		if ($objNodes->numRows < 1)
-		{
+		// no entries for the given pid
+		if (!$objNodes->numRows)
 			return '';
-		}
-
 		$items = array();
-
 		// Determine the layout template
 		if (!strlen($this->navigationTpl))
 		{
 			$this->navigationTpl = 'nav_default';
 		}
-
 		// Overwrite template
 		$objTemplate = new FrontendTemplate($this->navigationTpl);
-
 		$objTemplate->type = get_class($this);
 		$objTemplate->level = 'level_' . $level++;
-
-		// Get page object
-		global $objPage;
-
 		// Browse field nodes
 		while($objNodes->next())
 		{
 			$subitems = '';
-
+			$strClass = '';
 			// if catalog reader, select item
 			// if current field value is selected, display children
-
 // !showlevel and hardLimit not working if set: Start=1 and Stop=2
-			
  			if (!$this->showLevel || $this->showLevel >= $level || (!$this->hardLimit && ($this->Input->get($this->catalog_navigation) == $objNodes->$valueField)))
 			{
 				// check order
@@ -2927,18 +2912,19 @@ abstract class ModuleCatalog extends Module
 					$subitems .= $this->renderCatalogNavigation($objNodes->id, $level);
 				}
 			}
-
 			// setup field and value
 			$field = $objFields->colName;
 			$value = $objNodes->$valueField;
-				
 			$href = $this->generateCatalogNavigationUrl($field, $value);
 
+			$strClass .= trim((strlen($subitems) ? 'submenu' : '') 
+							. (strlen($objJump->cssClass) ? ' ' . $objJump->cssClass : '')
+							. (in_array($objNodes->id, $this->arrTrail) ? ' trail' : '')
+							. ' ' . (count($items)%2 ? 'odd' : 'even')
+							);
 			// Active field
 			if ($this->Input->get($this->catalog_navigation) == $objNodes->$valueField)
 			{
-				$strClass = trim((strlen($subitems) ? 'submenu' : '') . (strlen($objJump->cssClass) ? ' ' . $objJump->cssClass : ''));
-
 				$items[] = array
 				(
 					'isActive' => true,
@@ -2956,16 +2942,13 @@ abstract class ModuleCatalog extends Module
 					'itemAlias' => $value
 				);
 				$this->arrTrail[]=$objNodes->pid;
+				// move on to next childnode
 				continue;
 			}
-
-// !fix trail
 			if(in_array($objNodes->id, $this->arrTrail))
 			{
 				$this->arrTrail[]=$objNodes->pid;
 			}
-
-			$strClass = trim((strlen($subitems) ? 'submenu' : '') . (strlen($objJump->cssClass) ? ' ' . $objJump->cssClass : '') . (in_array($objNodes->id, $this->arrTrail) || in_array($objJump->id, $objPage->trail) ? ' trail' : ''));
 			// contributed patch by m.reimann@patchwork-webdesign.de attached to issue #72
 			// check's if there are actually items for this navigation entry.
 			$idArray = $this->Database->prepare("SELECT concat(pid,',',group_concat(id)) AS tree FROM  " . $sourceTable . " AS t where pid=? group by pid")
@@ -2993,7 +2976,6 @@ abstract class ModuleCatalog extends Module
 				);
 			}
 		}
-
 		// Add classes first and last
 		if (count($items))
 		{
@@ -3002,7 +2984,6 @@ abstract class ModuleCatalog extends Module
 			$items[0]['class'] = trim($items[0]['class'] . ' first');
 			$items[$last]['class'] = trim($items[$last]['class'] . ' last');
 		}
-
 		$objTemplate->items = $items;
 		return count($items) ? $objTemplate->parse() : '';
 	}

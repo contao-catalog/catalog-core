@@ -124,7 +124,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'select' => 'name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{advanced_legend:hide},mandatory,includeBlankOption;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
 		'tags' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
 		'checkbox' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{feedit_legend},editGroups',
-		'url' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory;{feedit_legend},editGroups',
+		'url' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory;{format_legend:hide},formatPrePost,{feedit_legend},editGroups',
 		'file' => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,customFiletree,multiple;{format_legend},showImage,showLink;{feedit_legend},editGroups',
 		'calc' => '{title_legend},name,description,colName,type,calcValue;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		
@@ -316,6 +316,10 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['minValue'],
 			'inputType'               => 'text',
 			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit', 'tl_class'=>'w50')
+			'save_callback'           => array
+										(
+											array('tl_catalog_fields', 'resetMinMaxValues')
+										)
 		),
 		
 		'maxValue' => array
@@ -323,6 +327,10 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['maxValue'],
 			'inputType'               => 'text',
 			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit', 'tl_class'=>'w50')
+			'save_callback'           => array
+										(
+											array('tl_catalog_fields', 'resetMinMaxValues')
+										)
 		),
 		
 		'format' => array
@@ -559,7 +567,17 @@ class tl_catalog_fields extends Backend
 		}
 
 	}
-	
+
+	public function resetMinMaxValues($varValue, DataContainer $dc)
+	{
+		if ($varValue=='')
+		{
+			$sqlReset = $this->Database->prepare("UPDATE ".$dc->table." SET ".$dc->field."=NULL WHERE id=?")
+						->execute($dc->activeRecord->id);
+			return NULL;
+		}
+		return $varValue;
+	}
 
 
 	/**
