@@ -315,7 +315,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['minValue'],
 			'inputType'               => 'text',
-			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit', 'tl_class'=>'w50')
+			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit', 'tl_class'=>'w50'),
 			'save_callback'           => array
 										(
 											array('tl_catalog_fields', 'resetMinMaxValues')
@@ -326,7 +326,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['maxValue'],
 			'inputType'               => 'text',
-			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit', 'tl_class'=>'w50')
+			'eval'                    => array('maxlength'=>255, 'rgxp' => 'digit', 'tl_class'=>'w50'),
 			'save_callback'           => array
 										(
 											array('tl_catalog_fields', 'resetMinMaxValues')
