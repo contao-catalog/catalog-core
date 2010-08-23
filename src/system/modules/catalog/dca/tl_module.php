@@ -882,14 +882,14 @@ class tl_module_catalog extends Backend
 	public function getModuleTemplates(DataContainer $dc)
 	{
 		// fix issue #70 - template selector shall only show relevant templates.
-		if (version_compare(VERSION.BUILD, '2.9.0', '>='))
+		if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
 		{
 			return $this->getTemplateGroup('mod_' . $dc->activeRecord->type, $dc->activeRecord->pid);
 		}
 		else
 		{
 			// backwards compatibility only
-			if (version_compare(VERSION.BUILD, '2.8.0', '>='))
+			if (version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
 				$type = $dc->activeRecord->type;
 			else
 			{
@@ -905,14 +905,14 @@ class tl_module_catalog extends Backend
 	public function getCatalogTemplates(DataContainer $dc)
 	{
 		// fix issue #70 - template selector shall only show relevant templates.
-		if (version_compare(VERSION.BUILD, '2.9.0', '>='))
+		if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
 		{
 			return $this->getTemplateGroup('catalog_' . $dc->activeRecord->type, $dc->activeRecord->pid);
 		}
 		else
 		{
 			// backwards compatibility only
-			if (version_compare(VERSION.BUILD, '2.8.0', '>='))
+			if (version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
 				$type = $dc->activeRecord->type;
 			else
 			{
@@ -928,14 +928,14 @@ class tl_module_catalog extends Backend
 	public function getFilterTemplates(DataContainer $dc)
 	{
 		// fix issue #70 - template selector shall only show relevant templates.
-		if (version_compare(VERSION.BUILD, '2.9.0', '>='))
+		if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
 		{
 			return $this->getTemplateGroup('filter_' . $dc->activeRecord->type, $dc->activeRecord->pid);
 		}
 		else
 		{
 			// backwards compatibility only
-			if (version_compare(VERSION.BUILD, '2.8.0', '>='))
+			if (version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
 				$type = $dc->activeRecord->type;
 			else
 			{
