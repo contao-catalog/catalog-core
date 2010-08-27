@@ -157,7 +157,6 @@ class ModuleCatalogReader extends ModuleCatalog
 			return;
 		}
 		
-		$this->Template->catalog = $this->parseCatalog($objCatalog, false, $this->catalog_template, $this->catalog_visible);
 		$this->Template->visible = $this->catalog_visible;
 
 
@@ -179,12 +178,13 @@ class ModuleCatalogReader extends ModuleCatalog
 			$GLOBALS['TL_KEYWORDS'] .= $this->gererateKeywords($objCatalog->$keywordsField);
 		}
 
-
 		// Process Comments if not disabled
 		if (!$this->catalog_comments_disable)
 		{
 			$this->processComments($objCatalog);	
 		}
+		// Keep this at the end to allow the reader template to manipulate $objPage
+		$this->Template->catalog = $this->parseCatalog($objCatalog, false, $this->catalog_template, $this->catalog_visible);
 	}
 	
 	/**
