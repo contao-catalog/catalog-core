@@ -3020,7 +3020,7 @@ abstract class ModuleCatalog extends Module
 									   ->execute($objCatalog->id, $objCatalog->pid);
 
 			// Add pagination menu
-			$objPagination = new PaginationCustom($objTotal->count, $objArchive->perPage, 7, 'com_page');
+			$objPagination = new Pagination($objTotal->count, $objArchive->perPage);
 			$this->Template->pagination = $objPagination->generate("\n  ");
 		}
 
