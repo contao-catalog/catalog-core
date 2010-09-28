@@ -1548,7 +1548,7 @@ abstract class ModuleCatalog extends Module
 
 
 
-	private function parseWidget(&$widget)
+	public function parseWidget(&$widget)
 	{
 		$this->addWidgetAttributes($widget);
 
