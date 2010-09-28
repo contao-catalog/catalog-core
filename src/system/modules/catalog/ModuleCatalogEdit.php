@@ -67,7 +67,10 @@ class ModuleCatalogEdit extends ModuleCatalog
 			$objTemplate->title = $this->headline;
 			$objTemplate->id = $this->id;
 			$objTemplate->link = $this->name;
-			$objTemplate->href = 'typolight/main.php?do=modules&amp;act=edit&amp;id=' . $this->id;
+			if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
+				$objTemplate->href = 'contao/main.php?do=themes&amp;table=tl_module&amp;act=edit&amp;id=' . $this->id;
+			else
+				$objTemplate->href = 'typolight/main.php?do=modules&amp;act=edit&amp;id=' . $this->id;
 
 			return $objTemplate->parse();
 		}
@@ -491,7 +494,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 			// Add datepicker
 			if (in_array($arrData['eval']['rgxp'], array('date', 'time', 'datim')))
 			{
-				$objDate = new Date($varValue, $GLOBALS['TL_CONFIG'][$arrData['eval']['rgxp'] . 'Format']);
+				$objDate = new Date($objWidget->varValue, $GLOBALS['TL_CONFIG'][$arrData['eval']['rgxp'] . 'Format']);
 				$objWidget->value = $objDate->$arrData['eval']['rgxp'];
 				//$objWidget->datepicker = '
 				$GLOBALS['TL_HEAD'][]='

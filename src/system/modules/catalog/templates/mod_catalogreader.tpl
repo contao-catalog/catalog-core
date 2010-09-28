@@ -15,7 +15,7 @@
 <<?php echo $this->hl; ?>><?php echo $this->addComment; ?></<?php echo $this->hl; ?>>
 <?php foreach ($this->comments as $comment) echo $comment; ?>
 <?php echo $this->pagination; ?>
-<?php if (!$this->protected): ?>
+<?php if (!$this->requireLogin): ?>
 
 <!-- indexer::stop -->
 <div class="form">

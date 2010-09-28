@@ -907,21 +907,11 @@ class tl_module_catalog extends Backend
 		// fix issue #70 - template selector shall only show relevant templates.
 		if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
 		{
-			return $this->getTemplateGroup('catalog_' . $dc->activeRecord->type, $dc->activeRecord->pid);
+			return $this->getTemplateGroup('catalog_', $dc->activeRecord->pid);
 		}
 		else
 		{
-			// backwards compatibility only
-			if (version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
-				$type = $dc->activeRecord->type;
-			else
-			{
-				// 2.7 and below do not have activeRecord.
-				$objModule=$this->Database->prepare("SELECT type FROM tl_module m WHERE m.id=?")
-									->execute($dc->id);
-				$type = $objModule->type;
-			}
-			return $this->getTemplateGroup('catalog_' . $type);
+			return $this->getTemplateGroup('catalog_');
 		}
 	}
 
@@ -930,27 +920,17 @@ class tl_module_catalog extends Backend
 		// fix issue #70 - template selector shall only show relevant templates.
 		if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
 		{
-			return $this->getTemplateGroup('filter_' . $dc->activeRecord->type, $dc->activeRecord->pid);
+			return $this->getTemplateGroup('filter_', $dc->activeRecord->pid);
 		}
 		else
 		{
-			// backwards compatibility only
-			if (version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
-				$type = $dc->activeRecord->type;
-			else
-			{
-				// 2.7 and below do not have activeRecord.
-				$objModule=$this->Database->prepare("SELECT type FROM tl_module m WHERE m.id=?")
-									->execute($dc->id);
-				$type = $objModule->type;
-			}
-			return $this->getTemplateGroup('filter_' . $type);
+			return $this->getTemplateGroup('filter_');
 		}
 	}
 
 	public function onLoadCallback(DataContainer $dc)
 	{
-		$result = $this->Database->prepare("SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1")
+		$result = $this->Database->prepare('SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1')
 								->limit(1)
 								->execute($dc->id);
 		if($result->type != 'catalogedit')
@@ -978,7 +958,7 @@ class tl_module_catalog extends Backend
 
 	public function onSaveColumns_catalog_edit_default_value($varValue, DataContainer $dc)
 	{
-		$result = $this->Database->prepare("SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1")
+		$result = $this->Database->prepare('SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1')
 								->limit(1)
 								->execute($dc->id);
 		$fields=deserialize($result->catalog_edit_default);
@@ -996,7 +976,7 @@ class tl_module_catalog extends Backend
 
 	public function onLoadColumns_catalog_edit_default_value($varValue, DataContainer $dc)
 	{
-		$result = $this->Database->prepare("SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1")
+		$result = $this->Database->prepare('SELECT m.* FROM tl_module m WHERE m.id=? AND m.catalog_edit_use_default=1')
 								->limit(1)
 								->execute($dc->id);
 		return $varValue;

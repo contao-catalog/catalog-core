@@ -61,7 +61,10 @@ class ModuleCatalogReader extends ModuleCatalog
 			$objTemplate->title = $this->headline;
 			$objTemplate->id = $this->id;
 			$objTemplate->link = $this->name;
-			$objTemplate->href = 'typolight/main.php?do=modules&amp;act=edit&amp;id=' . $this->id;
+			if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
+				$objTemplate->href = 'contao/main.php?do=themes&amp;table=tl_module&amp;act=edit&amp;id=' . $this->id;
+			else
+				$objTemplate->href = 'typolight/main.php?do=modules&amp;act=edit&amp;id=' . $this->id;
 
 			return $objTemplate->parse();
 		}
@@ -169,7 +172,10 @@ class ModuleCatalogReader extends ModuleCatalog
 		// Overwrite page description
 		if (strlen($objCatalogType->descriptionField)) 
 		{
-			$objPage->description = strip_tags($objCatalog->$descriptionField);
+			// according to issue #176 we should rather add the description instead of rewriting it.
+			// This is harmless as the reader is on a own page anyway and therefore the editor can leave
+			// the description blank for this page then.
+			$objPage->description .= strip_tags($objCatalog->$descriptionField);
 		}
 
 		// Overwrite page keywords

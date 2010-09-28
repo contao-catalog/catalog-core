@@ -161,7 +161,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 	'typesOptionSelectors' => array('select', 'tags'),
 	'typesFilterFields' => array('number', 'decimal', 'text', 'longtext', 'date', 'select', 'tags', 'checkbox'),
 	'typesMatchFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'),
-	'typesEditFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'), /* TODO: add file support later */
+	'typesEditFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file'),
 	'typesLinkFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'file'),
 	'typesReferenceFields' => array('text', 'alias', 'number', 'decimal', 'longtext', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'calc'),
 	'typesCatalogFields' => array('text', 'alias', 'longtext', 'number', 'decimal', 'date', 'select', 'tags', 'checkbox', 'url', 'file', 'calc'),
@@ -183,16 +183,15 @@ if (TL_MODE == 'BE')
 $GLOBALS['FE_MOD']['catalog'] = array
 	(
 		'catalogfilter'			=> 'ModuleCatalogFilter',
-		'cataloglist'				=> 'ModuleCatalogList',
+		'cataloglist'			=> 'ModuleCatalogList',
 		'catalogreader'			=> 'ModuleCatalogReader',
 		'catalogfeatured'		=> 'ModuleCatalogFeatured',
 		'catalogrelated'		=> 'ModuleCatalogRelated',
-		'catalogreference'	=> 'ModuleCatalogReference',
-		'catalognavigation'	=> 'ModuleCatalogNavigation',
+		'catalogreference'		=> 'ModuleCatalogReference',
+		'catalognavigation'		=> 'ModuleCatalogNavigation',
 		'catalognotify'			=> 'ModuleCatalogNotify',
-		'catalogedit'				=> 'ModuleCatalogEdit',
+		'catalogedit'			=> 'ModuleCatalogEdit',
 	);
-
 
 /**
  * Register hook to add items to the indexer

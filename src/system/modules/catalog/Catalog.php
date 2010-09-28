@@ -861,9 +861,16 @@ class Catalog extends Backend
 			return '';
 		}
 
-		//$size = getimagesize(TL_ROOT.'/'.$src);
-		return '<img src="' . $this->getImage($src, $params['w'], $params['h'], $params['mode']) . '" alt="'.specialchars($label).'" />';
-
+		try
+		{
+			$file = $this->getImage($src, $params['w'], $params['h'], $params['mode']);
+			return '<img src="' . $file . '" alt="'.specialchars($label).'" />';
+		}
+		// catch an error when the image is invalid and return a span instead.
+		catch(Exception $e)
+		{
+			return '<span class="image_not_found" style="width:'.$params['w'].'px;height:'.$params['h'].'px;">'.specialchars($label).'</span>';
+		}
 	}
     
 	private function formatTitle($value, &$fieldConf, $tableName, $id)
@@ -1044,12 +1051,18 @@ class Catalog extends Backend
 			$colType = $objFields->type;
 			
 			$visibleOptions = trimsplit('[,;]', $GLOBALS['TL_DCA']['tl_catalog_fields']['palettes'][$colType]);
-			
+
 			// Changed by c.schiffler to allow custom editors to register themselves.
 			$field = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType]['fieldDef'];
 			$fields[] = $colName;
-			$separators[] = (($objFields->insertBreak) ? ((count($separators)>0 ? ';':'') . '{'.$objFields->legendTitle. ( ($objFields->legendHide) ? ':hide': '' ).'},') : ',');
-
+			// if we have a legend, we have to transport the text via the lang array to allow special chars to occur (issue #178)
+			if($objFields->insertBreak && strlen($objFields->legendTitle))
+			{
+				$legendName = $colName.'_legend';
+				$GLOBALS['TL_LANG'][$objCatalog->tableName][$legendName] = $objFields->legendTitle;
+				$separators[] = ((count($separators)>0 ? ';':'') . '{'.$legendName.(($objFields->legendHide)?':hide':'').'},');
+			} else
+				$separators[] = ',';
 			// Ammend field with catalog field settings
 			$field['label'] = array($objFields->name, $objFields->description);
 			$field['eval']['mandatory'] = $field['eval']['mandatory'] || ($objFields->mandatory && in_array('mandatory', $visibleOptions) ? true : false);
@@ -1070,7 +1083,7 @@ class Catalog extends Backend
 			}
 
 			$dca['fields'][$colName] = $field;
-			
+
 			$configFunction = $colType . "Config";
 			if (method_exists($this, $configFunction))
 			{
@@ -1089,18 +1102,17 @@ class Catalog extends Backend
 			}
 			// End of addition by c.schiffler to allow custom editors to register themselves.
 
-					
 			if ($objFields->titleField && in_array('titleField', $visibleOptions))
 			{
 				$titleFields[] = $colName;
 			}
-			
+
 			if ($objFields->sortingField && in_array('sortingField', $visibleOptions))
 			{
 				$sortingFields[] = $colName;
 				$dca['fields'][$colName]['flag'] = $objFields->groupingMode;
 			}
-			
+
 			if ($objFields->parentCheckbox)
 			{
 				$dca['fields'][$colName]['eval']['catalog']['parentCheckbox'] = $objFields->parentCheckbox;
@@ -1142,7 +1154,7 @@ class Catalog extends Backend
 		foreach ($palettes as $id=>$field) 
 		{
 //			$strPalette .= (($id > 0) ? $separators[$id] : '').$field;	
-			$strPalette .= $separators[$id] . $field;	
+			$strPalette .= $separators[$id] . $field;
 		}
 		$dca['palettes']['default'] = $strPalette;
 					

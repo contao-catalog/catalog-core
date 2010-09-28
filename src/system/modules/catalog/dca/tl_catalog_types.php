@@ -46,7 +46,6 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 				array('tl_catalog_types', 'checkUpgrade'),
 				array('tl_catalog_types', 'checkPermission'),
 				array('tl_catalog_types', 'checkRemoveTable'),
-				array('tl_catalog_types', 'generateFeed'),
 			)
 		),
 
@@ -769,14 +768,14 @@ class tl_catalog_types extends Backend
 
 			$objArchive = $this->Database->prepare("SELECT * FROM tl_catalog_types WHERE id=?")
 									  ->execute($row['id']);
-			
+
 			if ($objArchive->numRows && strlen($objArchive->tableName))
 			{
 
 
 				$objComments = $this->Database->prepare("SELECT id FROM tl_catalog_comments WHERE catid=?")
 											  ->execute($row['id']);
-	
+
 				if ($objComments->numRows)
 				{
 					return '<a href="'.$this->addToUrl($href.'&amp;id='.$row['id']).'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';

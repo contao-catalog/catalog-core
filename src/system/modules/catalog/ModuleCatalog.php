@@ -1216,10 +1216,7 @@ abstract class ModuleCatalog extends Module
 
 								$addOption = array();
 								$addOption['value'] = $url;
-								if($this->showOccurrences)
-									$addOption['label'] = '{{CATALOG_OCCURENCE::'.$field.'||'.htmlspecialchars($row[$field]).'}}';
-								else
-									$addOption['label'] = $label;
+								$addOption['label'] = $label;
 								$addOption['id'] = $row[$field];
 								if ($selected)
 								{
@@ -1538,6 +1535,14 @@ abstract class ModuleCatalog extends Module
 		$settings['action'] =	$this->generateFilterUrl($current);
 		$settings['widgets'] = $widgets;
 
+		if(is_array($GLOBALS['TL_HOOKS']['generateFilterCatalog']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['generateFilterCatalog'] as $callback)
+			{
+				$this->import($callback[0]);
+				$settings = $this->$callback[0]->$callback[1]($this,$settings);
+			}
+		}
 		return $settings; 
 	}
 
@@ -1816,7 +1821,15 @@ abstract class ModuleCatalog extends Module
 				$labelSuffix = $blnAsc ? $GLOBALS['TL_LANG']['MSC']['dateasc']: $GLOBALS['TL_LANG']['MSC']['datedesc'];
 				break;
 				
-			default:;
+			default:
+				if($blnAsc)
+				{
+					if($GLOBALS['TL_LANG']['MSC'][$inputType.'asc'])
+						$labelSuffix=$GLOBALS['TL_LANG']['MSC'][$inputType.'asc'];
+				} else {
+					if($GLOBALS['TL_LANG']['MSC'][$inputType.'desc'])
+						$labelSuffix=$GLOBALS['TL_LANG']['MSC'][$inputType.'desc'];
+				}
 		}		
 		return $labelSuffix;
 	}
@@ -1943,17 +1956,14 @@ abstract class ModuleCatalog extends Module
 		return $arrConverted;
 	}
 
-
 	/**
-	 * Parse one or more items and return them as array
+	 * Generate one or more items and return them as array
 	 * @param object
 	 * @param boolean
 	 * @return array
 	 */
-	protected function parseCatalog(Database_Result $objCatalog, $blnLink=true, $template='catalog_full', $visible=null, $blnImageLink=false)
+	protected function generateCatalog(Database_Result $objCatalog, $blnLink=true, $visible=null, $blnImageLink=false)
 	{
-		$objTemplate = new FrontendTemplate($template);
-
 		$i=0;
 		$arrCatalog = array();
 
@@ -1969,10 +1979,6 @@ abstract class ModuleCatalog extends Module
 			// get alias field WARNING -- check if blnLink is needed for edit mode where alias is also used
 			if ($i==0 && $blnLink)
 			{
-//				$objArchive = $this->Database->prepare("SELECT aliasField FROM tl_catalog_types where name=?")
-//										 ->limit(1)
-//										 ->execute($objCatalog->catalog_name);
-				// We have to use pid here as Catalog names are not unique - Does this imply any problems in any module?
 				$objArchive = $this->Database->prepare("SELECT aliasField FROM tl_catalog_types where id=?")
 										 ->limit(1)
 										 ->execute($objCatalog->pid);
@@ -2118,6 +2124,20 @@ abstract class ModuleCatalog extends Module
 			
 			$i++;
 		}
+		return $arrCatalog;
+	}
+
+	/**
+	 * Parse one or more items and pipe them through the given template
+	 * @param object
+	 * @param boolean
+	 * @return array
+	 */
+	protected function parseCatalog(Database_Result $objCatalog, $blnLink=true, $template='catalog_full', $visible=null, $blnImageLink=false)
+	{
+		$objTemplate = new FrontendTemplate($template);
+		$arrCatalog = $this->generateCatalog($objCatalog, $blnLink, $visible, $blnImageLink);
+
 		// HOOK: allow other extensions to manipulate the items before passing it to the template
 		if(is_array($GLOBALS['TL_HOOKS']['parseCatalog']))
 		{
