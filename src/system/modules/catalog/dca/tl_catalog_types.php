@@ -85,20 +85,28 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['edit'],
 				'href'                => 'table=tl_catalog_items',
 				'icon'                => 'edit.gif',
+				'attributes'          => 'class="contextmenu"'
 			),
+            'editheader' => array
+            (
+                'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['editheader'],
+                'href'                => 'act=edit',
+                'icon'                => 'header.gif',
+                'attributes'          => 'class="edit-header"'
+            ),
 			'copy' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['copy'],
 				'href'                => 'act=copy',
 				'icon'                => 'copy.gif',
-				'button_callback'			=> array('tl_catalog_types', 'copyBtn')
+				'button_callback'     => array('tl_catalog_types', 'copyBtn')
 			),
 			'delete' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['delete'],
 				'href'                => 'act=delete',
 				'icon'                => 'delete.gif',
-				'button_callback'			=> array('tl_catalog_types', 'deleteBtn'),
+				'button_callback'     => array('tl_catalog_types', 'deleteBtn'),
 				'attributes'          => 'onclick="if (!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\')) return false; Backend.getScrollOffset();"'
 
 			),
@@ -108,12 +116,12 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 				'href'                => 'act=show',
 				'icon'                => 'show.gif'
 			),
-      'fields' => array
+            'fields' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['fields'],
 				'href'                => 'table=tl_catalog_fields',
 				'icon'                => 'tablewizard.gif',
-        'button_callback'     => array('tl_catalog_types', 'fieldsButton')
+                'button_callback'     => array('tl_catalog_types', 'fieldsButton')
 			),
 			'comments' => array
 			(
@@ -128,16 +136,16 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 	// Palettes
 	'palettes' => array
 	(
-		'__selector__'		=> array('addImage', 'import', 'searchable', 'allowComments', 'makeFeed'),
-		'default'					=> '{title_legend},name,tableName,aliasField,publishField,jumpTo;{page_legend:hide},titleField,descriptionField,keywordsField;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed',
+		'__selector__'    => array('addImage', 'import', 'searchable', 'allowComments', 'makeFeed'),
+		'default'         => '{title_legend},name,tableName,aliasField,publishField,jumpTo;{page_legend:hide},titleField,descriptionField,keywordsField;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed',
 	),
 
 	// Subpalettes
 	'subpalettes' => array
 	(
 		'addImage'				=> 'singleSRC,size',
-		'allowComments'		=> 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha,hideMember,disableWebsite',
-		'import'					=> 'importAdmin,importDelete',
+		'allowComments'		    => 'template,sortOrder,perPage,moderate,bbcode,requireLogin,disableCaptcha,hideMember,disableWebsite',
+		'import'				=> 'importAdmin,importDelete',
 		'searchable'			=> 'searchCondition',
 		'makeFeed'				=> 'feedFormat,language,source,datesource,feedBase,alias,maxItems,feedTitle,description',
 	),
