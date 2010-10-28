@@ -179,19 +179,19 @@ class ModuleCatalogList extends ModuleCatalog
 	
 				$objTotal = $objTotalStmt->execute($params);
 				$total = $objTotal->numRows;
-	
+
 				// Get the current page
 				$page = $this->Input->get('page') ? $this->Input->get('page') : 1;
-	
+
 				if ($page > ($total/$this->perPage))
 				{
 					$page = ceil($total/$this->perPage);
 				}
-	
+
 				// Set limit and offset
 				$limit = ((is_null($limit) || $this->perPage < $limit) ? $this->perPage : $limit);
-				$offset = ((($page > 1) ? $page : 1) - 1) * $this->perPage;
-	
+				$offset = $offset+(max($page, 1) - 1) * $this->perPage;
+
 				// Add pagination menu
 				$objPagination = new Pagination($total, $this->perPage);
 				$this->Template->pagination = $objPagination->generate("\n  ");
@@ -203,7 +203,7 @@ class ModuleCatalogList extends ModuleCatalog
 			// Run Query
 			$objCatalogStmt = $this->Database->prepare("SELECT ".implode(',',$this->systemColumns).",".implode(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=?".$strWhere.(strlen($strOrder) ? " ORDER BY ".$strOrder : "")); 
 
-			
+
 			// add filter and order later
 
 			// Limit result
@@ -212,8 +212,10 @@ class ModuleCatalogList extends ModuleCatalog
 				$objCatalogStmt->limit($limit, $offset);
 			}
 			$objCatalog = $objCatalogStmt->execute($params);
+			if (!$limit)
+				$total = $objCatalog->numRows;
 			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);
-			
+
 		} // condition check
 		else 
 		{

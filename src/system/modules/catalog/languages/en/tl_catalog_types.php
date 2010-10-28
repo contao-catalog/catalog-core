@@ -45,6 +45,8 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['jumpTo'] = array('Jump to page', 'Pleas
 $GLOBALS['TL_LANG']['tl_catalog_types']['aliasField'] = array('Alias field', 'Select the field to use instead of using the id when creating the jumpTo link.');
 
 $GLOBALS['TL_LANG']['tl_catalog_types']['publishField'] = array('Publish field', 'Select the field that controls the visibility of a catalog item.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['allowManualSort'] = array('Allow manual sorting', 'Allow manual sorting in the backend.');
+
 $GLOBALS['TL_LANG']['tl_catalog_types']['titleField'] = array('Meta title field', 'Select the field that overrides the default meta title on the reader page.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['descriptionField'] = array('Meta description field', 'Select the field that overrides the default meta description on the reader page.');
 $GLOBALS['TL_LANG']['tl_catalog_types']['keywordsField'] = array('Meta keywords field', 'Select the field that overrides the default meta keywords on the reader page.');

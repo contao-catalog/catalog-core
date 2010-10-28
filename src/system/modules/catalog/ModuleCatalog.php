@@ -1027,6 +1027,15 @@ abstract class ModuleCatalog extends Module
 							// get all rows
 							$rows = $objFilter->fetchEach($field);
 
+							$tmpTags = array();
+							foreach ($fieldConf['options'] as $id=>$option)
+							{
+								$tmpTags[] = 'SUM(FIND_IN_SET('.$id.','.$field.')) AS '.$option.$id;
+							}
+							$objResultCount = $this->Database->prepare('SELECT '.implode(', ',$tmpTags).' FROM '.$this->strTable. ($query['query'] ? ' WHERE '. $query['query'] : ''))
+															->execute($query['params']);
+							$arrResultCount = $objResultCount->row();
+
 							foreach ($fieldConf['options'] as $id=>$option)
 							{
 								if (in_array($id, $rows))
@@ -1042,6 +1051,7 @@ abstract class ModuleCatalog extends Module
 									$addOption['label'] = $option;
 									$addOption['id'] = $id;
 									$addOption['alias'] = $id;
+									$addOption['resultcount'] = $arrResultCount[$option.$id];
 									if ($selected)
 									{
 										$addOption['selected'] = true;
@@ -1117,12 +1127,12 @@ abstract class ModuleCatalog extends Module
 									$addOption['value'] = $url;
 									$addOption['label'] = $blnList ? sprintf($GLOBALS['TL_LANG']['MSC']['optionselected'], $option) : $option;
 									$addOption['id'] = $id;
+									$addOption['resultcount'] = $row[$field.$id];
 									if ($selected)
 									{
 										$addOption['selected'] = true;
 									}
 									array_push($options, $addOption);
-
 								}
 							}
 						}

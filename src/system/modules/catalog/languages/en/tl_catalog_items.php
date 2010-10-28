@@ -50,6 +50,8 @@ $GLOBALS['TL_LANG']['tl_catalog_items']['cut']   = array('Move item', 'Move item
 $GLOBALS['TL_LANG']['tl_catalog_items']['delete'] = array('Delete item', 'Delete item ID %s');
 $GLOBALS['TL_LANG']['tl_catalog_items']['show']   = array('Item details', 'Show details of item ID %s');
 $GLOBALS['TL_LANG']['tl_catalog_items']['editheader'] = array('Edit item type', 'Edit the item type');
+$GLOBALS['TL_LANG']['tl_catalog_items']['manualsort_enter'] = array('Manual sorting', 'Switch to manual sorting');
+$GLOBALS['TL_LANG']['tl_catalog_items']['manualsort_leave'] = array('Automatic sorting', 'Switch to automatic sorting');
 
 $GLOBALS['TL_LANG']['tl_catalog_items']['toggle']['0'] = 'Published';
 $GLOBALS['TL_LANG']['tl_catalog_items']['toggle']['1'] = 'Unpublished';

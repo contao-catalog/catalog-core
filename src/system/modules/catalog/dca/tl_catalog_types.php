@@ -137,7 +137,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 	'palettes' => array
 	(
 		'__selector__'    => array('addImage', 'import', 'searchable', 'allowComments', 'makeFeed'),
-		'default'         => '{title_legend},name,tableName,aliasField,publishField,jumpTo;{page_legend:hide},titleField,descriptionField,keywordsField;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed',
+		'default'         => '{title_legend},name,tableName,aliasField,publishField,allowManualSort,jumpTo;{page_legend:hide},titleField,descriptionField,keywordsField;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed',
 	),
 
 	// Subpalettes
@@ -239,7 +239,13 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'eval'                    => array('mandatory'=>false, 'includeBlankOption'=>true, 'tl_class'=>'w50'),
 			'doNotCopy'               => true,
 		),
-		
+
+		'allowManualSort' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['allowManualSort'],
+			'exclude'                 => true,
+			'inputType'               => 'checkbox',
+		),
 
 		'titleField' => array
 		(

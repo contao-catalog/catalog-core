@@ -31,6 +31,7 @@ CREATE TABLE `tl_catalog_types` (
   `titleField` varchar(64) NOT NULL default '',
   `descriptionField` varchar(64) NOT NULL default '',
   `keywordsField` varchar(64) NOT NULL default '',
+  `allowManualSort` char(1) NOT NULL default '',
 
   `import` char(1) NOT NULL default '',
   `importAdmin` char(1) NOT NULL default '',

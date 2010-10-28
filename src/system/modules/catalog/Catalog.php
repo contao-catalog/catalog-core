@@ -57,7 +57,8 @@ class Catalog extends Backend
 		$objType = $this->Database->prepare("SELECT tableName FROM tl_catalog_types where id=?")
 				->limit(1)
 				->execute(CURRENT_ID);
-				
+
+
 		// load default language
 		$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
 												 ? array_merge_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
@@ -355,9 +356,10 @@ class Catalog extends Backend
 				'sorting' => array
 				(
 					'mode'                    => 1, // 1 default sorting value, 2 switchable sorting value
-					'panelLayout'             => 'filter,limit;search,sort',
+					// panelLayout is now built dynamically in getCatalogDca() to solve issue #199
+//					'panelLayout'             => 'filter,limit;search,sort',
 					'headerFields'            => array('name', 'tstamp'),
-					'fields'            			=> array(),
+					'fields'                  => array(),
 					'child_record_callback'   => array('Catalog', 'renderField')
 				),
 				'global_operations' => array
@@ -414,15 +416,12 @@ class Catalog extends Backend
 					)
 				),
 			),
-			
 			'palettes' => array
 			(
 			),
-			
 			'subpalettes' => array
 			(
 			),
-			
 			'fields' => array
 			(
 			)
@@ -974,13 +973,13 @@ class Catalog extends Backend
 	}
 
 
-    
+
 	public function pagePicker(DataContainer $dc)
 	{
 		return ' ' . $this->generateImage('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top; cursor:pointer;" onclick="Backend.pickPage(\'ctrl_'.$dc->field.'\')"');
 	}
-	
-	
+
+
 	public function getCatalogDca($catalogId)
 	{
 		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? ORDER BY sorting")
@@ -991,7 +990,7 @@ class Catalog extends Backend
 
 		// load default catalog dca
 		$dca = $this->getDefaultDca();        
-		
+
 		$fields = array();
 		$titleFields = array();
 		$sortingFields = $dca['list']['sorting']['fields'];
@@ -1045,6 +1044,21 @@ class Catalog extends Backend
 			}
 		}
 
+		// allow manual sorting - thanks to Ueli Kunz <elun@gmx.ch> for the idea
+		if($objCatalog->allowManualSort)
+		{
+			$this->manualsort=$this->Input->get('manualsort');
+			$dca['list']['global_operations']['manualsort'] = array
+			(
+				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_items']['manualsort_'.($this->manualsort?'leave':'enter')],
+				'href'                => 'manualsort='.($this->manualsort?'0':'1'),
+				'class'               => 'header_manualsort',
+				'attributes'          => 'onclick="Backend.getScrollOffset();"'
+			);
+		}
+
+
+		$filter=$search=$sort=false;
 		while ($objFields->next())
 		{
 			$colName = $objFields->colName;
@@ -1075,7 +1089,7 @@ class Catalog extends Backend
 			$field['default'] = $objFields->defValue;
 			$field['filter'] = ($objFields->filteredField && in_array('filteredField', $visibleOptions) ? true : false);
 			$field['search'] = ($objFields->searchableField && in_array('searchableField', $visibleOptions) ? true : false);
-			$field['sorting'] = ($objFields->sortingField && in_array('sortingField', $visibleOptions) ? true : false);
+			$field['sorting'] = ((!$this->manualsort) && $objFields->sortingField && in_array('sortingField', $visibleOptions) ? true : false);
 
 			if ($objFields->width50)
 			{
@@ -1107,7 +1121,7 @@ class Catalog extends Backend
 				$titleFields[] = $colName;
 			}
 
-			if ($objFields->sortingField && in_array('sortingField', $visibleOptions))
+			if ((!$this->manualsort) && $objFields->sortingField && in_array('sortingField', $visibleOptions))
 			{
 				$sortingFields[] = $colName;
 				$dca['fields'][$colName]['flag'] = $objFields->groupingMode;
@@ -1135,7 +1149,28 @@ class Catalog extends Backend
 			{
 				$dca['fields'][$colName]['eval']['catalog']['editGroups'] = unserialize($objFields->editGroups);
 			}
+
+			$filter=$filter||$field['filter'];
+			$search=$search||$field['search'];
+			$sort=$sort||$field['sorting'];
 		}
+		$panelLayout=array();
+		if($filter)
+			$layout='filter,limit;';
+		else
+			$layout='limit';
+		if($search)
+		{
+			$layout.=';search';
+			if($sort)
+				$layout.=',sort';
+		}
+		else
+		{
+			if($sort)
+				$layout.=';sort';
+		}
+		$dca['list']['sorting']['panelLayout'] = $layout;
 
 		// build palettes and subpalettes
 		$selectors = array_intersect_key($selectors, array_flip($fields));
