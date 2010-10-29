@@ -2485,10 +2485,9 @@ abstract class ModuleCatalog extends Module
 					elseif ($showLink)
 					{
 						$text = $strBasename;
-						$url = $this->Environment->request . (($GLOBALS['TL_CONFIG']['disableAlias'] || !$GLOBALS['TL_CONFIG']['rewriteURL']
-&& count($_GET) || strlen($_GET['page'])) ? '&amp;' : '?'). 'file=' . $this->urlEncode($file);
+						$url = $this->Environment->request . (($GLOBALS['TL_CONFIG']['disableAlias'] || strpos($this->Environment->request, '?') !== false) ? '&amp;' : '?') . 'file=' . $this->urlEncode($file);
 						$icon = 'system/themes/' . $this->getTheme() . '/images/' . $objFile->icon;
-						$sizetext = '('.number_format(($objFile->filesize/1024), 1, $GLOBALS['TL_LANG']['MSC']['decimalSeparator'], $GLOBALS['TL_LANG']['MSC']['thousandsSeparator']).' kB)';
+						$sizetext = '('.$this->getReadableSize($objFile->filesize, 1).')';
 						$arrSource[$file] = array
 						(
 							'title' => $strBasename,

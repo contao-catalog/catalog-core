@@ -1158,7 +1158,7 @@ class Catalog extends Backend
 		}
 		$panelLayout=array();
 		if($filter)
-			$layout='filter,limit;';
+			$layout='filter,limit';
 		else
 			$layout='limit';
 		if($search)
