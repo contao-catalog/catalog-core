@@ -1027,37 +1027,38 @@ abstract class ModuleCatalog extends Module
 							// get all rows
 							$rows = $objFilter->fetchEach($field);
 
-							$tmpTags = array();
-							foreach ($fieldConf['options'] as $id=>$option)
+							if($fieldConf['options'])
 							{
-								$tmpTags[] = 'SUM(FIND_IN_SET('.$id.','.$field.')) AS '.$option.$id;
-							}
-							$objResultCount = $this->Database->prepare('SELECT '.implode(', ',$tmpTags).' FROM '.$this->strTable. ($query['query'] ? ' WHERE '. $query['query'] : ''))
-															->execute($query['params']);
-							$arrResultCount = $objResultCount->row();
-
-							foreach ($fieldConf['options'] as $id=>$option)
-							{
-								if (in_array($id, $rows))
+								$tmpTags = array();
+								foreach ($fieldConf['options'] as $id=>$option)
 								{
-									$selected = ($current[$field] == $id);
-									$newcurrent = $current;
-									$newcurrent[$field] = $id;
-									$this->clearTree($field, $newcurrent, $tree);
-									$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
+									$tmpTags[] = 'SUM(FIND_IN_SET('.$id.','.$field.')) AS '.$option.$id;
+								}
+								$objResultCount = $this->Database->prepare('SELECT '.implode(', ',$tmpTags).' FROM '.$this->strTable. ($query['query'] ? ' WHERE '. $query['query'] : ''))
+																->execute($query['params']);
+								$arrResultCount = $objResultCount->row();
 
-									$addOption = array();
-									$addOption['value'] = $url;
-									$addOption['label'] = $option;
-									$addOption['id'] = $id;
-									$addOption['alias'] = $id;
-									$addOption['resultcount'] = $arrResultCount[$option.$id];
-									if ($selected)
+								foreach ($fieldConf['options'] as $id=>$option)
+								{
+									if (in_array($id, $rows))
 									{
-										$addOption['selected'] = true;
+										$selected = ($current[$field] == $id);
+										$newcurrent = $current;
+										$newcurrent[$field] = $id;
+										$this->clearTree($field, $newcurrent, $tree);
+										$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
+										$addOption = array();
+										$addOption['value'] = $url;
+										$addOption['label'] = $option;
+										$addOption['id'] = $id;
+										$addOption['alias'] = $id;
+										$addOption['resultcount'] = $arrResultCount[$option.$id];
+										if ($selected)
+										{
+											$addOption['selected'] = true;
+										}
+										array_push($options, $addOption);
 									}
-									array_push($options, $addOption);
-
 								}
 							}
 
@@ -1120,7 +1121,7 @@ abstract class ModuleCatalog extends Module
 									$newcurrent[$field] = ($this->catalog_tags_multi ? implode(',',$newids) : $id);
 									$this->clearTree($field, $newcurrent, $tree);
 									$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
-									
+
 									$blnList = ($selected && $input=='list');
 
 									$addOption = array();
@@ -1128,15 +1129,12 @@ abstract class ModuleCatalog extends Module
 									$addOption['label'] = $blnList ? sprintf($GLOBALS['TL_LANG']['MSC']['optionselected'], $option) : $option;
 									$addOption['id'] = $id;
 									$addOption['resultcount'] = $row[$field.$id];
-									if ($selected)
-									{
-										$addOption['selected'] = true;
-									}
+									$addOption['selected'] = $selected;
 									array_push($options, $addOption);
 								}
 							}
 						}
-						
+
 						$widget = array
 						(
 							'name'			=> $field,
@@ -1591,12 +1589,12 @@ abstract class ModuleCatalog extends Module
 					
 					$selected = $option['selected'];
 					$return .= sprintf('
-		<li class="option%s%s">%s%s%s</li>',
-						(' list_'.$class),
+		<li class="option%s%s"><a href="%s" title="%s">%s</a></li>',
+						' list_'.$class,
 						($selected ? ' active' : ''),
-						(!$selected ? sprintf('<a href="%s" title="%s">', $option['value'], $option['label']) : '<p class="active">'),
+						$option['value'],
 						$option['label'],
-						(!$selected ? '</a>' : '</p>')
+						$option['label']
 					);
 				}
 				$return .= '

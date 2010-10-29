@@ -79,7 +79,7 @@ $GLOBALS['TL_LANG']['MSC']['catalogSearch'] = 'Go';
 $GLOBALS['TL_LANG']['MSC']['clearFilter'] = 'Clear all filters';
 $GLOBALS['TL_LANG']['MSC']['clearAll'] = 'Clear %s'; // %s=field label
 $GLOBALS['TL_LANG']['MSC']['selectNone'] = 'Select %s'; // %s=field label
-$GLOBALS['TL_LANG']['MSC']['optionselected'] 	= '[%s]'; // %s=field label
+$GLOBALS['TL_LANG']['MSC']['optionselected'] 	= '%s'; // %s=field label
 
 $GLOBALS['TL_LANG']['MSC']['invalidFilter'] = 'Invalid filter type';
 
