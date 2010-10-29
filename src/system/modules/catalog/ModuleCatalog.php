@@ -2723,14 +2723,14 @@ abstract class ModuleCatalog extends Module
 	
 		global $objPage;
 
-		// bugfix c.schiffler, we must handle a jumpTo if it is present.
-		if($this->jumpTo)
+		$jumpTo= $this->catalog_jumpTo?$this->catalog_jumpTo:$this->jumpTo;
+		if($jumpTo)
 		{
-			$this->getJumpTo($this->jumpTo, false);
+			$this->getJumpTo($jumpTo, false);
 			// Get internal page (from parent catalog)
-			$objJump = $this->Database->prepare("SELECT * FROM tl_page WHERE id=?")
+			$objJump = $this->Database->prepare('SELECT * FROM tl_page WHERE id=?')
 									  ->limit(1)
-									  ->execute($this->jumpTo);
+									  ->execute($jumpTo);
 			// TODO: shall we fallback to the current page then?
 			if ($objJump->numRows < 1)
 			{
@@ -2739,8 +2739,6 @@ abstract class ModuleCatalog extends Module
 			$pageRow = $objJump->fetchAssoc();
 		} else
 			$pageRow = $objPage->row();
-		// end bugfix c.schiffler, we must handle a jumpTo if it is present.
-
 
 		if (!count($pageRow))
 		{
@@ -2762,7 +2760,6 @@ abstract class ModuleCatalog extends Module
 
 	protected function renderCatalogItems($id, $level=1, $blnTags=false)
 	{
-
 		$aliasField = $this->getAliasField($this->strTable);
 
 		$strWhere = $blnTags ? "FIND_IN_SET(?,".$this->catalog_navigation.")" : $this->catalog_navigation."=?";
@@ -2864,6 +2861,7 @@ abstract class ModuleCatalog extends Module
 
 
 	protected $arrTrail=array();
+	protected $objNavField=NULL;
 
 	/**
 	 * Recursively compile the catalog navigation menu and return it as HTML string
@@ -2871,51 +2869,29 @@ abstract class ModuleCatalog extends Module
 	 * @param integer
 	 * @return string
 	 */
-	protected function renderCatalogNavigation($pid, $level=1)
+	protected function internalRenderCatalogNavigation($pid, $level, $strActive=NULL)
 	{
-		if($level==1)
-			$this->arrTrail=array();
 		$this->getJumpTo($this->jumpTo, false);
 		// Get internal page (from parent catalog)
-		$objJump = $this->Database->prepare('SELECT * FROM tl_page WHERE id=?')
-							 	  ->limit(1)
-								  ->execute($this->jumpTo);
-		if ($objJump->numRows < 1)
-			return '';
-		$arrJump = $objJump->fetchAssoc();
-		// get reference table and column		
-		$objFields = $this->Database->prepare('SELECT * FROM tl_catalog_fields WHERE pid=? AND colName=?')
-											->limit(1)
-											->execute($this->catalog, $this->catalog_navigation);
-		if (!$objFields->numRows)
-			return '';
-		$sourceTable = $objFields->itemTable;
-		$sourceColumn = $objFields->itemTableValueCol;
-		$blnChildren = $objFields->childrenSelMode;
-		$ids = ($pid == 0) ? ($objFields->limitItems && strlen($objFields->items) ? deserialize($objFields->items) : array(0)) : array($pid);
-		$strRoot = ((!$blnChildren && $level == 1) ? 'id' : 'pid');
-		$valueField = $this->getAliasField($sourceTable);
-		// check if this tree has a pid or a flat table
-		$treeView = $this->Database->fieldExists('pid', $sourceTable);
-		$sort = $this->Database->fieldExists('sorting', $sourceTable) ? 'sorting' : $sourceColumn;
-		if ($treeView)
+		$arrJump = $this->cacheJumpTo['page'];
+		$ids = ($pid == 0) ? ($this->objNavField->limitItems && $this->objNavField->items ? $this->objNavField->items : array(0)) : array($pid);
+		$strRoot = ((!$this->objNavField->blnChildren && $level == 1) ? 'id' : 'pid');
+		if ($this->objNavField->treeView)
 		{
-			$objNodes = $this->Database->prepare('SELECT '.$strRoot.', id, '.$valueField.', (SELECT COUNT(*) FROM '. $sourceTable .' i WHERE i.pid=o.id) AS childCount, ' . $sourceColumn . ' AS name FROM '. $sourceTable. ' o WHERE '.$strRoot.' IN ('.implode(',',$ids).') ORDER BY '. $sort)
+			$objNodes = $this->Database->prepare('SELECT '.$strRoot.', id, '.$this->objNavField->valueField.', (SELECT COUNT(*) FROM '. $this->objNavField->sourceTable .' i WHERE i.pid=o.id) AS childCount, ' . $this->objNavField->sourceColumn . ' AS name FROM '. $this->objNavField->sourceTable. ' o WHERE '.$strRoot.' IN ('.implode(',',$ids).') ORDER BY '. $this->objNavField->sort)
 									 ->execute();
 		}
-		if (!$treeView || ($objNodes->numRows == 0 && $level == 1))
+		if (!$this->objNavField->treeView || ($objNodes->numRows == 0 && $level == 1))
 		{
-			$objNodes = $this->Database->execute('SELECT id, '.$valueField.', 0 AS childCount, '. $sourceColumn .' AS name FROM '. $sourceTable .' ORDER BY '.$sort);
+			$objNodes = $this->Database->execute('SELECT id, '.$this->objNavField->valueField.', 0 AS childCount, '. $this->objNavField->sourceColumn .' AS name FROM '. $this->objNavField->sourceTable .' ORDER BY '.$this->objNavField->sort);
 		}
 		// no entries for the given pid
 		if (!$objNodes->numRows)
 			return '';
+
+		$valueField=$this->objNavField->valueField;
+
 		$items = array();
-		// Determine the layout template
-		if (!strlen($this->navigationTpl))
-		{
-			$this->navigationTpl = 'nav_default';
-		}
 		// Overwrite template
 		$objTemplate = new FrontendTemplate($this->navigationTpl);
 		$objTemplate->type = get_class($this);
@@ -2925,85 +2901,82 @@ abstract class ModuleCatalog extends Module
 		{
 			$subitems = '';
 			$strClass = '';
-			// if catalog reader, select item
-			// if current field value is selected, display children
-// !showlevel and hardLimit not working if set: Start=1 and Stop=2
- 			if (!$this->showLevel || $this->showLevel >= $level || (!$this->hardLimit && ($this->Input->get($this->catalog_navigation) == $objNodes->$valueField)))
+ 			if (!$this->showLevel || $this->showLevel >= $level || (!$this->hardLimit && in_array($objNodes->id, $this->arrTrail)))
 			{
-				// check order
-				if ($this->catalog_show_items && $this->Input->get($this->catalog_navigation) == $objNodes->$valueField)
+				// if current field value is selected, display children
+				if ($this->catalog_show_items && $strActive == $objNodes->$valueField)
 				{
-					$subitems .= $this->renderCatalogItems($objNodes->id, $level, ($objFields->type == 'tags'));
+					$subitems .= $this->renderCatalogItems($objNodes->id, $level, ($this->objNavField->type == 'tags'));
 				}
-				if (count($objNodes->childCount) && $objFields->childrenSelMode) 
+				if (count($objNodes->childCount) && $this->objNavField->blnChildren) 
 				{
-					$subitems .= $this->renderCatalogNavigation($objNodes->id, $level);
+					$subitems .= $this->internalRenderCatalogNavigation($objNodes->id, $level, $strActive);
 				}
 			}
 			// setup field and value
-			$field = $objFields->colName;
+			$field = $this->catalog_navigation;
 			$value = $objNodes->$valueField;
 			$href = $this->generateCatalogNavigationUrl($field, $value);
 
 			$strClass .= trim((strlen($subitems) ? 'submenu' : '') 
-							. (strlen($objJump->cssClass) ? ' ' . $objJump->cssClass : '')
+							. (strlen($arrJump['cssClass']) ? ' ' . $arrJump['cssClass'] : '')
 							. (in_array($objNodes->id, $this->arrTrail) ? ' trail' : '')
 							. ' ' . (count($items)%2 ? 'odd' : 'even')
 							);
 			// Active field
-			if ($this->Input->get($this->catalog_navigation) == $objNodes->$valueField)
+			if ($strActive == $objNodes->$valueField)
 			{
 				$items[] = array
 				(
-					'isActive' => true,
+					'isActive' => !strlen($this->Input->get('items')),
 					'subitems' => $subitems,
 					'class' => (strlen($strClass) ? $strClass : ''),
-					'pageTitle' => specialchars($objJump->pageTitle),
+					'pageTitle' => specialchars($arrJump['pageTitle']),
 					'title' => specialchars($objNodes->name),
 					'link' => $objNodes->name,
 					'href' => $href,
-					'alias' => $objJump->alias,
-					'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
-					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
-					'accesskey' => $objJump->accesskey,
-					'tabindex' => $objJump->tabindex,
+					'alias' => $arrJump['alias'],
+					'target' => (($arrJump['type'] == 'redirect' && $arrJump['target']) ? ' window.open(this.href); return false;' : ''),
+					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $arrJump['description']),
+					'accesskey' => $arrJump['accesskey'],
+					'tabindex' => $arrJump['tabindex'],
 					'itemAlias' => $value
 				);
-				$this->arrTrail[]=$objNodes->pid;
 				// move on to next childnode
 				continue;
 			}
-			if(in_array($objNodes->id, $this->arrTrail))
-			{
-				$this->arrTrail[]=$objNodes->pid;
-			}
+
 			// contributed patch by m.reimann@patchwork-webdesign.de attached to issue #72
 			// check's if there are actually items for this navigation entry.
-			$idArray = $this->Database->prepare("SELECT concat(pid,',',group_concat(id)) AS tree FROM  " . $sourceTable . " AS t where pid=? group by pid")
-										->execute($objNodes->id)->next();
-			$objCount = $this->Database->prepare('SELECT id FROM ' . $this->strTable . ' AS t WHERE ' . (!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '') . $this->arrData['catalog_navigation'] . '  IN (' . ($idArray->tree ? implode(',', array($objNodes->id, $idArray->tree)) : $objNodes->id). ')')
-										->execute()->numRows;
-			if($objCount)
+			if($this->objNavField->treeView)
 			{
-			// end of contributed patch by m.reimann@patchwork-webdesign.de attached to issue #72
+				$idArray = $this->Database->prepare("SELECT CONCAT(pid,',',GROUP_CONCAT(id)) AS tree FROM  " . $this->objNavField->sourceTable . " AS t WHERE pid=? GROUP BY pid")
+											->execute($objNodes->id)->next();
+				$itemCount = $this->Database->prepare('SELECT id FROM ' . $this->strTable . ' AS t WHERE ' . (!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '') . $this->catalog_navigation . '  IN (' . ($idArray->tree ? implode(',', array($objNodes->id, $idArray->tree)) : $objNodes->id). ')')
+											->execute()
+											->numRows;
+			}
+			if(!$this->objNavField->treeView || $itemCount)
+			{
 				$items[] = array
 				(
 					'isActive' => false,
 					'subitems' => $subitems,
 					'class' => (strlen($strClass) ? $strClass : ''),
-					'pageTitle' => specialchars($objJump->pageTitle),
+					'pageTitle' => specialchars($arrJump['pageTitle']),
 					'title' => specialchars($objNodes->name),
 					'link' => $objNodes->name,
 					'href' => $href,
-					'alias' => $objJump->alias,
-					'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
-					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
-					'accesskey' => $objJump->accesskey,
-					'tabindex' => $objJump->tabindex,
+					'alias' => $arrJump['alias'],
+					'target' => (($arrJump['type'] == 'redirect' && $arrJump['target']) ? ' window.open(this.href); return false;' : ''),
+					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $arrJump['description']),
+					'accesskey' => $arrJump['accesskey'],
+					'tabindex' => $arrJump['tabindex'],
 					'itemAlias' => $value
 				);
 			}
 		}
+
 		// Add classes first and last
 		if (count($items))
 		{
@@ -3014,6 +2987,83 @@ abstract class ModuleCatalog extends Module
 		}
 		$objTemplate->items = $items;
 		return count($items) ? $objTemplate->parse() : '';
+
+	}
+
+	/**
+	 * Look up all needed stuff and then call the recursive function internalRenderCatalogNavigation
+	 * @param integer
+	 * @return string
+	 */
+	protected function renderCatalogNavigation($pid)
+	{
+		$this->arrTrail=array();
+		// get reference table and column		
+		$objFields = $this->Database->prepare('SELECT * FROM tl_catalog_fields WHERE pid=? AND colName=?')
+											->limit(1)
+											->execute($this->catalog, $this->catalog_navigation);
+		if (!$objFields->numRows)
+			return '';
+		$this->objNavField = new stdClass();
+		$this->objNavField->sourceTable = $objFields->itemTable;
+		$this->objNavField->sourceColumn = $objFields->itemTableValueCol;
+		$this->objNavField->blnChildren = $objFields->childrenSelMode;
+		$this->objNavField->limitItems = $objFields->limitItems;
+		$this->objNavField->items = deserialize($objFields->items);
+		$this->objNavField->valueField = $this->getAliasField($this->objNavField->sourceTable);
+		// check if this tree has a pid or a flat table
+		$this->objNavField->treeView = $this->Database->fieldExists('pid', $this->objNavField->sourceTable);
+		$this->objNavField->sort = $this->Database->fieldExists('sorting', $this->objNavField->sourceTable) ? 'sorting' : $this->objNavField->sourceColumn;
+		// Determine the layout template
+		if (!strlen($this->navigationTpl))
+		{
+			$this->navigationTpl = 'nav_default';
+		}
+
+		if(($this->objNavField->type != 'tags') && $this->Input->get('items'))
+		{
+			$value=$this->Input->get('items');
+			$strAlias = $this->strAliasField ? $this->strAliasField : (is_numeric($value) ? 'id' : '');
+			if(strlen($strAlias))
+			{
+				$objItem = $this->Database->prepare('SELECT '.$this->objNavField->valueField.' AS alias FROM '. $this->objNavField->sourceTable. ' WHERE id=(SELECT '.$this->catalog_navigation.' FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : ''). $strAlias . '=?)')
+											->limit(1)
+											->execute($value);
+				if ($objItem->numRows)
+				{
+					$root=$objItem->alias;
+				}
+			}
+		}
+		if($this->Input->get($this->catalog_navigation))
+			$root=$this->Input->get($this->catalog_navigation);
+
+		if ($this->objNavField->treeView && $root)
+		{
+			// determine all parents
+			$objRoot = $this->Database->prepare('SELECT id,pid FROM '. $this->objNavField->sourceTable. ' WHERE '.$this->objNavField->valueField.'=?')
+												->limit(1)
+												->execute($root);
+			$parents=array($objRoot->id);
+			// root found, we can now find the parents.
+			while($objRoot->numRows && $objRoot->pid)
+			{
+				$parents[]=$objRoot->pid;
+				$objRoot = $this->Database->prepare('SELECT pid FROM '. $this->objNavField->sourceTable. ' WHERE id='.$objRoot->pid)
+													->limit(1)
+													->execute();
+			}
+			foreach(array_reverse($parents) as $k=>$v)
+				$this->arrTrail[$k+1]=$v;
+		}
+		if($this->levelOffset)
+		{
+			// start level specified but not in trail -> do not output
+			if(!$this->arrTrail[$this->levelOffset])
+				return '';
+			$pid = $this->arrTrail[$this->levelOffset];
+		}
+		return $this->internalRenderCatalogNavigation($pid, 1, $root);
 	}
 	
 	/**

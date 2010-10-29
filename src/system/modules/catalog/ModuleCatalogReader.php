@@ -96,9 +96,9 @@ class ModuleCatalogReader extends ModuleCatalog
 		$objCatalogType = $this->Database->prepare("SELECT aliasField,titleField,descriptionField,keywordsField FROM tl_catalog_types WHERE id=?")
 										->execute($this->catalog);
 
-		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';		
+		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';
 
-		$arrConverted = $this->processFieldSQL($this->catalog_visible);		
+		$arrConverted = $this->processFieldSQL($this->catalog_visible);
 
 		// Overwrite page title
 		if (strlen($objCatalogType->titleField)) 
