@@ -1039,7 +1039,7 @@ class Catalog extends Backend
 			{
 				// Update database
 				$this->Database->prepare('UPDATE '.$objCatalog->tableName.' SET ' . $this->publishField . '=? WHERE id=?')
-							   ->execute($this->Input->post('state'), $this->Input->post('id'));
+							   ->execute($this->Input->post('state')=='1'?'1':'', $this->Input->post('id'));
 				exit;
 			}
 		}
@@ -1079,6 +1079,7 @@ class Catalog extends Backend
 				$separators[] = ',';
 			// Ammend field with catalog field settings
 			$field['label'] = array($objFields->name, $objFields->description);
+
 			$field['eval']['mandatory'] = $field['eval']['mandatory'] || ($objFields->mandatory && in_array('mandatory', $visibleOptions) ? true : false);
 			if ($objFields->includeBlankOption && $colType == 'select')
 			{	
@@ -1086,7 +1087,8 @@ class Catalog extends Backend
 			}
 			$field['eval']['unique'] = $field['eval']['unique'] || ($objFields->uniqueItem && in_array('uniqueItem', $visibleOptions) ? true : false);
 			$field['eval']['catalog']['type'] = $colType;
-			$field['default'] = $objFields->defValue;
+			if($objFields->defValue)
+				$field['default'] = $objFields->defValue;
 			$field['filter'] = ($objFields->filteredField && in_array('filteredField', $visibleOptions) ? true : false);
 			$field['search'] = ($objFields->searchableField && in_array('searchableField', $visibleOptions) ? true : false);
 			$field['sorting'] = ((!$this->manualsort) && $objFields->sortingField && in_array('sortingField', $visibleOptions) ? true : false);
@@ -1869,7 +1871,6 @@ class Catalog extends Backend
 		{
 			return;
 		}
-		$GLOBALS['TL_DEBUG']['info'][]=$row;
 		$href .= '&amp;tid='.$row['id'].'&amp;state='.($row[$this->publishField] ? '0' : '1');
 		if (!$row[$this->publishField])
 		{
