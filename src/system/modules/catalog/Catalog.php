@@ -1831,14 +1831,14 @@ class Catalog extends Backend
     <option value="semicolon">'.$GLOBALS['TL_LANG']['MSC']['semicolon'].'</option>
     <option value="tabulator">'.$GLOBALS['TL_LANG']['MSC']['tabulator'].'</option>
   </select>'.(strlen($GLOBALS['TL_LANG']['MSC']['separator'][1]) ? '
-  <p class="tl_help">'.$GLOBALS['TL_LANG']['MSC']['separator'][1].'</p>' : '').'
+  <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['MSC']['separator'][1].'</p>' : '').'
   <h3><label for="source">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][0].'</label> <a href="typolight/files.php" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['fileManager']) . '" onclick="Backend.getScrollOffset(); this.blur(); Backend.openWindow(this, 750, 500); return false;">' . $this->generateImage('filemanager.gif', $GLOBALS['TL_LANG']['MSC']['fileManager'], 'style="vertical-align:text-bottom;"') . '</a></h3>
 '.$objTree->generate().(strlen($GLOBALS['TL_LANG']['tl_catalog_items']['source'][1]) ? '
-  <p class="tl_help">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][1].'</p>' : ''). 
+  <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][1].'</p>' : ''). 
 ($blnDelete ? '
   <div id="ctrl_removeData" class="tl_checkbox_single_container"><input type="checkbox" name="removeData" id="opt_removeData_0" value="1" class="tl_checkbox" onfocus="Backend.getScrollOffset();" onclick="if (this.checked && !confirm(\''.sprintf($GLOBALS['TL_LANG']['MSC']['removeDataConfirm'],$objCatalog->name).'\')) return false; Backend.getScrollOffset();" /> <label for="opt_removeData_0">' . $GLOBALS['TL_LANG']['tl_catalog_items']['removeData'][0] . '</label></div>
 ' . (($GLOBALS['TL_LANG']['tl_catalog_items']['removeData'][1] && $GLOBALS['TL_CONFIG']['showHelp']) ? '
-  <p class="tl_help">' . $GLOBALS['TL_LANG']['tl_catalog_items']['removeData'][1] . '</p>' : '') : '') . '
+  <p class="tl_help tl_tip">' . $GLOBALS['TL_LANG']['tl_catalog_items']['removeData'][1] . '</p>' : '') : '') . '
 </div>
 
 </div>
