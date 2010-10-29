@@ -123,13 +123,6 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 				'icon'                => 'tablewizard.gif',
                 'button_callback'     => array('tl_catalog_types', 'fieldsButton')
 			),
-			'comments' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['comments'],
-				'href'                => 'key=comments',
-				'icon'                => 'system/modules/catalog/html/comments.gif',
-				'button_callback'     => array('tl_catalog_types', 'showComments')
-			),
 		)
 	),
 
@@ -503,16 +496,46 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 class tl_catalog_types extends Backend
 {
 	/**
-	 * Check if old split Catalog, then call auto-upgrade
+	 * various auto-upgrade functionality
 	 */
 	public function checkUpgrade()
 	{
+		//Check if old split Catalog, then call auto-upgrade
 		$checkFolder = TL_ROOT . '/system/modules/catalog_ext';
 
 		if (file_exists($checkFolder) && is_dir($checkFolder))
 		{
 			$this->Import('CatalogUpgrade');
 			$this->CatalogUpgrade->checkUpgrade();
+		}
+
+		// migration of comments.
+		if(in_array('comments', $this->Config->getActiveModules()) && $this->Database->tableExists('tl_catalog_comments'))
+		{
+			$objComments = $this->Database->execute('SELECT COUNT(id) FROM tl_catalog_comments');
+			if($objComments->numRows)
+			{
+				// we have to port all comments over into the centralized archive now.
+				$objComments = $this->Database->execute('SELECT co.*, (SELECT tableName FROM tl_catalog_types WHERE co.catid=id) as tableName FROM tl_catalog_comments AS co');
+				while($objComments->next())
+				{
+					$arrNew=array
+					(
+						'tstamp' => $objComments->tstamp,
+						'name' => $objComments->name,
+						'email' => $objComments->email,
+						'website' => $objComments->website,
+						'comment' => $objComments->comment,
+						'published' => $objComments->published,
+						'date' => $objComments->date,
+						'ip' => $objComments->ip,
+						'source' => $objComments->tableName,
+						'parent' => $objComments->pid
+					);
+					$this->Database->prepare('INSERT INTO tl_comments %s')->set($arrNew)->execute();
+					$this->Database->prepare('DELETE FROM tl_catalog_comments WHERE id=?')->execute($objComments->id);
+				}
+			}
 		}
 	}
 
@@ -763,41 +786,6 @@ class tl_catalog_types extends Backend
 			$result[$objFields->colName] = $objFields->name;
 		}
 		return $result;
-	}
-
-	/**
-	 * Return the show comments button
-	 * @param array
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @return string
-	 */
-	public function showComments($row, $href, $label, $title, $icon, $attributes)
-	{
-		if ($row['allowComments'])
-		{
-
-			$objArchive = $this->Database->prepare("SELECT * FROM tl_catalog_types WHERE id=?")
-									  ->execute($row['id']);
-
-			if ($objArchive->numRows && strlen($objArchive->tableName))
-			{
-
-
-				$objComments = $this->Database->prepare("SELECT id FROM tl_catalog_comments WHERE catid=?")
-											  ->execute($row['id']);
-
-				if ($objComments->numRows)
-				{
-					return '<a href="'.$this->addToUrl($href.'&amp;id='.$row['id']).'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
-				}
-			}
-		}
-
-		return $this->generateImage(str_replace('.gif', '_.gif', $icon), $label);
 	}
 
 	/**

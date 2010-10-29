@@ -24,12 +24,12 @@
 <p class="confirm"><?php echo $this->confirm; ?></p>
 <?php else: ?>
 
-<form action="<?php echo $this->action; ?>" method="post">
+<form action="<?php echo $this->action; ?>" id="<?php echo $this->formId; ?>" method="post">
 <div class="formbody">
-<input type="hidden" name="FORM_SUBMIT" value="tl_catalog_comment" />
+<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>" />
 <?php foreach ($this->fields as $objWidget): ?>
 <div class="widget">
-  <?php echo $objWidget->generateWithError(); ?> <?php echo ($objWidget instanceof FormCaptcha) ? $objWidget->generateQuestion() : $objWidget->generateLabel(); ?><?php if ($objWidget->required): ?><span class="mandatory">*</span><?php endif; ?> 
+  <?php echo $objWidget->generateWithError(); ?> <?php echo ($objWidget instanceof FormCaptcha) ? $objWidget->generateQuestion() : $objWidget->generateLabel(); ?>
 </div>
 <?php endforeach; ?>
 <div class="submit_container">
@@ -37,6 +37,15 @@
 </div>
 </div>
 </form>
+<?php if ($this->hasError): ?>
+
+<script type="text/javascript">
+<!--//--><![CDATA[//><!--
+window.scrollTo(null, ($('<?php echo $this->formId; ?>').getElement('p.error').getPosition().y - 20));
+//--><!]]>
+</script>
+<?php endif; ?>
+
 <?php endif; ?>
 
 </div>

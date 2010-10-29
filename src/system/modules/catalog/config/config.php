@@ -37,7 +37,6 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 		'icon'				=> 'system/modules/catalog/html/icon.gif',
 		'import'			=> array('Catalog', 'importCSV'),
 		'export'			=> array('Catalog', 'exportItems'),
-		'comments'		=> array('CatalogComments', 'run'),
 		'upgrade'			=> array('CatalogUpgrade', 'upgrade'),
 
 		// Added by c.schiffler to allow custom editors to register themselves.
@@ -213,6 +212,9 @@ $GLOBALS['TL_HOOKS']['parseFrontendTemplate'][] = array('CatalogExt', 'parseFron
 
 }
 
+// register hook to inject our catalog names into the comments module as source.
+$GLOBALS['TL_HOOKS']['loadDataContainer'][] = array('CatalogExt', 'addCatalogsToComments');
+$GLOBALS['TL_HOOKS']['listComments'][] = array('CatalogExt', 'listComments');
 
 /**
  * Cron jobs

@@ -335,6 +335,44 @@ class CatalogExt extends Frontend
 		// We simply to not want to tamper with it.
 		return $strBuffer;
 	}
+
+	/**
+	 * get called by hook to inject all catalog names into the comments module.
+	 * @param string
+	 */
+	public function addCatalogsToComments($strName)
+	{
+		if($strName!='tl_comments')
+			return;
+		$objCatalogs = $this->Database->execute('SELECT id, tableName, name, titleField FROM tl_catalog_types;');
+		while($objCatalogs->next())
+		{
+			$GLOBALS['TL_LANG']['tl_comments'][$objCatalogs->tableName] = $objCatalogs->name;
+			$GLOBALS['TL_CATALOG_ITEMS'][$objCatalogs->tableName]['title'] = $objCatalogs->titleField;
+			$GLOBALS['TL_CATALOG_ITEMS'][$objCatalogs->tableName]['id'] = $objCatalogs->id;
+		}
+	}
+
+	/**
+	 * get called by hook to show the item title in the comments module.
+	 * @param string
+	 */
+	public function listComments($arrRow)
+	{
+		// did we already look up this item? if so we can take this value now otherwise look it up.
+		if($GLOBALS['TL_CATALOG_ITEMS'][$arrRow['source']]['items'][$arrRow['parent']])
+			return $GLOBALS['TL_CATALOG_ITEMS'][$arrRow['source']]['items'][$arrRow['parent']];
+		$titleField=$GLOBALS['TL_CATALOG_ITEMS'][$arrRow['source']]['title'];
+		if(!$titleField)
+			return '';
+		$objItem = $this->Database->prepare('SELECT id,'.$titleField.' FROM '.$arrRow['source'].' WHERE id=?;')
+									->execute($arrRow['parent']);
+		if($objItem->numRows)
+		{
+			$GLOBALS['TL_CATALOG_ITEMS'][$arrRow['source']]['items'][$objItem->id] = $objItem->$titleField;
+			return ' (<a href="contao/main.php?do=catalog&amp;table=tl_catalog_items&amp;act=edit&amp;id=' . $objItem->id . '">' . $objItem->$titleField . '</a>)';
+		}
+	}
 }
 
 ?>

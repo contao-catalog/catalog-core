@@ -3025,329 +3025,37 @@ abstract class ModuleCatalog extends Module
 	public function processComments(Database_Result $objCatalog)
 	{
 		// Comments
-		$objArchive = $this->Database->prepare("SELECT * FROM tl_catalog_types WHERE id=?")
+		$objArchive = $this->Database->prepare('SELECT * FROM tl_catalog_types WHERE id=?')
 									 ->limit(1)
 									 ->execute($objCatalog->pid);
 
-		if (/*$objCatalog->noComments ||*/ $objArchive->numRows < 1 || !$objArchive->allowComments)
+		if ($objArchive->numRows < 1 || !$objArchive->allowComments || !in_array('comments', $this->Config->getActiveModules()))
 		{
 			$this->Template->allowComments = false;
 			return;
 		}
 
-		$limit = null;
-		$arrComments = array();
-
-		// Pagination
-		if ($objArchive->perPage > 0)
-		{
-			$page = $this->Input->get('com_page') ? $this->Input->get('com_page') : 1;
-			$limit = $objArchive->perPage;
-			$offset = ($page - 1) * $objArchive->perPage;
-
-			// Get total number of comments
-			$objTotal = $this->Database->prepare('SELECT COUNT(*) AS count FROM tl_catalog_comments WHERE pid=? AND catid=?' . (!BE_USER_LOGGED_IN ? ' AND published=1' : ''))
-									   ->execute($objCatalog->id, $objCatalog->pid);
-
-			// Add pagination menu
-			$objPagination = new Pagination($objTotal->count, $objArchive->perPage);
-			$this->Template->pagination = $objPagination->generate("\n  ");
-		}
-
-		// Get all published comments
-		$objCommentsStmt = $this->Database->prepare('SELECT * FROM tl_catalog_comments WHERE pid=? AND catid=?' . (!BE_USER_LOGGED_IN ? ' AND published=1' : '') . ' ORDER BY date' . (($objArchive->sortOrder == 'descending') ? ' DESC' : ''));
-
-		if ($limit)
-		{
-			$objCommentsStmt->limit($limit, $offset);
-		}
-
-		$objComments = $objCommentsStmt->execute($objCatalog->id, $objCatalog->pid);
-
-		if ($objComments->numRows)
-		{
-			$count = 0;
-			$objTemplate = new FrontendTemplate($objArchive->template);
-
-			while ($objComments->next())
-			{
-				$objTemplate->name = $objComments->name;
-				$objTemplate->email = $objComments->email;
-				$objTemplate->website = $objComments->website;
-				$objTemplate->comment = trim($objComments->comment);
-				$objTemplate->datim = date($GLOBALS['TL_CONFIG']['datimFormat'], $objComments->date);
-				$objTemplate->date = date($GLOBALS['TL_CONFIG']['dateFormat'], $objComments->date);
-				$objTemplate->class = (($count == 0) ? ' first' : '') . ((($count + 1) == $objComments->numRows) ? ' last' : '') . ((($count++ % 2) == 0) ? ' even' : ' odd');
-
-				$objTemplate->by = $GLOBALS['TL_LANG']['MSC']['comment_by'];
-				$objTemplate->id = 'c' . $objComments->id;
-				$objTemplate->ip = $objComments->ip;
-				$objTemplate->timestamp = $objComments->date;
-
-				$arrComments[] = $objTemplate->parse();
-			}
-		}
-
 		$this->Template->allowComments = true;
-		$this->Template->comments = $arrComments;
-		$this->Template->addComment = $GLOBALS['TL_LANG']['MSC']['addComment'];
-		$this->Template->name = $GLOBALS['TL_LANG']['MSC']['com_name'];
-		$this->Template->email = $GLOBALS['TL_LANG']['MSC']['com_email'];
-		$this->Template->website = $GLOBALS['TL_LANG']['MSC']['com_website'];
+		$this->import('Comments');
+		$objConfig = new stdClass();
+		$objConfig->perPage = $objArchive->perPage;
+		$objConfig->order = $objArchive->sortOrder;
+		$objConfig->template = $objArchive->template;
+		$objConfig->requireLogin = $objArchive->requireLogin;
+		$objConfig->disableCaptcha = $objArchive->disableCaptcha;
+		$objConfig->bbcode = $objArchive->bbcode;
+		$objConfig->moderate = $objArchive->moderate;
+		// TODO: add notifies here.
+		$arrNotifies=array($GLOBALS['TL_ADMIN_EMAIL']);
+		$this->Comments->addCommentsToTemplate($this->Template, $objConfig, $this->strTable, $objCatalog->id, $arrNotifies);
 
-		// Access control
-		if ($objArchive->requireLogin && !BE_USER_LOGGED_IN && !FE_USER_LOGGED_IN)
+		if($objArchive->disableWebsite)
 		{
-			$this->Template->protected = true;
-			return;
-		}
-
-
-		// check if member logged in
-		$this->import('FrontendUser', 'User');
-
-		$blnHide = (FE_USER_LOGGED_IN && $objArchive->hideMember);
-
-		// Form fields
-		$arrFields = array
-		(
-			'name' => array
-			(
-				'name' => 'name',
-				'label' =>  $blnHide ? '' : $GLOBALS['TL_LANG']['MSC']['com_name'],
-				'value' => FE_USER_LOGGED_IN ? ($this->User->firstname . ' ' . $this->User->lastname) : '',
-				'inputType' => ($blnHide) ? 'hidden' : 'text',
-				'eval' => array('mandatory'=> !$blnHide, 'maxlength'=>64)
-			),
-			'email' => array
-			(
-				'name' => 'email',
-				'label' => ($blnHide) ? '' : $GLOBALS['TL_LANG']['MSC']['com_email'],
-				'value' => $this->User->email,
-				'inputType' => ($blnHide) ? 'hidden' : 'text',
-				'eval' => array('rgxp'=>'email', 'mandatory'=>!$blnHide, 'maxlength'=>128)
-			),
-		);
-		
-		
-		if (!$objArchive->disableWebsite)
-		{
-			$arrFields['website'] = array
-				(
-					'name' => 'website',
-					'label' => $GLOBALS['TL_LANG']['MSC']['com_website'],
-					'inputType' => 'text',
-					'eval' => array('rgxp'=>'url', 'maxlength'=>128, 'decodeEntities'=>true)
-				);
-		}
-
-		// Captcha
-		if (!$objArchive->disableCaptcha)
-		{
-			$arrFields['captcha'] = array
-			(
-				'name' => 'captcha',
-				'inputType' => 'captcha',
-				'eval' => array('mandatory'=>true)
-			);
-		}
-
-		// Comment field
-		$arrFields['comment'] = array
-		(
-			'name' => 'comment',
-			'inputType' => 'textarea',
-			'eval' => array('rows'=>4, 'cols'=>40, 'allowHtml'=>true)
-		);
-
-		$doNotSubmit = false;
-		$arrWidgets = array();
-
-		// Initialize widgets
-		foreach ($arrFields as $arrField)
-		{
-			$strClass = $GLOBALS['TL_FFL'][$arrField['inputType']];
-
-			// Continue if the class is not defined
-			if (!$this->classFileExists($strClass))
-			{
-				continue;
-			}
-
-			$arrField['eval']['required'] = $arrField['eval']['mandatory'];
-			$objWidget = new $strClass($this->prepareForWidget($arrField, $arrField['name'], $arrField['value']));
-
-			// Validate widget
-			if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_comment')
-			{
-				$objWidget->validate();
-
-				if ($objWidget->hasErrors())
-				{
-					$doNotSubmit = true;
-				}
-			}
-
-			$arrWidgets[] = $objWidget;
-		}
-
-		$this->Template->fields = $arrWidgets;
-		$this->Template->submit = $GLOBALS['TL_LANG']['MSC']['com_submit'];
-		$this->Template->action = ampersand($this->Environment->request);
-
-		// Confirmation message when pending comment was added.
-		if ($_SESSION['TL_COMMENT_ADDED'])
-		{
-			$this->Template->confirm = $GLOBALS['TL_LANG']['MSC']['com_confirm'];
-			$_SESSION['TL_COMMENT_ADDED'] = false;
-		}
-
-		// Add comment
-		if ($this->Input->post('FORM_SUBMIT') == 'tl_catalog_comment' && !$doNotSubmit)
-		{
-			$this->addComment($objCatalog, $objArchive);
-			// Pending for approval
-			if ($objArchive->moderate)
-			{
-				$_SESSION['TL_COMMENT_ADDED'] = true;
-			}
-			$this->reload();
+			$fields = $this->Template->fields;
+			unset($fields['website']);
+			$this->Template->fields=$fields;
 		}
 	}
-
-
-	/**
-	 * Replace bbcode and add the comment to the database
-	 * 
-	 * Supports the following tags:
-	 * 
-	 * - [b][/b] bold
-	 * - [i][/i] italic
-	 * - [u][/u] underline
-	 * - [img][/img]
-	 * - [code][/code]
-	 * - [color=#ff0000][/color]
-	 * - [quote][/quote]
-	 * - [quote=tim][/quote]
-	 * - [url][/url]
-	 * - [url=http://][/url]
-	 * - [email][/email]
-	 * - [email=name@domain.com][/email]
-	 * @param object
-	 * @param object
-	 */
-	private function addComment(Database_Result $objCatalog, Database_Result $objArchive)
-	{
-		$strWebsite = $this->Input->post('website');
-
-		// Add http:// to website
-		if (strlen($strWebsite) && !preg_match('@^https?://|ftp://|mailto:@i', $strWebsite))
-		{
-			$strWebsite = 'http://' . $strWebsite;
-		}
-
-		$strComment = trim($this->Input->post('comment', DECODE_ENTITIES));
-
-		// Replace bbcode
-		if ($objArchive->bbcode)
-		{
-			$arrSearch = array
-			(
-				'[b]', '[/b]',
-				'[i]', '[/i]',
-				'[u]', '[/u]',
-				'[code]', '[/code]',
-				'[/color]',
-				'[quote]', '[/quote]'
-			);
-
-			$arrReplace = array
-			(
-				'<strong>', '</strong>',
-				'<em>', '</em>',
-				'<span style="text-decoration:underline;">', '</span>',
-				'<div class="code"><p>' . $GLOBALS['TL_LANG']['MSC']['com_code'] . '</p><pre>', '</pre></div>',
-				'</span>',
-				'<div class="quote">', '</div>'
-			);
-
-			$strComment = str_replace($arrSearch, $arrReplace, $strComment);
-
-			$strComment = preg_replace('/\[color=([^\]]+)\]/i', '<span style="color:$1;">', $strComment);
-			$strComment = preg_replace('/\[quote=([^\]]+)\]/i', '<div class="quote"><p>' . sprintf($GLOBALS['TL_LANG']['MSC']['com_quote'], '$1') . '</p>', $strComment);
-			$strComment = preg_replace('/\[img\]([^\[]+)\[\/img\]/i', '<img src="$1" alt="" />', $strComment);
-
-			$strComment = preg_replace('/\[url\]([^\[]+)\[\/url\]/i', '<a href="$1">$1</a>', $strComment);
-			$strComment = preg_replace('/\[url=([^\]]+)\]([^\[]+)\[\/url\]/i', '<a href="$1">$2</a>', $strComment);
-
-			$strComment = preg_replace('/\[email\]([^\[]+)\[\/email\]/i', '<a href="mailto:$1">$1</a>', $strComment);
-			$strComment = preg_replace('/\[email=([^\]]+)\]([^\[]+)\[\/email\]/i', '<a href="mailto:$1">$2</a>', $strComment);
-
-			$strComment = preg_replace(array('@</div>(\n)*@', '@\r@'), array("</div>\n", ''), $strComment);
-		}
-
-		// Encode e-mail addresses
-		if (strpos($strComment, 'mailto:') !== false)
-		{
-			$this->import('String');
-			$strComment = $this->String->encodeEmail($strComment);
-		}
-
-		$time = time();
-
-		// Prevent cross-site request forgeries
-		$strComment = preg_replace('/(href|src|on[a-z]+)="[^"]*(typolight\/main\.php|javascript|vbscri?pt|script|alert|document|cookie|window)[^"]*"+/i', '$1="#"', $strComment);
-
-		// Prepare record
-		$arrSet = array
-		(
-			'pid' => $objCatalog->id,
-			'catid' => $objCatalog->pid,
-			'tstamp' => $time,
-			'name' => $this->Input->post('name'),
-			'email' => $this->Input->post('email', true),
-			'website' => $strWebsite,
-			'comment' => nl2br_pre($strComment),
-			'ip' => $this->Environment->ip,
-			'date' => $time,
-			'published' => 1
-		);
-
-		// Moderate
-		if ($objArchive->moderate)
-		{
-			$arrSet['published'] = '';
-		}
-
-		$insert = $this->Database->prepare("INSERT INTO tl_catalog_comments %s")->set($arrSet)->execute();
-
-		// Inform admin
-		$objEmail = new Email();
-
-		$objEmail->from = $GLOBALS['TL_ADMIN_EMAIL'];
-		$objEmail->subject = sprintf($GLOBALS['TL_LANG']['MSC']['com_catalog_subject'], $objArchive->name, $this->Environment->host);
-
-		// Add First Catalog Title Field
-		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? AND titleField=? AND titleField=? ORDER BY sorting")
-								  ->execute($this->Input->get('id'), 1, 'text');
-
-		$titleField = strlen($objArchive->titleField) ? $objArchive->titleField : 
-				($objFields->numRows ? $objFields->colName : 'id');
-
-		// Add comment details
-		$objEmail->text = sprintf($GLOBALS['TL_LANG']['MSC']['com_catalog_message'],
-									$objArchive->name, 
-									$objCatalog->$titleField,
-								  $arrSet['name'] . ' (' . $arrSet['email'] . ')',
-								  strip_tags($arrSet['comment']),
-								  $this->Environment->base . $this->Environment->request,
-								  $this->Environment->base . 'typolight/main.php?do=catalog&key=comments&act=edit&id=' . $insert->insertId);
-
-		$objEmail->sendTo($GLOBALS['TL_ADMIN_EMAIL']);
-
-	}
-
-
 }
 
 ?>
