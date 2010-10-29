@@ -599,6 +599,8 @@ class tl_catalog_types extends Backend
 
   public function getRowLabel($row, $label, $dc)
   {
+		if(!($row['tableName'] && $this->Database->tableExists($row['tableName'])))
+			return '';
 		// add image
 		$image = '';
 		if ($row['addImage'])
