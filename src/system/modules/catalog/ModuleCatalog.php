@@ -1032,7 +1032,7 @@ abstract class ModuleCatalog extends Module
 								$tmpTags = array();
 								foreach ($fieldConf['options'] as $id=>$option)
 								{
-									$tmpTags[] = 'SUM(FIND_IN_SET('.$id.','.$field.')) AS '.$option.$id;
+									$tmpTags[] = 'SUM(FIND_IN_SET('.$id.','.$field.')) AS '.$field.$id;
 								}
 								$objResultCount = $this->Database->prepare('SELECT '.implode(', ',$tmpTags).' FROM '.$this->strTable. ($query['query'] ? ' WHERE '. $query['query'] : ''))
 																->execute($query['params']);
@@ -1052,7 +1052,7 @@ abstract class ModuleCatalog extends Module
 										$addOption['label'] = $option;
 										$addOption['id'] = $id;
 										$addOption['alias'] = $id;
-										$addOption['resultcount'] = $arrResultCount[$option.$id];
+										$addOption['resultcount'] = $arrResultCount[$field.$id];
 										if ($selected)
 										{
 											$addOption['selected'] = true;
