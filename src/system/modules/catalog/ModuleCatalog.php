@@ -2129,7 +2129,15 @@ abstract class ModuleCatalog extends Module
 				}
 
 			}
-			
+			// HOOK: allow other extensions to manipulate the item before returning them in the array
+			if(is_array($GLOBALS['TL_HOOKS']['generateCatalogItem']))
+			{
+				foreach ($GLOBALS['TL_HOOKS']['generateCatalogItem'] as $callback)
+				{
+					$this->import($callback[0]);
+					$arrCatalog[$i] = $this->$callback[0]->$callback[1]($arrCatalog[$i], $arrData, $this);
+				}
+			}
 			$i++;
 		}
 		return $arrCatalog;
@@ -2287,7 +2295,8 @@ abstract class ModuleCatalog extends Module
 					{
 						$arrValues[0] = $raw;
 						$website = $matches[2][0];
-						$strHtml = '<a href="'.$raw.'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$website.'</a>';
+//						$strHtml = '<a href="'.$raw.'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$website.'</a>';
+						$strHtml = '<a href="'.ampersand($raw).'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$website.'</a>';
 					}
 				
 				}
