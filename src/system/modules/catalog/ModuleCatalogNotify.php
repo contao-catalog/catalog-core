@@ -241,10 +241,18 @@ class ModuleCatalogNotify extends ModuleCatalog
 			// compile body text
 			$objEmail->text =  $text. "\n\n" . $notify;
 
-
+			$additionalRecipients = array();
+			foreach(deserialize($this->catalog_recipient_fields) as $field)
+			{
+				if($arrCatalog[$field])
+					$additionalRecipients[] = $arrCatalog[$field];
+			}
+			$this->catalog_recipients = array_unique(array_merge($this->catalog_recipients, $additionalRecipients));
+			
 			foreach($this->catalog_recipients as $recipient) 
 			{
-				$objEmail->sendTo($recipient);
+				if($recipient)
+					$objEmail->sendTo($recipient);
 			}
 			
 			$this->log('A user has notified you of interest in the following catalog item: '.$url, 'ModuleCatalogNotify compile()', TL_GENERAL);

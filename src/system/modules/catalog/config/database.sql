@@ -251,6 +251,7 @@ CREATE TABLE `tl_module` (
 -- catalog notify
   `catalog_notify_fields` text NULL,
   `catalog_recipients` text NULL,
+  `catalog_recipient_fields` text NULL,
   `catalog_subject` varchar(255) NOT NULL default '',
   `catalog_notify` text NULL,
 

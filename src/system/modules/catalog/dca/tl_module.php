@@ -46,7 +46,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legen
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,jumpTo,catalog_navigation,levelOffset,showLevel,hardLimit;catalog_show_items;{template_legend:hide},catalog_layout,navigationTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_recipients,catalog_notify;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_recipients,catalog_recipient_fields,catalog_notify;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 // catalog edit AND modify list above ^^
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,jumpTo,disableCaptcha;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
@@ -613,11 +613,19 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 	(
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_notify_fields'],
 		'exclude'                 => true,
-		'default'									=> array('Name', 'E-mail', 'Phone'),
+		'default'                 => array('Name', 'E-mail', 'Phone'),
 		'inputType'               => 'listWizard',
 		'eval'                    => array('mandatory'=>true, 'maxlength'=>64)
 	),
 
+	'catalog_recipient_fields' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_recipient_fields'],
+		'exclude'                 => true,
+		'inputType'               => 'checkbox',
+		'options_callback'        => array('tl_module_catalog', 'getCatalogEmailFields'),
+		'eval'                    => array('multiple'=>true, 'maxlength'=>64)
+	),
 
 	'catalog_recipients' => array
 	(
@@ -625,7 +633,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'exclude'                 => true,
 		'default'									=> array($GLOBALS['TL_CONFIG']['adminEmail']),
 		'inputType'               => 'listWizard',
-		'eval'                    => array('mandatory'=>true, 'maxlength'=>64)
+		'eval'                    => array('maxlength'=>64)
 	),
 
 	'catalog_subject' => array
@@ -780,10 +788,17 @@ class tl_module_catalog extends Backend
 	 */
 	public function getCatalogLinkFields(DataContainer $dc)
 	{
-		return $this->getCatalogFields($dc, $GLOBALS['BE_MOD']['content']['catalog']['typesLinkFields']);	
+		return $this->getCatalogFields($dc, $GLOBALS['BE_MOD']['content']['catalog']['typesLinkFields']);
 	}
 
-
+	/**
+	 * Get all email fields and return them as array
+	 * @return array
+	 */
+	public function getCatalogEmailFields(DataContainer $dc)
+	{
+		return $this->getCatalogFields($dc, array('text'));
+	}
 
 	/**
 	 * Get all catalog fields and return them as array
