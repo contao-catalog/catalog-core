@@ -115,6 +115,8 @@ CREATE TABLE `tl_catalog_fields` (
   `limitItems` char(1) NOT NULL default '',
   `items` text NULL,
   `childrenSelMode` varchar(64) NOT NULL default '',
+  `treeMinLevel` int(10) NULL default NULL,
+  `treeMaxLevel` int(10) NULL default NULL,
   `itemFilter` text NULL,
   `includeTime` char(1) NOT NULL default '',
   `multiple` char(1) NOT NULL default '',

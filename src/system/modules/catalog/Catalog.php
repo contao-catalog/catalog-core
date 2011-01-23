@@ -1378,9 +1378,11 @@ class Catalog extends Backend
 			$field['eval']['childrenOnly'] = $objRow->childrenSelMode == 'treeChildrenOnly';
 
 		}
-
-//print_r($field);
-
+		if($objRow->limitItems && ($objRow->childrenSelMode == 'treeAll') && ($objRow->treeMinLevel || $objRow->treeMaxLevel))
+		{
+			$field['eval']['minLevel'] = $objRow->treeMinLevel;
+			$field['eval']['maxLevel'] = $objRow->treeMaxLevel;
+		}
 	}
 
 

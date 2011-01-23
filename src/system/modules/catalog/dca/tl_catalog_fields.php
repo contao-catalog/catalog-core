@@ -121,8 +121,8 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'number'       => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'decimal'      => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,minValue,maxValue;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'date'         => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,includeTime;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
-		'select'       => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{advanced_legend:hide},mandatory,includeBlankOption;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
-		'tags'         => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems;{feedit_legend},editGroups',
+		'select'       => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{advanced_legend:hide},mandatory,includeBlankOption;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems,treeMinLevel,treeMaxLevel;{feedit_legend},editGroups',
+		'tags'         => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems,treeMinLevel,treeMaxLevel;{feedit_legend},editGroups',
 		'checkbox'     => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{feedit_legend},editGroups',
 		'url'          => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,uniqueItem;{format_legend:hide},formatPrePost,{feedit_legend},editGroups',
 		'file'         => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,customFiletree,multiple;{format_legend},showImage,showLink;{feedit_legend},editGroups',
@@ -451,6 +451,24 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'options_callback'        => array('tl_catalog_fields', 'getOptionSelectors'),
 			'eval'                    => array('includeBlankOption' => true, 'tl_class'=>'w50'),
 		),
+
+		'treeMinLevel' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['treeMinLevel'],
+			'exclude'                 => true,
+			'inputType'               => 'text',
+			'default'                 => '0',
+			'eval'                    => array('rgxp'=>'digit', 'nospace'=>true, 'tl_class'=>'w50')
+		),
+		'treeMaxLevel' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['treeMaxLevel'],
+			'exclude'                 => true,
+			'inputType'               => 'text',
+			'default'                 => '0',
+			'eval'                    => array('rgxp'=>'digit', 'nospace'=>true, 'tl_class'=>'w50')
+		),
+
 
 		'itemFilter' => array
 		(
