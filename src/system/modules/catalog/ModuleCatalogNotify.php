@@ -90,7 +90,8 @@ class ModuleCatalogNotify extends ModuleCatalog
 
 		global $objPage;
 
-		$this->Template->erromsg = '';
+		$this->Template->errormsg = '';
+		$this->Template->sent = false;
 		
 		$objCatalogType = $this->Database->prepare("SELECT name,aliasField FROM tl_catalog_types WHERE id=?")
 										->execute($this->catalog);
@@ -118,6 +119,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 		$doNotSubmit = false;
 		$formId = 'tl_catalog_notify';
 
+
 		// Captcha
 		if (!$this->disableCaptcha)
 		{
@@ -144,6 +146,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 
 		$inputType = 'text';
 		$arrFields = array();
+		$arrWidgets = array();
 		$i = 0;
 
 		
@@ -195,10 +198,45 @@ class ModuleCatalogNotify extends ModuleCatalog
 			$temp = $objWidget->parse();
 
 			$this->Template->fields .= $temp;
-			$arrFields[$field] .= $temp;
-
+			$arrFields[$field] = $temp;
+			$arrWidgets[$field] = $objWidget;
 			++$i;
 		}
+
+		$field = 'message';
+		$inputType = 'textarea';
+		// Long text message
+			$arrMessage = array
+			(
+				'id'=> $field,
+				'label'=> $GLOBALS['TL_LANG']['MSC'][$field],
+				'mandatory'=>true,
+				'required'=>true,
+				'inputType'               => $inputType,
+				'eval'                    => array('mandatory'=>true)
+			);
+
+			$strClass = $GLOBALS['TL_FFL'][$inputType];
+			// Continue if the class is not defined
+			if (!$this->classFileExists($strClass))
+			{
+				continue;
+			}
+			$objMessage = new $strClass($this->prepareForWidget($arrMessage, $field));
+			$objMessage->rowClass = 'row_'.$i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
+			if($this->Input->post('FORM_SUBMIT') == $formId)
+			{
+				$objMessage->validate();
+				if ($objMessage->hasErrors())
+				{
+					$doNotSubmit = true;
+				}
+			}
+			$strMessage = $objMessage->parse();
+			$this->Template->fields .= $strMessage;
+			$arrFields[$field] = $strMessage;
+			$arrWidgets[$field] = $objMessage;
+			++$i;
 
 		// Captcha
 		if (!$this->disableCaptcha)
@@ -207,7 +245,8 @@ class ModuleCatalogNotify extends ModuleCatalog
 			$strCaptcha = $objCaptcha->parse();
 
 			$this->Template->fields .= $strCaptcha;
-			$arrFields['captcha'] .= $strCaptcha;
+			$arrFields['captcha'] = $strCaptcha;
+			$arrWidgets['captcha'] = $objCaptcha;
 		}
 
 		$this->Template->rowLast = 'row_' . ++$i . ((($i % 2) == 0) ? ' even' : ' odd');
@@ -258,16 +297,27 @@ class ModuleCatalogNotify extends ModuleCatalog
 			$this->log('A user has notified you of interest in the following catalog item: '.$url, 'ModuleCatalogNotify compile()', TL_GENERAL);
 			$_SESSION[$formId]['TL_CONFIRM'][0] = $GLOBALS['TL_LANG']['MSC']['notifyConfirm'];
 
-		// initialize
-		$this->initializeSession($formId);
-			
+			$this->Template->sent = true;
+			if($this->catalog_useJumpTo)
+			{
+				$objJump = $this->Database->prepare("SELECT * FROM tl_page WHERE id=?")
+										->execute($this->jumpTo);
+				if($objJump->numRows)
+				{
+					$this->redirect($this->generateFrontendUrl($objJump->row());
+				}
+			}
 		}
 
+		// initialize
+		$this->initializeSession($formId);
+
 		$this->Template->captcha = $arrFields['captcha'];
+		$this->Template->arrFields = $arrFields;
+		$this->Template->arrWidgets = $arrWidgets;
 		$this->Template->formId = $formId;
 		$this->Template->slabel = specialchars($GLOBALS['TL_LANG']['MSC']['notifySubmit']);
 		$this->Template->action = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
-	
 	}
 
 
@@ -305,8 +355,6 @@ class ModuleCatalogNotify extends ModuleCatalog
 			}
 		}
 	}
-
-
 }
 
 ?>

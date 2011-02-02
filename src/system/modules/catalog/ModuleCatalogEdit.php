@@ -494,7 +494,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 			// Add datepicker
 			if (in_array($arrData['eval']['rgxp'], array('date', 'time', 'datim')))
 			{
-				$objDate = new Date($objWidget->varValue, $GLOBALS['TL_CONFIG'][$arrData['eval']['rgxp'] . 'Format']);
+				$objDate = new Date($objWidget->value, $GLOBALS['TL_CONFIG'][$arrData['eval']['rgxp'] . 'Format']);
 				$objWidget->value = $objDate->$arrData['eval']['rgxp'];
 				//$objWidget->datepicker = '
 				$GLOBALS['TL_HEAD'][]='

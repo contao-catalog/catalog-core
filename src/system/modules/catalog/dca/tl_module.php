@@ -46,7 +46,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legen
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,jumpTo,catalog_navigation,levelOffset,showLevel,hardLimit;catalog_show_items;{template_legend:hide},catalog_layout,navigationTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_recipients,catalog_recipient_fields,catalog_notify;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_recipients,catalog_recipient_fields,catalog_notify,catalog_useJumpTo;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 // catalog edit AND modify list above ^^
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,jumpTo,disableCaptcha;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
@@ -65,6 +65,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_edit_en
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_show_items';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_edit_use_default';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_list_use_limit';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_useJumpTo';
 
 // Insert new Subpalettes after position 1
 array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
@@ -81,7 +82,8 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
 		'catalog_edit_enable' => 'catalog_editJumpTo',
 		'catalog_show_items' => 'catalog_show_field',
 		'catalog_edit_use_default' => 'catalog_edit_default,catalog_edit_default_value',
-		'catalog_list_use_limit' => 'catalog_list_offset,catalog_limit'
+		'catalog_list_use_limit' => 'catalog_list_offset,catalog_limit',
+		'catalog_useJumpTo' => 'jumpTo',
 	)
 );
 
@@ -656,6 +658,13 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		(
 			array('tl_module_catalog', 'getDefaultValue')
 		)
+	),
+	'catalog_useJumpTo' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_useJumpTo'],
+		'exclude'                 => true,
+		'inputType'               => 'checkbox',
+		'eval'                    => array('submitOnChange'=> true),
 	),
 	'catalog_comments_disable' => array
 	(

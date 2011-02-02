@@ -555,7 +555,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['editGroups'],
 			'inputType'               => 'checkbox',
 			'foreignKey'              => 'tl_member_group.name',
-			'eval'                    => array('title' => &$GLOBALS['TL_LANG']['tl_catalog_fields']['useridfield'], 'multiple'=>true , 'tl_class'=>'w50')
+			'eval'                    => array('title' => &$GLOBALS['TL_LANG']['tl_catalog_fields']['useridfield'], 'multiple'=>true , 'tl_class'=>'w50 clr')
 		),
 		
 	)
@@ -663,7 +663,12 @@ class tl_catalog_fields extends Backend
 
 	public function getTables()
 	{
-		return $this->Database->listTables();
+		$tables = array('' => '-');
+		foreach($this->Database->listTables() as $table)
+		{
+			$tables[$table]=$table;
+		}
+		return $tables;
 	}
 	
 	public function getTableKeys(DataContainer $dc)
