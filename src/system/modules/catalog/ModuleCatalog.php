@@ -100,8 +100,9 @@ abstract class ModuleCatalog extends Module
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');
 			$GLOBALS['TL_DCA'][$objCatalog->tableName] = 
-				isset($GLOBALS['TL_DCA'][$objCatalog->tableName])
-					? array_merge($this->Catalog->getCatalogDca($this->catalog), $GLOBALS['TL_DCA'][$objCatalog->tableName])
+				is_array($GLOBALS['TL_DCA'][$objCatalog->tableName])
+					// NOTE: array_merge_recursive raises warnings for recursion when trying to create the DCA twice.
+					? @array_merge_recursive($this->Catalog->getCatalogDca($this->catalog), $GLOBALS['TL_DCA'][$objCatalog->tableName])
 					: $this->Catalog->getCatalogDca($this->catalog);
 		}
 
@@ -1099,11 +1100,12 @@ abstract class ModuleCatalog extends Module
 						}
 						array_push($options, $addOption);
 
-						$tmpTags = array();
 						foreach ($fieldConf['options'] as $id=>$option)
 						{
 								$tmpTags[] = "SUM(FIND_IN_SET(".$id.",".$field.")) AS ".$field.$id;
 						}
+						if(count($tmpTags)==0)
+							$tmpTags = array($field);
 						$objFilter = $this->Database->prepare("SELECT ".implode(', ',$tmpTags)." FROM ".$this->strTable. ($query['query'] ? " WHERE ". $query['query'] : ''))
 								->execute($query['params']);
 						if ($objFilter->numRows)
