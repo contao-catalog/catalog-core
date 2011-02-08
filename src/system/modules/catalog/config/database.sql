@@ -264,7 +264,8 @@ CREATE TABLE `tl_module` (
 -- LIMIT n,m for listings
   `catalog_list_use_limit` char(1) NOT NULL default '',
   `catalog_list_offset` smallint(5) NOT NULL default '0',
-
+-- if module registration is disabled, we loose this field. :(
+  `disableCaptcha` char(1) NOT NULL default '',
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 

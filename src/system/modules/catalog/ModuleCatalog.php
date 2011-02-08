@@ -1959,7 +1959,17 @@ abstract class ModuleCatalog extends Module
 							$arrConverted[$id] = $field;
 					}
 
-				}			
+				}
+
+				// HOOK: allow third party extension developers to prepare the SQL data
+				if(is_array($GLOBALS['TL_HOOKS']['processFieldSQL']) && count($GLOBALS['TL_HOOKS']['processFieldSQL']))
+				{
+					foreach($GLOBALS['TL_HOOKS']['processFieldSQL'] as $callback)
+					{
+						$this->import($callback[0]);
+						$this->$callback[0]->$callback[1]($this->catalog, $id, $field, $arrFields, $arrConverted, $this->strTable);
+					}
+				}	
 			}	
 		}
 

@@ -271,7 +271,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 			// replace catalog url
 			$url = $this->Environment->base . ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 			$text = str_replace('##link##', $url, $text);
-			
+
 			$notify = '';
 			foreach($arrStore as $k=>$v)
 			{
@@ -304,7 +304,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 										->execute($this->jumpTo);
 				if($objJump->numRows)
 				{
-					$this->redirect($this->generateFrontendUrl($objJump->row());
+					$this->redirect($this->generateFrontendUrl($objJump->row()));
 				}
 			}
 		}

@@ -177,7 +177,7 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_edit_default'] = array('Restricted fie
 $GLOBALS['TL_LANG']['tl_module']['catalog_edit_default_value'] = array('Restricted fields default values', 'These are the default values for the above defined fields.');
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_filter_cond_from_lister'] = array('Use filter condition from lister on same page.', 'If there is at least one catalog lister module on the same page, the filter condition from those cataloglisters is applied to this filter aswell.');
-
+$GLOBALS['TL_LANG']['tl_module']['disableCaptcha'] = array('Disable the security question', 'Here you can disable the security question (not recommended).'); 
 
 
 /**

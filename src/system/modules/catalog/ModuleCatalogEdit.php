@@ -773,7 +773,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 			foreach ($GLOBALS['TL_HOOKS']['catalogFrontendUpdate'] as $callback)
 			{
 				$this->import($callback[0]);
-				$this->$callback[0]->$callback[1]($arrData);
+				$this->$callback[0]->$callback[1]($arrData, $this, $this->strTable);
 			}
 		}
 
@@ -818,7 +818,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 			foreach ($GLOBALS['TL_HOOKS']['catalogFrontendInsert'] as $callback)
 			{
 				$this->import($callback[0]);
-				$this->$callback[0]->$callback[1]($arrData);
+				$this->$callback[0]->$callback[1]($arrData, $this, $this->strTable);
 			}
 		}
 /*

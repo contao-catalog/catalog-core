@@ -703,9 +703,12 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'reference'               => &$GLOBALS['TL_LANG']['tl_module'],
 		'eval'                    => array('tl_class'=>'w50')
 	),
-	
-
-
+	'disableCaptcha' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['disableCaptcha'],
+		'exclude'                 => true,
+		'inputType'               => 'checkbox'
+	)
 )); 
 
 /**

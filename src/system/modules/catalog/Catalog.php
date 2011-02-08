@@ -1155,6 +1155,16 @@ class Catalog extends Backend
 			$filter=$filter||$field['filter'];
 			$search=$search||$field['search'];
 			$sort=$sort||$field['sorting'];
+			
+			// HOOK: allow third party extension developers to modify the dca on the fly
+			if(is_array($GLOBALS['TL_HOOKS']['getCatalogDca']) && count($GLOBALS['TL_HOOKS']['getCatalogDca']))
+			{
+				foreach($GLOBALS['TL_HOOKS']['getCatalogDca'] as $callback)
+				{
+					$this->import($callback[0]);
+					$this->$callback[0]->$callback[1]($objFields, $dca);
+				}
+			}			
 		}
 		$panelLayout=array();
 		if($filter)
