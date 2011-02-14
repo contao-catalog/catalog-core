@@ -136,7 +136,7 @@ class CatalogMultiWidget extends Widget
 						$arrSubField['inputType']='select';
 						$arrSubField['eval']['options']=array(
 																array('value' => 1, 'label' => $GLOBALS['TL_LANG']['MSC']['yes']), 
-																array('value' => 0, 'label' => $GLOBALS['TL_LANG']['MSC']['no'])
+																array('value' => '', 'label' => $GLOBALS['TL_LANG']['MSC']['no'])
 															);
 					}
 					$parsedSubField=$this->prepareForWidget($arrSubField, $this->strName . '_'.$i, $this->value[$i], $this->strField . '['.$i.']', $this->strTable);
