@@ -370,7 +370,7 @@ class CatalogExt extends Frontend
 		if($objItem->numRows)
 		{
 			$GLOBALS['TL_CATALOG_ITEMS'][$arrRow['source']]['items'][$objItem->id] = $objItem->$titleField;
-			return ' (<a href="contao/main.php?do=catalog&amp;table=tl_catalog_items&amp;act=edit&amp;id=' . $objItem->id . '">' . $objItem->$titleField . '</a>)';
+			return ' (<a href="contao/main.php?do=catalog&amp;table=tl_catalog_items&amp;act=edit&amp;id=' . $objItem->id . '&amp;catid=' . $GLOBALS['TL_CATALOG_ITEMS'][$arrRow['source']]['id'] . '">' . $objItem->$titleField . '</a>)';
 		}
 	}
 }

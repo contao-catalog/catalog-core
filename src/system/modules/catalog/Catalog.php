@@ -53,6 +53,14 @@ class Catalog extends Backend
 
 		$this->import('Database');
 		$this->import('Input');
+
+		// Store the current ID in the current session if it was passed via the url (like i.e. from an email)
+		$catid=$this->Input->get('catid')?(int)$this->Input->get('catid'):NULL;
+		if ($catid && ($catid != $this->Session->get('CURRENT_ID')))
+		{
+			$this->Session->set('CURRENT_ID', $catid);
+			$this->redirect(str_replace('&catid='.$catid, '', $this->Environment->request));
+		}
 				
 		$objType = $this->Database->prepare("SELECT tableName FROM tl_catalog_types where id=?")
 				->limit(1)
