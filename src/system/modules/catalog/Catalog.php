@@ -1086,7 +1086,9 @@ class Catalog extends Backend
 			} else
 				$separators[] = ',';
 			// Ammend field with catalog field settings
-			$field['label'] = array($objFields->name, $objFields->description);
+			if(!$GLOBALS['TL_LANG'][$objCatalog->tableName][$colName])
+				$GLOBALS['TL_LANG'][$objCatalog->tableName][$colName] = array($objFields->name, $objFields->description);
+			$field['label'] = &$GLOBALS['TL_LANG'][$objCatalog->tableName][$colName];
 
 			$field['eval']['mandatory'] = $field['eval']['mandatory'] || ($objFields->mandatory && in_array('mandatory', $visibleOptions) ? true : false);
 			if ($objFields->includeBlankOption && $colType == 'select')
@@ -1170,7 +1172,7 @@ class Catalog extends Backend
 				foreach($GLOBALS['TL_HOOKS']['getCatalogDca'] as $callback)
 				{
 					$this->import($callback[0]);
-					$this->$callback[0]->$callback[1]($objFields, $dca);
+					$this->$callback[0]->$callback[1]($objFields, $dca, $objCatalog, $this);
 				}
 			}			
 		}
@@ -1303,7 +1305,7 @@ class Catalog extends Backend
 		$field['save_callback'][] = array('Catalog', 'generateAlias');
 	}
 
-	private function configOptions(&$field, $objRow, $blnTags)
+	public function configOptions(&$field, $objRow, $blnTags)
 	{
 		$foreignKey = $objRow->itemTable . '.' . $objRow->itemTableValueCol;
 		$limitItems = $objRow->limitItems ? true : false;
@@ -1371,6 +1373,7 @@ class Catalog extends Backend
 	
 		$field['options'] = $this->loadAllOptions($foreignKey, $ids, 0, $sortCol, $blnItems, $objRow->itemFilter, $idsFilter);
 		$field['eval']['tableColumn'] = $foreignKey;
+		$field['eval']['sortColumn'] = $sortCol;
 		$field['eval']['root'] = $ids;
 
 /*
