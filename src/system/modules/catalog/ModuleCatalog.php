@@ -2175,9 +2175,8 @@ abstract class ModuleCatalog extends Module
 				$arrCatalog = $this->$callback[0]->$callback[1]($arrCatalog, $objTemplate, $this);
 			}
 		}
-		$objTemplate->entries	= $arrCatalog;
-		$objTemplate->back      = $this->Template->back;
-		$objTemplate->referer   = $this->Template->referer;
+		$objTemplate->entries         = $arrCatalog;
+		$objTemplate->moduleTemplate  = $this->Template;
 
 		return $objTemplate->parse();
 	}
