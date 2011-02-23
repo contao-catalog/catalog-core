@@ -410,7 +410,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 
 				// Convert date formats into timestamps
-				if (strlen($varValue) && in_array($arrData['eval']['rgxp'], array('date', 'time', 'datim')))
+				if (in_array($arrData['eval']['rgxp'], array('date', 'time', 'datim')) && strlen($varValue))
 				{
 					$objDate = new Date($varValue, $GLOBALS['TL_CONFIG'][$arrData['eval']['rgxp'] . 'Format']);
 					$varValue = $objDate->tstamp;
