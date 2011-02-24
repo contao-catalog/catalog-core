@@ -718,7 +718,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				{
 					$this->import($callback[0]);
 					// TODO: Do we need more parameters here?
-					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl);
+					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl, $arrData);
 				}
 			}
 		}
@@ -740,7 +740,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				{
 					$this->import($callback[0]);
 					// TODO: Do we need more parameters here?
-					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl);
+					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl, $arrData);
 				}
 			}
 		}
