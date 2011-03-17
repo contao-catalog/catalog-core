@@ -94,15 +94,6 @@ class ModuleCatalogList extends ModuleCatalog
 		if (!$this->catalog_condition_enable || ($this->catalog_condition_enable && $blnCondition) || is_array($filterurl['procedure']['search']))
 		{
 			// Query Catalog
-			$limit = null;
-			$offset = 0;
-			// issue #81
-			if($this->catalog_list_use_limit)
-			{
-				$limit = is_numeric($this->catalog_limit)? $this->catalog_limit : 0;
-				if($this->catalog_list_offset)
-					$offset = $this->catalog_list_offset;
-			}
 	
 			// add search as single query using OR, after foreach
 			$this->catalog_search = deserialize($this->catalog_search, true); 
@@ -166,19 +157,28 @@ class ModuleCatalogList extends ModuleCatalog
 
 			$this->perPage = strlen($this->Input->post('per_page')) ? $this->Input->post('per_page') : $this->perPage;
 
+			$limit = NULL;
+			$offset = 0;
+			// issue #81
+			if($this->catalog_list_use_limit && ($this->catalog_limit || $this->catalog_list_offset))
+			{
+				$limit = (is_numeric($this->catalog_limit) && $limit)? $this->catalog_limit : NULL;
+				if($this->catalog_list_offset)
+					$offset = $this->catalog_list_offset;
+			}
 			// Split pages
 			if ($this->perPage > 0)
 			{
 				// Get total number of items
-				$objTotalStmt = $this->Database->prepare("SELECT id AS count FROM ".$this->strTable." WHERE pid=?".$strWhere);
-	
-				if (!is_null($limit))
-				{
-					$objTotalStmt->limit($limit);
-				}
+				$objTotalStmt = $this->Database->prepare("SELECT COUNT(id) AS count FROM ".$this->strTable." WHERE pid=?".$strWhere);
 	
 				$objTotal = $objTotalStmt->execute($params);
-				$total = $objTotal->numRows;
+				$total = $objTotal->count;
+				if (!is_null($limit))
+				{
+					$total -= $limit;
+				}
+				$total -= $offset;
 
 				// Get the current page
 				$page = $this->Input->get('page') ? $this->Input->get('page') : 1;
@@ -189,8 +189,8 @@ class ModuleCatalogList extends ModuleCatalog
 				}
 
 				// Set limit and offset
-				$limit = ((is_null($limit) || $this->perPage < $limit) ? $this->perPage : $limit);
-				$offset = $offset+(max($page, 1) - 1) * $this->perPage;
+				$offset += (max($page, 1) - 1) * $this->perPage;
+				$limit = is_null($limit)?$this->perPage:min($limit - $offset, $this->perPage);
 
 				// Add pagination menu
 				$objPagination = new Pagination($total, $this->perPage);
