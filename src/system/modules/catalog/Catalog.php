@@ -378,6 +378,7 @@ class Catalog extends Backend
 				'onsubmit_callback'			=> array
 				(
 					array('Catalog', 'generateSitemaps'),
+					array('tl_catalog_items', 'generateFeed'),
 				),
 			),
 			

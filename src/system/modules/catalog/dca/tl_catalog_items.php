@@ -44,10 +44,6 @@ $GLOBALS['TL_DCA']['tl_catalog_items'] = array
 			(
 				array('Catalog', 'initializeCatalogItems'),
 			),
-		'onsubmit_callback'           => array
-			(
-				array('tl_catalog_types', 'generateFeed'),
-			),
 	),
 	
 
@@ -67,6 +63,14 @@ $GLOBALS['TL_DCA']['tl_catalog_items'] = array
 
 class tl_catalog_items extends Backend
 {
+	/**
+	 * Update the RSS-feed
+	 */
+	public function generateFeed()
+	{
+		$this->import('CatalogExt');
+		$this->CatalogExt->generateFeed(CURRENT_ID);
+	}
 }
 
 ?>

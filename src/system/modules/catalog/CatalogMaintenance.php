@@ -156,6 +156,36 @@ class CatalogMaintenance extends Backend
 		$this->Template->tagsHeadline = $GLOBALS['TL_LANG']['tl_maintenance']['catalogTagsUpdate'];
 		$this->Template->tagsSubmit = $GLOBALS['TL_LANG']['tl_maintenance']['catalogTagsSubmit'];
 	}
+
+	protected function purgeInvalidFields($tableName)
+	{
+		// only in backend!
+		if(TL_MODE != 'BE')
+			return;
+		$columns = $this->Database->listFields($tableName, true);
+		
+		// skip the indexes
+		foreach($columns as $key => $column)
+		{
+			if($column['type'] == 'index')
+			{
+				unset($columns[$key]);
+			}
+		}
+		
+		$invalid=array();
+		$valid=array_merge(array_keys($GLOBALS['TL_DCA'][$tableName]['fields']), $this->systemColumns);
+		foreach($columns as $col)
+		{
+			if(!in_array($col['name'], $valid))
+				$invalid[] = $col['name'];
+		}
+		if(count($invalid)>0)
+		{
+			// TODO: loop over the invalid array and drop the columns or rather redirect to some maintenance screen? see issue #59
+			throw new Exception('INVALID COLUMNS DETECTED: '.implode(', ', $invalid));
+		}
+	}
 }
 
 ?>
