@@ -739,6 +739,7 @@ class Catalog extends Backend
 	public function saveTags($varValue, DataContainer $dc)
 	{
 		$options = deserialize($varValue, true);
+		$objField = $this->Database->prepare('SELECT * FROM tl_catalog_fields WHERE pid=? AND colName=?')->execute($dc->activeRecord->pid, $dc->field);
 		$this->setTags($dc->activeRecord->pid, $objField->id, $dc->activeRecord->id, $options);
 		if (!is_array($options))
 		{
