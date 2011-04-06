@@ -131,8 +131,6 @@ class Catalog extends Backend
 			$GLOBALS['TL_DCA'][$objType->tableName]['Cataloggenerated'] = true;
 		}
 
-		$this->purgeInvalidFields($objType->tableName);
-
 		return $objType->tableName;
 	}
 
@@ -161,18 +159,14 @@ class Catalog extends Backend
 		{
 			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['invalidTableName'], $varValue));
 		}
-		
 		$objType = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
-				
 		if ($objType->numRows == 0)
 		{
 			return $varValue;
 		}
-						
 		$oldTableName = $objType->tableName;
-				
 		if (strlen($oldTableName))
 		{
 			$statement = sprintf($this->renameTableStatement, $oldTableName, $varValue);
@@ -181,22 +175,15 @@ class Catalog extends Backend
 		{
 			$statement = sprintf($this->createTableStatement, $varValue);
 		}
-		
 		$needToCheckIfExists = (!strlen($oldTableName) || $oldTableName != $varValue);
-		
 		if ($needToCheckIfExists && $this->Database->tableExists($varValue))
 		{
 			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['tableExists'], $varValue)); 
 		}
-		
 		$this->Database->execute($statement);
-		
 		$this->checkCatalogFields($dc->id, $varValue);
-		
 		return $varValue;
 	}
-
-
 
 	public function dropTable($tableName)
 	{
@@ -252,36 +239,6 @@ class Catalog extends Backend
 		
 	}
 
-	public function purgeInvalidFields($tableName)
-	{
-		// only in backend!
-		if(TL_MODE != 'BE')
-			return;
-		$columns = $this->Database->listFields($tableName, true);
-		
-		// skip the indexes
-		foreach($columns as $key => $column)
-		{
-			if($column['type'] == 'index')
-			{
-				unset($columns[$key]);
-			}
-		}
-		
-		$invalid=array();
-		$valid=array_merge(array_keys($GLOBALS['TL_DCA'][$tableName]['fields']), $this->systemColumns);
-		foreach($columns as $col)
-		{
-			if(!in_array($col['name'], $valid))
-				$invalid[] = $col['name'];
-		}
-		if(count($invalid)>0)
-		{
-			// TODO: loop over the invalid array and drop the columns or rather redirect to some maintenance screen? see issue #59
-			throw new Exception('INVALID COLUMNS DETECTED: '.implode(', ', $invalid));
-		}
-	}
-	
 	public function renameColumn($varValue, DataContainer $dc)
 	{
 		if (!preg_match('/^[a-z_][a-z\d_]*$/i', $varValue))
