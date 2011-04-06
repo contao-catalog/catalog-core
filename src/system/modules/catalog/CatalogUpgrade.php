@@ -70,7 +70,7 @@ class CatalogUpgrade extends Backend
 			exit;
 		}
 
-		if (file_exists(TL_ROOT . '/' . $checkFolder) && is_dir(TL_ROOT . '/' . $checkFolder))
+		if (file_exists(TL_ROOT . '/' . $this->checkFolder) && is_dir(TL_ROOT . '/' . $this->checkFolder))
 		{
 
 			return '
@@ -102,8 +102,6 @@ class CatalogUpgrade extends Backend
 		}
 
 	}	
-
-
 
 	private function scanRecursive($folder, $arrFiles=null)
 	{

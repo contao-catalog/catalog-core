@@ -134,30 +134,25 @@ CREATE TABLE `tl_catalog_fields` (
   KEY `pid` (`pid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-
 -- --------------------------------------------------------
 
 -- 
--- Table `tl_catalog_comments`
+-- Table `tl_catalog_tag_rel` - tag relations for entries and tag fields.
 -- 
-
-CREATE TABLE `tl_catalog_comments` (
+CREATE TABLE `tl_catalog_tag_rel` (
   `id` int(10) unsigned NOT NULL auto_increment,
-  `pid` int(10) unsigned NOT NULL default '0',
   `catid` int(10) unsigned NOT NULL default '0',
-  `tstamp` int(10) unsigned NOT NULL default '0',
-  `name` varchar(64) NOT NULL default '',
-  `email` varchar(128) NOT NULL default '',
-  `website` varchar(128) NOT NULL default '',
-  `comment` text NULL,
-  `ip` varchar(15) NOT NULL default '',
-  `date` int(10) unsigned NOT NULL default '0',
-  `published` char(1) NOT NULL default '',
+  `itemid` int(10) unsigned NOT NULL default '0',
+  `fieldid` int(10) unsigned NOT NULL default '0',
+  `valueid` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`id`),
-  KEY `pid` (`pid`),
-  KEY `catid` (`catid`)
+  KEY `catid` (`catid`),
+  KEY `itemid` (`itemid`),
+  KEY `fieldid` (`fieldid`),
+  KEY `valueid` (`valueid`),
+-- enable when contao issue #112 has been fixed (xtra is working on it).
+--   KEY `tagid` (`catid`, `itemid`, `fieldid`, `valueid`),
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
 
 -- --------------------------------------------------------
 

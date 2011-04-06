@@ -38,6 +38,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 		'import'			=> array('Catalog', 'importCSV'),
 		'export'			=> array('Catalog', 'exportItems'),
 		'upgrade'			=> array('CatalogUpgrade', 'upgrade'),
+		'maintenance'       => array('CatalogMaintenance', 'compile'),
 
 		// Added by c.schiffler to allow custom editors to register themselves.
 		'fieldTypes' => array
@@ -94,7 +95,8 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 						(
 							'inputType' => 'text',
 						),
-					'sqlDefColumn' => "varchar(10) NOT NULL default ''",
+//					'sqlDefColumn' => "varchar(10) NOT NULL default ''",
+					'sqlDefColumn' => 'int(10) unsigned NULL default NULL',
 				),
 			'select' => array
 				(
@@ -112,7 +114,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 					'fieldDef'     => array
 						(
 							'inputType' => 'tableTree',
-							'eval'      => array('fieldType' => 'checkbox', 'multiple' => true)
+							'eval'      => array('fieldType' => 'checkbox', 'multiple' => true),
 						),
 					'sqlDefColumn' => "text NULL",
 				),
@@ -197,9 +199,6 @@ $GLOBALS['FE_MOD']['catalog'] = array
  */
 $GLOBALS['TL_HOOKS']['getSearchablePages'][] = array('CatalogExt', 'getSearchablePages');
 
-if (TL_MODE == 'FE')
-{
-
 /**
  * Register hook to preserve feeds 
  */
@@ -209,8 +208,6 @@ $GLOBALS['TL_HOOKS']['removeOldFeeds'][] = array('CatalogExt', 'removeOldFeedsHO
  * Register hook to add rss feeds to the layout
  */
 $GLOBALS['TL_HOOKS']['parseFrontendTemplate'][] = array('CatalogExt', 'parseFrontendTemplate');
-
-}
 
 // register hook to inject our catalog names into the comments module as source.
 $GLOBALS['TL_HOOKS']['loadDataContainer'][] = array('CatalogExt', 'addCatalogsToComments');

@@ -87,7 +87,7 @@ abstract class ModuleCatalog extends Module
 		}
 
 		// get DCA
-		$objCatalog = $this->Database->prepare("SELECT tableName, aliasField, publishField FROM tl_catalog_types WHERE id=?")
+		$objCatalog = $this->Database->prepare('SELECT * FROM tl_catalog_types WHERE id=?')
 				->limit(1)
 				->execute($this->catalog);
 		
@@ -99,11 +99,19 @@ abstract class ModuleCatalog extends Module
 
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');
-			$GLOBALS['TL_DCA'][$objCatalog->tableName] = 
-				is_array($GLOBALS['TL_DCA'][$objCatalog->tableName])
-					// NOTE: array_merge_recursive raises warnings for recursion when trying to create the DCA twice.
-					? @array_merge_recursive($this->Catalog->getCatalogDca($this->catalog), $GLOBALS['TL_DCA'][$objCatalog->tableName])
-					: $this->Catalog->getCatalogDca($this->catalog);
+			if(!$GLOBALS['TL_DCA'][$objCatalog->tableName]['Cataloggenerated'])
+			{
+				// load default language
+				$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
+													 ? self::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
+													 : $GLOBALS['TL_LANG']['tl_catalog_items'];
+				// load dca
+				$GLOBALS['TL_DCA'][$objCatalog->tableName] = 
+					is_array($GLOBALS['TL_DCA'][$objCatalog->tableName])
+						? Catalog::array_replace_recursive($this->Catalog->getCatalogDca($this->catalog), $GLOBALS['TL_DCA'][$objCatalog->tableName])
+						: $this->Catalog->getCatalogDca($this->catalog);
+				$GLOBALS['TL_DCA'][$objCatalog->tableName]['Cataloggenerated'] = true;
+			}
 		}
 
 		// Send file to the browser
@@ -133,41 +141,41 @@ abstract class ModuleCatalog extends Module
 
 	protected function getModulesForThisPage()
 	{
-		if(!$this->cachePageModules)
-		{
-			global $objPage;
-			$objLayout = $this->Database->prepare("SELECT id,modules FROM tl_layout WHERE id=?")
+		if($this->cachePageModules)
+			return $this->cachePageModules;
+		global $objPage;
+		if($objPage->layout)
+			$objLayout = $this->Database->prepare('SELECT id,modules FROM tl_layout WHERE id=?')
 								->limit(1)
 								->execute($objPage->layout);
-			// Fallback layout
-			if ($objLayout->numRows < 1)
-			{
-				$objLayout = $this->Database->prepare("SELECT id, modules FROM tl_layout WHERE fallback=?")
-											->limit(1)
-											->execute(1);
-			}
-			// check if there is a layout and fetch modules if so.
-			if ($objLayout->numRows)
-			{
-				$arrModules = deserialize($objLayout->modules);
-			} else {
-				$arrModules = array();
-			}
-			// fetch all content element modules from this page.
-			$objContent = $this->Database->prepare("SELECT module FROM tl_content WHERE pid IN (SELECT id FROM tl_article WHERE pid=?)")
-										->execute($objPage->id);
-			while($objContent->next())
-			{
-				$arrModules[] = array('mod' => $objContent->module);
-			
-			}
-			$ids=array();
-			foreach ($arrModules as $arrModule)
-			{
-				$ids[] = $arrModule['mod'];
-			}
-			$this->cachePageModules=$ids;
+		// Fallback layout
+		if (!$objPage->layout || $objLayout->numRows == 0)
+		{
+			$objLayout = $this->Database->prepare('SELECT id, modules FROM tl_layout WHERE fallback=?')
+										->limit(1)
+										->execute(1);
 		}
+		// check if there is a layout and fetch modules if so.
+		if ($objLayout->numRows)
+		{
+			$arrModules = deserialize($objLayout->modules);
+		} else {
+			$arrModules = array();
+		}
+		// fetch all content element modules from this page.
+		$objContent = $this->Database->prepare('SELECT module FROM tl_content WHERE pid IN (SELECT id FROM tl_article WHERE pid=?) AND type="module"')
+									->execute($objPage->id);
+		while($objContent->next())
+		{
+			$arrModules[] = array('mod' => $objContent->module);
+		
+		}
+		$ids=array();
+		foreach ($arrModules as $arrModule)
+		{
+			$ids[] = $arrModule['mod'];
+		}
+		$this->cachePageModules=$ids;
 		return $this->cachePageModules;
 	}
 
@@ -176,11 +184,13 @@ abstract class ModuleCatalog extends Module
 		if(!$arrTypes)
 			$arrTypes=$GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
 		$fields = array();
-		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? AND type IN ('" . implode("','", $arrTypes) . "') ORDER BY sorting")
+		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? ORDER BY sorting")
 							->execute($this->catalog);
 
 		while ($objFields->next())
 		{
+			if(!in_array($objFields->type, $arrTypes))
+				continue;
 			$fields[$objFields->colName] = array 
 			(
 				'label' => $objFields->name,
@@ -218,14 +228,15 @@ abstract class ModuleCatalog extends Module
 		$arrTree = $this->getTree();
 		$blnTree = (count($arrTree)>0);
 
-    $current = $this->convertAliasInput();
-   
+		$current = $this->convertAliasInput();
+		$searchFields = deserialize($searchFields);
+
 		// Setup Fields
 		$fields = $this->getCatalogFields();
 
 		if (!strlen($this->catalog_tags_mode))
 		{
-			$this->catalog_tags_mode = "AND";
+			$this->catalog_tags_mode = 'AND';
 		}
 
 		// Process POST redirect() settings
@@ -255,7 +266,6 @@ abstract class ModuleCatalog extends Module
 				{
 					$doPost = true;
 					$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
-
 					// check if array posted (range and dates)
 					if (is_array($this->Input->post($field)))
 					{
@@ -268,10 +278,17 @@ abstract class ModuleCatalog extends Module
 						{
 							$current[$field] = $min.'__'.$max;
 						}
-						if (in_array($fieldConf['eval']['catalog']['type'],array('number', 'decimal')))
+						if (in_array($fieldConf['eval']['catalog']['type'],array('number', 'decimal', 'date')))
 						{
 							$min='';
 							$max='';
+							if($fieldConf['eval']['catalog']['type'] == 'date')
+							{
+								if($range[0] && !is_numeric($range[0]))
+									$range[0] = strtotime($range[0]);
+								if($range[1] && !is_numeric($range[1]))
+									$range[1] = strtotime($range[1]);
+							}
 							if (strlen($range[0]))							
 								$min=$range[0];
 							if (strlen($range[1]))
@@ -310,40 +327,10 @@ abstract class ModuleCatalog extends Module
 								default:;
 							}
 						}
-						
 						$current[$field] = $v;
-
-
-/*
-						// convert alias values to IDs
-						$arrAlias = array_flip($this->getAliasOptionList($fieldConf));
-						
-						switch ($fieldConf['eval']['catalog']['type'])
-						{
-							case 'select':
-
-								//$tmpValue = $this->convertAliasToId($field, array($this->Input->post($field)));
-								//$current[$field] = $tmpValue[0];
-								break;
-
-							case 'tags':
-								$tags = split(',', $this->Input->post($field));
-								$tags = $this->convertAliasToId($field, $tags);
-								$current[$field] = join(',', $tags);
-								break;
-
-							default:
-								$current[$field] = $this->Input->post($field);
-						}
-
-						$current[$field] = $this->Input->post($field);
-*/
-
-
 					}			
 				}
 			}
-
 			// Redirect POST variables to GET, for [search] and [ranges]
 			if ($doPost)
 			{
@@ -351,8 +338,6 @@ abstract class ModuleCatalog extends Module
 			}
 		}
 
-	
-		
 		// return if no filter parameters in URL
 		if (!is_array($current) && !count($current))
 		{
@@ -372,7 +357,6 @@ abstract class ModuleCatalog extends Module
 		{
 			$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 
-		
 			// GET search value
 			if ($this->Input->get($this->strSearch) && strlen($fieldConf['eval']['catalog']['type']))
 			{
@@ -389,6 +373,7 @@ abstract class ModuleCatalog extends Module
 							// this allows us to search for multiple words which do not have to be in the same order as searched by.
 							// Drawback is, we now can not search for exact phrases anymore (which is less required than searching for
 							// multiple words IMO).
+							// TODO: make this configable so users can decide which search algorithm to use.
 							$words=explode(' ', $this->Input->get($this->strSearch));
 							$proc=array();
 							$vals=array();
@@ -445,32 +430,27 @@ abstract class ModuleCatalog extends Module
 							}
 							break;
 
-
 					case 'select' :
 							list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-							$procedure['search'][$field] = "(".$field." IN (SELECT id FROM ".$itemTable." WHERE ".$valueCol." LIKE ?".($fieldConf['options']? " AND id IN (".implode(',',array_keys($fieldConf['options'])).")":"")."))";
+							$procedure['search'][$field] = '('.$field.' IN (SELECT id FROM '.$itemTable.' WHERE '.$valueCol.' LIKE ?'.($fieldConf['options']? ' AND id IN ('.implode(',',array_keys($fieldConf['options'])).')':'').'))';
 							$values['search'][$field] = '%'.$this->Input->get($this->strSearch).'%';
 							break;
 								
 					case 'tags' :
 
 							list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-							$tagQuery = $this->Database->prepare("SELECT id FROM ".$itemTable." WHERE ".$valueCol." LIKE ?".($fieldConf['options']? " AND id IN (".implode(',',array_keys($fieldConf['options'])).")":""))
+							// perform search by using a subselect over the tables.
+							$tagQuery = $this->Database->prepare(sprintf('SELECT DISTINCT(itemid) as id FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid IN (SELECT id FROM %s WHERE %s LIKE ? %s)',
+																	$fieldConf['eval']['catalog']['fieldId'],
+																	$itemTable,
+																	$valueCol,
+																	($fieldConf['options']? ' AND id IN ('.implode(',',array_keys($fieldConf['options'])).')':'')
+																	))
 									->execute('%'.$this->Input->get($this->strSearch).'%');
-
-							// search only if search string in tag namelist
 							if ($tagQuery->numRows)
 							{
-								$tmpTags = array();
-								while($tagQuery->next())
-								{
-									$tmpTags[] = "FIND_IN_SET(?,".$field.")";
-									$values['search'][$field][] = $tagQuery->id;
-								}
-								if(count($tmpTags))
-									$procedure['search'][$field] = '('.implode(' + ',$tmpTags).' > 0)';
+								$procedure['search'][$field] = 'id IN('.implode(',', $tagQuery->fetchEach('id')).')';
 							}
-
 							break;
 
 					default:;
@@ -501,7 +481,7 @@ abstract class ModuleCatalog extends Module
 			// GET range values
 			if (substr_count($this->Input->get($field),'__'))
 			{
-				$rangeValues = trimsplit('__', $this->Input->get($field));
+				$rangeValues = trimsplit('__', $this->Input->get($field), 2);
 				$rangeOptions[$field]['label'] = $fieldConf['label'][0];
 				$rangeOptions[$field]['min'] = 	$rangeValues[0];
 				$rangeOptions[$field]['max'] = $rangeValues[1];
@@ -512,39 +492,27 @@ abstract class ModuleCatalog extends Module
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'number':
-						//$values['where'][] = intval($rangeValues[0]);
-						//$values['where'][] = intval($rangeValues[1]);
-						if ($minValue!='')
-							$values['where'][] = intval($rangeValues[0]);
-						else
-							$strSqlWhereClause = '('.$field.' < ?)';
-						if ($maxValue!='')
-							$values['where'][] = intval($rangeValues[1]);
-						else
-							$strSqlWhereClause = '('.$field.' > ?)';
+						$rangeValues[0] = intval($rangeValues[0]);
+						$rangeValues[1] = intval($rangeValues[1]);
 						break;
 					case 'decimal':
-						//$values['where'][] = floatval($rangeValues[0]);
-						//$values['where'][] = floatval($rangeValues[1]);
-						if ($minValue!='')
-							$values['where'][] = floatval($rangeValues[0]);
-						else
-							$strSqlWhereClause = '('.$field.' < ?)';
-						if ($maxValue!='')
-							$values['where'][] = floatval($rangeValues[1]);
-						else
-							$strSqlWhereClause = '('.$field.' > ?)';
+						$rangeValues[0] = floatval($rangeValues[0]);
+						$rangeValues[1] = floatval($rangeValues[1]);
 						break;
 					case 'date':
-						$values['where'][] = strtotime($rangeValues[0]);
-						$values['where'][] = strtotime($rangeValues[1]);
+						$rangeValues[0] = strtotime($rangeValues[0]);
+						$rangeValues[1] = strtotime($rangeValues[1]);
 						break;
 					default:
-						$values['where'][] = $rangeValues[0];
-						$values['where'][] = $rangeValues[1];
 				}
-				$rangeOptions[$field]['min'] = 	$minValue;
-				$rangeOptions[$field]['max'] = $maxValue;
+				if ($minValue!='')
+					$values['where'][] = $rangeValues[0];
+				else
+					$strSqlWhereClause = '('.$field.' < ?)';
+				if ($maxValue!='')
+					$values['where'][] = $rangeValues[1];
+				else
+					$strSqlWhereClause = '('.$field.' > ?)';
 				$procedure['where'][] = $strSqlWhereClause;
 				$current[$field] = $this->Input->get($field);
 			}
@@ -553,20 +521,35 @@ abstract class ModuleCatalog extends Module
 			{
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
-					case 'tags':					
-						$tags = explode(',', $current[$field]);
-
-						$tmpTags = array();
-						foreach ($tags as $tag)
+					case 'tags':
+						list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
+						// TODO: add support for string values here and get rid of the convertAliasInput call on the beginning.
+						foreach(explode(',', $current[$field]) as $tag)
+							$tags[] = (int)$tag;
+						if($this->catalog_tags_mode == 'AND')
 						{
-							$tmpTags[] = 'FIND_IN_SET(?,'.$field.')';
-							$values['tags'][] = $tag;
+							$sql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid=%s', 
+											 $fieldConf['eval']['catalog']['fieldId'], 
+											 $tag);
+							foreach($tags as $tag)
+								$sql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid=%s AND itemid IN(%s)', 
+												 $fieldConf['eval']['catalog']['fieldId'], 
+												 $tag,
+												 $sql);
+							$sql = sprintf('id IN (SELECT DISTINCT(itemid) FROM tl_catalog_tag_rel WHERE fieldid=%s AND itemid IN (%s) AND valueid IN (%s))',
+											$fieldConf['eval']['catalog']['fieldId'], 
+											$sql,
+											implode(',', array_intersect($tags, ($fieldConf['options']?array_keys($fieldConf['options']):array())))
+											);
+							$tagQuery = $sql;
+						} else {
+							// perform search by using a subselect over the tables.
+							$tagQuery = 'id IN(SELECT DISTINCT(itemid) as id FROM tl_catalog_tag_rel WHERE fieldid='.$fieldConf['eval']['catalog']['fieldId'].' AND valueid IN ('.implode(',', array_intersect($tags, ($fieldConf['options']?array_keys($fieldConf['options']):array()))).'))';
 						}
-						$procedure['tags'][] = '('.implode(($this->catalog_tags_mode == 'AND' ? ' * ' : ' + '),$tmpTags).' > 0)';
-
-						if ($blnTree && in_array($field, $arrTree)) 
+						$procedure['tags'][] = $tagQuery;
+						if ($blnTree && in_array($field, $arrTree))
 						{
-							$procedure['tree'][] = '('.implode(($this->catalog_tags_mode == 'AND' ? ' * ' : ' + '),$tmpTags).' > 0)';
+							$procedure['tree'][] = $tagQuery;
 						}
 						break;
 					case 'checkbox':
@@ -584,7 +567,6 @@ abstract class ModuleCatalog extends Module
 					case 'number':
 					case 'decimal':
 					case 'select':
-					case 'checkbox':
 						$value = $current[$field];
 						$procedure['where'][] = $field."=?";
 						$values['where'][] = $value;
@@ -637,11 +619,13 @@ abstract class ModuleCatalog extends Module
 			} //sort
 
 		} // foreach $filter
+		
+
 		$settings = array 
 			(
 				'current' 	=> $current,
 				'procedure' => $procedure,
-				'values' 	=> $values,
+				'values' 		=> $values,
 			);
 		// HOOK: allow other extensions to manipulate the filter settings before passing it to the template
 		if(is_array($GLOBALS['TL_HOOKS']['filterCatalog']))
@@ -697,15 +681,18 @@ abstract class ModuleCatalog extends Module
 	 * @return array
 	 */
 
-	private function getAliasOptionList($fieldConf)
+	private function getAliasOptionList(&$fieldConf)
 	{
+		if($fieldConf['optionslist'])
+			return $fieldConf['optionslist'];
+			
 		// get alias column
 		list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
 		$aliasField = $this->getAliasField($itemTable);
-		
+
 		// get existing alias values of options in DB
-		$objList = $this->Database->prepare("SELECT id,".$aliasField." FROM ".$itemTable . 
-						($fieldConf['options'] ? " WHERE id IN (".implode(',',array_keys($fieldConf['options'])).")":""))
+		$objList = $this->Database->prepare('SELECT id,'.$aliasField.' FROM '.$itemTable . 
+						($fieldConf['options'] ? ' WHERE id IN ('.implode(',',array_keys($fieldConf['options'])).')':''))
 				->execute();
 		
 		$return = array();
@@ -714,7 +701,7 @@ abstract class ModuleCatalog extends Module
 			// check if this is still ok to use id if alias is empty
 			$return[$objList->id] = strlen($objList->$aliasField) ? $objList->$aliasField : $objList->id;
 		}
-		
+		$fieldConf['optionslist'] = $return;
 		return $return;
 	}
 
@@ -743,7 +730,6 @@ abstract class ModuleCatalog extends Module
 				if (strlen($v) && $this->getAliasFieldConf($fieldConf) != 'id')
 				{
 					$arrAlias = array_flip($this->getAliasOptionList($fieldConf));
-
 					switch ($fieldConf['eval']['catalog']['type'])
 					{
 						case 'tags':
@@ -871,9 +857,27 @@ abstract class ModuleCatalog extends Module
 				}
 
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
+
+				$fieldType = $fieldConf['eval']['catalog']['type'];
+				// HOOK: let custom fields mimic another fieldtype to generate a filter
+				if(array_key_exists($fieldType, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
+				{
+					$fieldTypeArr=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType];
+					if(array_key_exists('generateFilterWidget', $fieldTypeArr) && is_array($fieldTypeArr['generateFilterWidget']))
+					{
+						foreach ($fieldTypeArr['generateFilterWidget'] as $callback)
+						{
+							$tmp=$this->$callback[0]->$callback[1]($fieldType, $field, $config, $fieldConf, $filterurl, $query, $tree);
+							if($tmp)
+							{
+								$fieldType = $tmp;
+							}
+						}
+					}
+				}
+
 				$options = array();
-				
-				switch ($fieldConf['eval']['catalog']['type'])
+				switch ($fieldType)
 				{
 					case 'checkbox':
 						// Build Widget Options
@@ -924,13 +928,13 @@ abstract class ModuleCatalog extends Module
 						if(($this instanceof ModuleCatalogFilter) && $this->catalog_filter_cond_from_lister)
 						{
 							$ids=$this->getModulesForThisPage();
-							$objModules = $this->Database->prepare("SELECT * FROM tl_module WHERE id IN (" . implode(', ', $ids) . ") AND type='cataloglist'")
+							$objModules = $this->Database->prepare('SELECT * FROM tl_module WHERE id IN (' . implode(', ', $ids) . ') AND type=\'cataloglist\' AND catalog='.$this->catalog)
 									->execute();
 							while($objModules->next())
 							{
 								$objModules->catalog_search=deserialize($objModules->catalog_search);
-								$filterurl = $this->parseFilterUrl($objModules->catalog_search);
-								if (is_array($objModules->catalog_search) && strlen($objModules->catalog_search[0]) && is_array($filterurl['procedure']['search']))
+								$moduleFilterUrl = $this->parseFilterUrl($objModules->catalog_search);
+								if (is_array($objModules->catalog_search) && strlen($objModules->catalog_search[0]) && is_array($moduleFilterUrl['procedure']['search']))
 								{
 									// reset arrays
 									$searchProcedure = array();
@@ -938,69 +942,69 @@ abstract class ModuleCatalog extends Module
 									foreach($objModules->catalog_search as $searchfield)
 									{
 										if (($searchfield != $field)
-											&& array_key_exists($searchfield, $filterurl['current'])
-											&& array_key_exists($searchfield, $filterurl['procedure']['search']))
+											&& array_key_exists($searchfield, $moduleFilterUrl['current'])
+											&& array_key_exists($searchfield, $moduleFilterUrl['procedure']['search']))
 										{
-											$searchProcedure[] = $filterurl['procedure']['search'][$searchfield];
-											if (is_array($filterurl['values']['search'][$searchfield]))
+											$searchProcedure[] = $moduleFilterUrl['procedure']['search'][$searchfield];
+											if (is_array($moduleFilterUrl['values']['search'][$searchfield]))
 											{
-												foreach($filterurl['values']['search'][$searchfield] as $item)
+												foreach($moduleFilterUrl['values']['search'][$searchfield] as $item)
 												{
 													$searchValues[] = $item;
 												}
 											}
 											else
 											{
-												$searchValues[] = $filterurl['values']['search'][$searchfield];
+												$searchValues[] = $moduleFilterUrl['values']['search'][$searchfield];
 											}
 										}
 									}
 									if(count($searchProcedure))
 									{
-										$filterurl['procedure']['where'][] = ' ('.implode(' OR ', $searchProcedure).')';
-										$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
+										$moduleFilterUrl['procedure']['where'][] = ' ('.implode(' OR ', $searchProcedure).')';
+										$moduleFilterUrl['values']['where'] = is_array($moduleFilterUrl['values']['where']) ? (array_merge($moduleFilterUrl['values']['where'],$searchValues)) : $searchValues;
 									}
 								}
-								if(is_array($filterurl['procedure']['where']))
+								if(is_array($moduleFilterUrl['procedure']['where']))
 								{
-									foreach($filterurl['procedure']['where'] as $key=>$value)
+									foreach($moduleFilterUrl['procedure']['where'] as $key=>$value)
 									{
 										if(strpos($value, $field) !== false)
 										{
-											unset($filterurl['procedure']['where'][$key]);
-											unset($filterurl['values']['where'][$key]);
+											unset($moduleFilterUrl['procedure']['where'][$key]);
+											unset($moduleFilterUrl['values']['where'][$key]);
 										}
 									}
 								}
-								if(is_array($filterurl['procedure']['tags']))
+								if(is_array($moduleFilterUrl['procedure']['tags']))
 								{
-									foreach($filterurl['procedure']['tags'] as $key=>$value)
+									foreach($moduleFilterUrl['procedure']['tags'] as $key=>$value)
 									{
 										if(strpos($value, $field) !== false)
 										{
-											unset($filterurl['procedure']['tags'][$key]);
-											unset($filterurl['values']['tags'][$key]);
+											unset($moduleFilterUrl['procedure']['tags'][$key]);
+											unset($moduleFilterUrl['values']['tags'][$key]);
 										}
 									}
 								}
-								if (is_array($filterurl['values']['where'])) {
-									$query['params'] = array_merge($query['params'], $filterurl['values']['where']);
+								if (is_array($moduleFilterUrl['values']['where'])) {
+									$query['params'] = array_merge($query['params'], $moduleFilterUrl['values']['where']);
 								}
 						
-								if (is_array($filterurl['values']['tags'])) {
-									$query['params'] = array_merge($query['params'], $filterurl['values']['tags']);
+								if (is_array($moduleFilterUrl['values']['tags'])) {
+									$query['params'] = array_merge($query['params'], $moduleFilterUrl['values']['tags']);
 								}
-								
+
 								if($objModules->catalog_where)
 								{
 									$strCondition = $this->replaceInsertTags($objModules->catalog_where);
 									if(strlen($strCondition))
 										$query['query'] .= (strlen($query['query'])?' AND ':'').$strCondition;
 								}
-								if(count($filterurl['procedure']['where']))
-									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_query_mode.' ', $filterurl['procedure']['where']);
-								if(count($filterurl['procedure']['tags']))
-									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_tags_mode.' ', $filterurl['procedure']['tags']);
+								if(count($moduleFilterUrl['procedure']['where']))
+									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_query_mode.' ', $moduleFilterUrl['procedure']['where']);
+								if(count($moduleFilterUrl['procedure']['tags']))
+									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_tags_mode.' ', $moduleFilterUrl['procedure']['tags']);
 							}
 						}
 						// get existing options in DB
@@ -1082,6 +1086,14 @@ abstract class ModuleCatalog extends Module
 						break;
 	
 					case 'tags' :
+						$query['query'] = '';
+						$query['params'] = is_array($filterurl['values']['where'])? $filterurl['values']['where'] : array();
+						if (is_array($filterurl['values']['tags']))
+							$query['params'] = array_merge($query['params'], $filterurl['values']['tags']);
+						if(count($filterurl['procedure']['where']))
+							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['where']);
+						if(count($filterurl['procedure']['tags']))
+							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['tags']);
 
 						// clear option
 						$selected = !strlen($current[$field]);
@@ -1100,15 +1112,26 @@ abstract class ModuleCatalog extends Module
 						}
 						array_push($options, $addOption);
 
-						foreach ($fieldConf['options'] as $id=>$option)
+						$tmpTags = array();
+						// get ids of matches according to all other filters.
+						if($query['query'])
 						{
-								$tmpTags[] = "SUM(FIND_IN_SET(".$id.",".$field.")) AS ".$field.$id;
+							$objFilter = $this->Database->prepare('SELECT id FROM '.$this->strTable.' WHERE '.$query['query'])
+														->execute($query['params']);
+							$itemIds = implode(',',$objFilter->fetchEach('id'));
 						}
-						if(count($tmpTags)==0)
-							$tmpTags = array($field);
-						$objFilter = $this->Database->prepare("SELECT ".implode(', ',$tmpTags)." FROM ".$this->strTable. ($query['query'] ? " WHERE ". $query['query'] : ''))
-								->execute($query['params']);
-						if ($objFilter->numRows)
+						if($itemIds)
+						{
+							foreach ($fieldConf['options'] as $id=>$option)
+							{
+									$tmpTags[] = '(SELECT COUNT(itemid) FROM tl_catalog_tag_rel WHERE valueid='.$id.' AND fieldid='.$fieldConf['eval']['catalog']['fieldId'].($query['query']?' AND itemid IN('.$itemIds:'').')) AS '.$field.$id;
+							}
+							if(count($tmpTags)==0)
+								$tmpTags = array($field);
+							$objFilter = $this->Database->prepare('SELECT '.implode(', ',$tmpTags))
+									->execute($query['params']);
+						}
+						if ($itemIds && $objFilter->numRows)
 						{
 							$row = $objFilter->row();
 
@@ -1277,15 +1300,25 @@ abstract class ModuleCatalog extends Module
 
 						break;
 					
-					default:;
-
+					default:
+						// HOOK: let custom fields generate a filter widget
+						if($fieldType && array_key_exists($fieldType, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
+						{
+							$fieldType=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType];
+							if(array_key_exists('generateFilterForField', $fieldType) && is_array($fieldType['generateFilterForField']))
+							{
+								$callback = $fieldType['generateFilterForField'];
+								$tmp=$this->$callback[0]->$callback[1]($fieldType, $field, $config, $fieldConf, $filterurl, $query, $tree);
+								if($tmp)
+								{
+									$settings['filter'][] = $tmp['settings'];
+									$widgets['filter'][] = $tmp['widget'];
+								}
+							}
+						}
 				}
-				
-
 			}
 		}
-
-
 		$arrRange = deserialize($this->catalog_range,true);
 		if ($this->catalog_range_enable && count($arrRange) && strlen($arrRange[0]))
 		{
@@ -1849,10 +1882,12 @@ abstract class ModuleCatalog extends Module
 	private function getJumpTo($catalogJump, $blnJumpTo=true)
 	{
 		global $objPage;
+		if(!$blnJumpTo)
+			return $objPage->row();
 
-		if ($this->cacheJumpTo['id'] == $catalogJump)
+		if ($this->cacheJumpTo[$catalogJump])
 		{
-			return;
+			return $this->cacheJumpTo[$catalogJump];
 		}
 		else
 		{
@@ -1870,12 +1905,9 @@ abstract class ModuleCatalog extends Module
 			{
 				$pageRow = $objPage->row();
 			}
-
 			// cacheJumpTo
-			$this->cacheJumpTo = array (
-				'id' 		=> $pageRow['id'],
-				'page'	=> $pageRow
-			);
+			$this->cacheJumpTo[$pageRow['id']] = $pageRow;
+			return $pageRow;
 		}
 	}
 
@@ -1883,7 +1915,7 @@ abstract class ModuleCatalog extends Module
 
 	public function generateFilterUrl($arrGet = array(), $blnRoot=false, $blnJumpTo=true)
 	{
-		$this->getJumpTo($this->catalog_jumpTo, $blnJumpTo);
+		$arrPage=$this->getJumpTo($this->catalog_jumpTo, $blnJumpTo);
 		$strParams = '';
 		if (is_array($arrGet) && ($arrGet))
 		{
@@ -1917,7 +1949,7 @@ abstract class ModuleCatalog extends Module
 				}
 			}
 		}
-		return ($blnRoot ? $this->Environment->base : '') . $this->generateFrontEndUrl($this->cacheJumpTo['page'], $strParams);		
+		return ($blnRoot ? $this->Environment->base : '') . $this->generateFrontEndUrl($arrPage, $strParams);		
 	}
 
 	/**
@@ -2137,7 +2169,13 @@ abstract class ModuleCatalog extends Module
 
 						break;
 
-					default:;									
+					default:
+						// per default we deliver all other keys aswell to allow custom field types to transport custom data.
+						foreach($arrValues as $kk => $vv)
+						{
+							if($kk != 'html')
+								$arrCatalog[$i]['data'][$k][$kk] = $vv;
+						}
 				}
 
 			}
@@ -2182,7 +2220,7 @@ abstract class ModuleCatalog extends Module
 	}
 
 
-	protected function generateCatalogUrl(Database_Result $objCatalog, $aliasField='alias', $strTable)
+	protected function generateCatalogUrl(Database_Result $objCatalog, $aliasField='alias', $strTable, $strPrependParams='')
 	{
 
 		if (!strlen($aliasField))
@@ -2193,9 +2231,8 @@ abstract class ModuleCatalog extends Module
 		$useJump = ($this instanceof ModuleCatalogList || $this instanceof ModuleCatalogFeatured || $this instanceof ModuleCatalogRelated || $this instanceof ModuleCatalogReference || $this instanceof ModuleCatalogNavigation); 
 
 		$jumpTo = ($useJump && $this->jumpTo) ? $this->jumpTo : $objCatalog->parentJumpTo;
-		$this->getJumpTo($jumpTo, true);
-
-		return ampersand($this->generateFrontendUrl($this->cacheJumpTo['page'], '/items/' . (($this->Database->fieldExists($aliasField, $strTable) && strlen($objCatalog->$aliasField) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $objCatalog->$aliasField : $objCatalog->id)));
+		$arrPage=$this->getJumpTo($jumpTo, true);
+		return ampersand($this->generateFrontendUrl($arrPage, $strPrependParams . '/items/' . (($this->Database->fieldExists($aliasField, $strTable) && strlen($objCatalog->$aliasField) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $objCatalog->$aliasField : $objCatalog->id)));
 		
 	}
 
@@ -2207,10 +2244,10 @@ abstract class ModuleCatalog extends Module
 			$aliasField = 'alias';
 		}
 
-		$this->getJumpTo($this->catalog_editJumpTo, true);
+		$arrPage=$this->getJumpTo($this->catalog_editJumpTo, true);
 
 		// Link to catalog edit
-		return ampersand($this->generateFrontendUrl($this->cacheJumpTo['page'], '/items/' . (($this->Database->fieldExists($aliasField, $strTable) && strlen($objCatalog->$aliasField) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $objCatalog->$aliasField : $objCatalog->id)));
+		return ampersand($this->generateFrontendUrl($arrPage, '/items/' . (($this->Database->fieldExists($aliasField, $strTable) && strlen($objCatalog->$aliasField) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $objCatalog->$aliasField : $objCatalog->id)));
 		
 	}
 
@@ -2296,7 +2333,6 @@ abstract class ModuleCatalog extends Module
 				if (strlen($raw))
 				{
 					// E-mail addresses
-					//	if (preg_match('/^[a-zA-Z0-9\.\+\/\?#%:,;\{\}\[\]@&=~_-]*$/', $varInput))
 					if (preg_match_all('/^(mailto:)?(\w+([_\.-]*\w+)*@\w+([_\.-]*\w+)*\.[a-z]{2,6})$/i', $value, $matches))
 					{
 						$this->import('String');
@@ -2308,14 +2344,13 @@ abstract class ModuleCatalog extends Module
 					{
 						$arrValues[0] = $raw;
 						$website = $matches[2][0];
-//						$strHtml = '<a href="'.$raw.'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$website.'</a>';
 						$strHtml = '<a href="'.ampersand($raw).'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$website.'</a>';
 					}
 				
 				}
 				break;
 		
-			// Changed by c.schiffler to allow custom fields.
+			// allow custom fields.
 			default:
 				if(array_key_exists($fieldConf['eval']['catalog']['type'], $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
 				{
@@ -2334,7 +2369,6 @@ abstract class ModuleCatalog extends Module
 					}
 				}
 		}		
-		
 
 		// special formatting 
 		$formatStr = $fieldConf['eval']['catalog']['formatStr'];
@@ -2347,20 +2381,12 @@ abstract class ModuleCatalog extends Module
 				case 'string':
 						$value = sprintf($formatStr, $value);
 						break;
-						
 				case 'number':
 						$decimalPlaces = is_numeric($formatStr) ? intval($formatStr) : 0;
 						$value = number_format($value, $decimalPlaces, 
 								$GLOBALS['TL_LANG']['MSC']['decimalSeparator'],
 								$GLOBALS['TL_LANG']['MSC']['thousandsSeparator']);
 						break;
-						
-/*
-				case 'money':
-						$value = money_format($formatStr, $value);
-						break;
-*/
-						
 				case 'date':
 						if (strlen($raw) && $raw !== 0)
 						{
@@ -2372,9 +2398,7 @@ abstract class ModuleCatalog extends Module
 							$value = '';
 						}
 						break;
-				
 				default:;
-
 			}
 			$arrValues[0] = $value;
 			$strHtml = $value;
@@ -2741,27 +2765,10 @@ abstract class ModuleCatalog extends Module
 
 	public function generateCatalogNavigationUrl($field=false, $value=false)
 	{
-	
-		global $objPage;
-
 		$jumpTo= $this->catalog_jumpTo?$this->catalog_jumpTo:$this->jumpTo;
-		if($jumpTo)
-		{
-			$this->getJumpTo($jumpTo, false);
-			// Get internal page (from parent catalog)
-			$objJump = $this->Database->prepare('SELECT * FROM tl_page WHERE id=?')
-									  ->limit(1)
-									  ->execute($jumpTo);
-			// TODO: shall we fallback to the current page then?
-			if ($objJump->numRows < 1)
-			{
-				return '';
-			}
-			$pageRow = $objJump->fetchAssoc();
-		} else
-			$pageRow = $objPage->row();
+		$pageRow=$this->getJumpTo($jumpTo, true);
 
-		if (!count($pageRow))
+		if (!$pageRow)
 		{
 			return ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 		}
@@ -2779,20 +2786,19 @@ abstract class ModuleCatalog extends Module
 	}
 
 
-	protected function renderCatalogItems($id, $level=1, $blnTags=false)
+	protected function renderCatalogNavigationItems($id, $level=1, $blnTags=false, $value='')
 	{
 		$aliasField = $this->getAliasField($this->strTable);
 
-		$strWhere = $blnTags ? "FIND_IN_SET(?,".$this->catalog_navigation.")" : $this->catalog_navigation."=?";
+		$strWhere = $blnTags ? $this->strTable.'.id=tl_catalog_tag_rel.itemid AND fieldid='.$GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->catalog_navigation]['eval']['catalog']['fieldId'].' AND valueid='.$id.'' : $this->catalog_navigation."=?";
+		// TODO: add the parsed filter URL here.
 		if(!BE_USER_LOGGED_IN && $this->publishField)
 		{
 			$strWhere .=' AND '.$this->publishField.'=1';
 		}
-
 		// query database
-		$objNodes = $this->Database->prepare("SELECT * FROM ".$this->strTable." WHERE ".$strWhere)
+		$objNodes = $this->Database->prepare('SELECT DISTINCT '.$this->strTable.'.*, tl_catalog_types.jumpTo AS parentJumpTo FROM '.$this->strTable.($blnTags?', tl_catalog_tag_rel':'').', tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid AND '.$strWhere)
 										->execute($id);
-
 		if ($objNodes->numRows < 1)
 		{
 			return '';
@@ -2820,7 +2826,7 @@ abstract class ModuleCatalog extends Module
 		// Browse items
 		while($objNodes->next())
 		{
-			$href = $this->generateCatalogUrl($objNodes, $aliasField, $this->strTable);
+			$href = $this->generateCatalogUrl($objNodes, $aliasField, $this->strTable, sprintf('/%s/%s', $this->catalog_navigation, $value?$value:$id));
 			
 			// Active field
 			if ($this->Input->get('items') == $objNodes->id || $this->Input->get('items') == $objNodes->$aliasField)
@@ -2832,15 +2838,15 @@ abstract class ModuleCatalog extends Module
 					'isActive' => true,
 					'subitems' => $subitems,
 					'class' => (strlen($strClass) ? $strClass : ''),
-					'pageTitle' => specialchars($objJump->pageTitle),
+//					'pageTitle' => specialchars($objJump->pageTitle),
 					'title' => specialchars($objNodes->$showField),
 					'link' => $objNodes->$showField,
 					'href' => $href,
-					'alias' => $objJump->alias,
-					'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
-					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
-					'accesskey' => $objJump->accesskey,
-					'tabindex' => $objJump->tabindex
+//					'alias' => $objJump->alias,
+//					'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
+//					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
+//					'accesskey' => $objJump->accesskey,
+//					'tabindex' => $objJump->tabindex
 				);
 
 				continue;
@@ -2853,15 +2859,15 @@ abstract class ModuleCatalog extends Module
 				'isActive' => false,
 				'subitems' => $subitems,
 				'class' => (strlen($strClass) ? $strClass : ''),
-				'pageTitle' => specialchars($objJump->pageTitle),
+//				'pageTitle' => specialchars($objJump->pageTitle),
 				'title' => specialchars($objNodes->$showField),
 				'link' => $objNodes->$showField,
 				'href' => $href,
-				'alias' => $objJump->alias,
-				'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
-				'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
-				'accesskey' => $objJump->accesskey,
-				'tabindex' => $objJump->tabindex
+//				'alias' => $objJump->alias,
+//				'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
+//				'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
+//				'accesskey' => $objJump->accesskey,
+//				'tabindex' => $objJump->tabindex
 			);
 
 		}
@@ -2892,19 +2898,29 @@ abstract class ModuleCatalog extends Module
 	 */
 	protected function internalRenderCatalogNavigation($pid, $level, $strActive=NULL)
 	{
-		$this->getJumpTo($this->jumpTo, false);
 		// Get internal page (from parent catalog)
-		$arrJump = $this->cacheJumpTo['page'];
+		$arrJump = $this->getJumpTo($this->jumpTo, false);
 		$ids = ($pid == 0) ? ($this->objNavField->limitItems && $this->objNavField->items ? $this->objNavField->items : array(0)) : array($pid);
 		$strRoot = ((!$this->objNavField->blnChildren && $level == 1) ? 'id' : 'pid');
 		if ($this->objNavField->treeView)
 		{
-			$objNodes = $this->Database->prepare('SELECT '.$strRoot.', id, '.$this->objNavField->valueField.', (SELECT COUNT(*) FROM '. $this->objNavField->sourceTable .' i WHERE i.pid=o.id) AS childCount, ' . $this->objNavField->sourceColumn . ' AS name FROM '. $this->objNavField->sourceTable. ' o WHERE '.$strRoot.' IN ('.implode(',',$ids).') ORDER BY '. $this->objNavField->sort)
-									 ->execute();
+			if($this->objNavField->type == 'tags')
+			{
+				$strItemCount = '(SELECT COUNT(t.id) AS count FROM tl_catalog_tag_rel AS t RIGHT JOIN ' . $this->strTable . ' AS c ON (t.itemid=c.id) WHERE t.valueid=o.id AND t.fieldid=' . $this->objNavField->id . (!BE_USER_LOGGED_IN && $this->publishField ? ' AND c.' . $this->publishField.'=1' : '') . ') AS itemCount';
+			} else {
+				$strItemCount = '(SELECT COUNT(t.id) AS count FROM ' . $this->strTable . ' AS t WHERE ' . 
+				(!BE_USER_LOGGED_IN && $this->publishField ? 't.'.$this->publishField.'=1 AND ' : '') . 
+				$this->catalog_navigation . ' IN (SELECT id FROM  ' . $this->objNavField->sourceTable . ' AS t WHERE pid=o.id) OR '.$this->catalog_navigation.'=o.id) AS itemCount';
+			}
+			$objNodes = $this->Database->execute('SELECT '.$strRoot.', id, ' . $this->objNavField->valueField . 
+											', (SELECT COUNT(*) FROM '. $this->objNavField->sourceTable .' i WHERE i.pid=o.id) AS childCount, ' . 
+											$this->objNavField->sourceColumn . ' AS name, ' .
+											$strItemCount .
+											' FROM '. $this->objNavField->sourceTable. ' o WHERE '.$strRoot.' IN ('.implode(',',$ids).') ORDER BY '. $this->objNavField->sort);
 		}
 		if (!$this->objNavField->treeView || ($objNodes->numRows == 0 && $level == 1))
 		{
-			$objNodes = $this->Database->execute('SELECT id, '.$this->objNavField->valueField.', 0 AS childCount, '. $this->objNavField->sourceColumn .' AS name FROM '. $this->objNavField->sourceTable .' ORDER BY '.$this->objNavField->sort);
+			$objNodes = $this->Database->execute('SELECT id, '.$this->objNavField->valueField.', 0 AS childCount, '. $this->objNavField->sourceColumn .' AS name FROM '. $this->objNavField->sourceTable .', 0 AS itemCount ORDER BY '.$this->objNavField->sort);
 		}
 		// no entries for the given pid
 		if (!$objNodes->numRows)
@@ -2918,39 +2934,43 @@ abstract class ModuleCatalog extends Module
 		$objTemplate->type = get_class($this);
 		$objTemplate->level = 'level_' . $level++;
 		// Browse field nodes
+
 		while($objNodes->next())
 		{
 			$subitems = '';
 			$strClass = '';
- 			if (!$this->showLevel || $this->showLevel >= $level || (!$this->hardLimit && in_array($objNodes->id, $this->arrTrail)))
+			// setup field and value
+			$field = $this->catalog_navigation;
+			$value = $objNodes->$valueField;
+			$isTrail = in_array($objNodes->id, $this->arrTrail);
+			$href = $this->generateCatalogNavigationUrl($field, $value, sprintf('/%s/%s', $field, $value));
+
+ 			if (!$this->showLevel || $this->showLevel >= $level || (!$this->hardLimit && $isTrail))
 			{
 				// if current field value is selected, display children
 				if ($this->catalog_show_items && $strActive == $objNodes->$valueField)
 				{
-					$subitems .= $this->renderCatalogItems($objNodes->id, $level, ($this->objNavField->type == 'tags'));
+					$subitems .= $this->renderCatalogNavigationItems($objNodes->id, $level, ($this->objNavField->type == 'tags'), $value);
 				}
 				if (count($objNodes->childCount) && $this->objNavField->blnChildren) 
 				{
 					$subitems .= $this->internalRenderCatalogNavigation($objNodes->id, $level, $strActive);
 				}
 			}
-			// setup field and value
-			$field = $this->catalog_navigation;
-			$value = $objNodes->$valueField;
-			$href = $this->generateCatalogNavigationUrl($field, $value);
 
 			$strClass .= trim((strlen($subitems) ? 'submenu' : '') 
 							. (strlen($arrJump['cssClass']) ? ' ' . $arrJump['cssClass'] : '')
-							. (in_array($objNodes->id, $this->arrTrail) ? ' trail' : '')
+							. ($isTrail ? ' trail' : '')
 							. ' ' . (count($items)%2 ? 'odd' : 'even')
 							);
 			// Active field
-			if ($strActive == $objNodes->$valueField)
+			if ($strActive == $value)
 			{
 				$items[] = array
 				(
 					'isActive' => !strlen($this->Input->get('items')),
 					'subitems' => $subitems,
+					'subitemcount' => $objNodes->itemCount,
 					'class' => (strlen($strClass) ? $strClass : ''),
 					'pageTitle' => specialchars($arrJump['pageTitle']),
 					'title' => specialchars($objNodes->name),
@@ -2967,26 +2987,17 @@ abstract class ModuleCatalog extends Module
 				continue;
 			}
 
-			// contributed patch by m.reimann@patchwork-webdesign.de attached to issue #72
-			// check's if there are actually items for this navigation entry.
-			if($this->objNavField->treeView)
-			{
-				$idArray = $this->Database->prepare("SELECT CONCAT(pid,',',GROUP_CONCAT(id)) AS tree FROM  " . $this->objNavField->sourceTable . " AS t WHERE pid=? GROUP BY pid")
-											->execute($objNodes->id)->next();
-				$itemCount = $this->Database->prepare('SELECT id FROM ' . $this->strTable . ' AS t WHERE ' . (!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '') . $this->catalog_navigation . '  IN (' . ($idArray->tree ? implode(',', array($objNodes->id, $idArray->tree)) : $objNodes->id). ')')
-											->execute()
-											->numRows;
-			}
-			if(!$this->objNavField->treeView || $itemCount)
+			if(!$this->objNavField->treeView || ($objNodes->itemCount || $objNodes->childCount))
 			{
 				$items[] = array
 				(
 					'isActive' => false,
-					'subitems' => $subitems,
+					'subitems' => $isTrail?$subitems:'',
+					'subitemcount' => $objNodes->itemCount,
 					'class' => (strlen($strClass) ? $strClass : ''),
 					'pageTitle' => specialchars($arrJump['pageTitle']),
 					'title' => specialchars($objNodes->name),
-					'link' => $objNodes->name,
+					'link' => specialchars($objNodes->name),
 					'href' => $href,
 					'alias' => $arrJump['alias'],
 					'target' => (($arrJump['type'] == 'redirect' && $arrJump['target']) ? ' window.open(this.href); return false;' : ''),
@@ -3008,7 +3019,44 @@ abstract class ModuleCatalog extends Module
 		}
 		$objTemplate->items = $items;
 		return count($items) ? $objTemplate->parse() : '';
+	}
 
+	protected function determineNavRootFromReferer($strNavField, $skipRawReferer=false)
+	{
+		$HTTPReferer = (!$skipRawReferer) ? $this->Environment->httpReferer : $this->getReferer();
+
+		// We check the real HTTP referer first, as we might have multiple tabs open in 
+		// this environment and therefore want to use the "real" referer.
+		if((!$skipRawReferer) && preg_match('#[\/?&]'.$strNavField.'#', $HTTPReferer))
+		{
+			$strRequest = str_replace($this->Environment->base, '', $HTTPReferer);
+			if(!$GLOBALS['TL_CONFIG']['disableAlias'])
+			{
+				$strRequest = preg_replace('/\?.*$/i', '', $strRequest);
+				$strRequest = preg_replace('/' . preg_quote($GLOBALS['TL_CONFIG']['urlSuffix'], '/') . '$/i', '', $strRequest);
+				$arrFragments = explode('/', $strRequest);
+				// Skip index.php
+				if (strtolower($arrFragments[0]) == 'index.php')
+				{
+					array_shift($arrFragments);
+				}
+			} else {
+				// TODO: handle disabled aliases here.
+				$arrFragments = array();
+			}
+			// skip page and search for our param.
+			for($i=1;$i<count($arrFragments);$i+=2)
+			{
+				if($arrFragments[$i]==$strNavField)
+				{
+					return $arrFragments[$i+1];
+				}
+			}
+		}
+		if(!$skipRawReferer)
+		{
+			return $this->determineNavRootFromReferer($strNavField, true);
+		}
 	}
 
 	/**
@@ -3026,12 +3074,14 @@ abstract class ModuleCatalog extends Module
 		if (!$objFields->numRows)
 			return '';
 		$this->objNavField = new stdClass();
+		$this->objNavField->id = $objFields->id;
 		$this->objNavField->sourceTable = $objFields->itemTable;
 		$this->objNavField->sourceColumn = $objFields->itemTableValueCol;
 		$this->objNavField->blnChildren = $objFields->childrenSelMode;
 		$this->objNavField->limitItems = $objFields->limitItems;
 		$this->objNavField->items = deserialize($objFields->items);
 		$this->objNavField->valueField = $this->getAliasField($this->objNavField->sourceTable);
+		$this->objNavField->type = $objFields->type;
 		// check if this tree has a pid or a flat table
 		$this->objNavField->treeView = $this->Database->fieldExists('pid', $this->objNavField->sourceTable);
 		$this->objNavField->sort = $this->Database->fieldExists('sorting', $this->objNavField->sourceTable) ? 'sorting' : $this->objNavField->sourceColumn;
@@ -3041,8 +3091,15 @@ abstract class ModuleCatalog extends Module
 			$this->navigationTpl = 'nav_default';
 		}
 
-		if(($this->objNavField->type != 'tags') && $this->Input->get('items'))
+		// root is given via URL
+		if($this->Input->get($this->catalog_navigation))
 		{
+			$root=$this->Input->get($this->catalog_navigation);
+		}
+		// root not given via URL but we have an select field and an item is being requested.
+		else if($this->Input->get('items') && ($this->objNavField->type == 'select'))
+		{
+			// SELECT fields
 			$value=$this->Input->get('items');
 			$strAlias = $this->strAliasField ? $this->strAliasField : (is_numeric($value) ? 'id' : '');
 			if(strlen($strAlias))
@@ -3056,9 +3113,15 @@ abstract class ModuleCatalog extends Module
 				}
 			}
 		}
-		if($this->Input->get($this->catalog_navigation))
-			$root=$this->Input->get($this->catalog_navigation);
-
+		// no root via URL but an item requested, let's try to get the root from the referer.
+		else if($this->Input->get('items') && !$this->Input->get($this->catalog_navigation))
+		{
+			// check if in referer is something mentioned.
+			if(preg_match('#[\/?&]'.$this->catalog_navigation.'#', $this->Environment->httpReferer))
+			{
+				$root = $this->determineNavRootFromReferer($this->catalog_navigation);
+			}
+		}
 		if ($this->objNavField->treeView && $root)
 		{
 			// determine all parents

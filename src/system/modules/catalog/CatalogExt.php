@@ -276,27 +276,23 @@ class CatalogExt extends Frontend
 	 */
 	protected function getPageLayout($intId)
 	{
-		$objLayout = $this->Database->prepare("SELECT * FROM tl_layout WHERE id=?")
+		$objLayout = $this->Database->prepare("SELECT l.*, t.templates FROM tl_layout l LEFT JOIN tl_theme t ON l.pid=t.id WHERE l.id=?")
 									->limit(1)
 									->execute($intId);
-
 		// Fallback layout
 		if ($objLayout->numRows < 1)
 		{
-			$objLayout = $this->Database->prepare("SELECT * FROM tl_layout WHERE fallback=?")
+			$objLayout = $this->Database->prepare("SELECT l.*, t.templates FROM tl_layout l LEFT JOIN tl_theme t ON l.pid=t.id WHERE l.fallback=?")
 										->limit(1)
 										->execute(1);
 		}
-		
 		// Die if there is no layout at all
 		if ($objLayout->numRows < 1)
 		{
-			$this->log('Could not find layout ID "' . $intId . '"', 'PageRegular getPageLayout()', TL_ERROR);
-
+			$this->log('Could not find layout ID "' . $intId . '"', 'Catalog getPageLayout()', TL_ERROR);
 			header('HTTP/1.1 501 Not Implemented');
 			die('No layout specified');
 		}
-
 		return $objLayout;
 	} 
 		
@@ -304,13 +300,15 @@ class CatalogExt extends Frontend
 	 * get called by hook to inject all RSS feeds for the current layout into the template
 	 * @param string
 	 */
-	public function parseFrontendTemplate($strBuffer, $strTemplate) {
+	public function parseFrontendTemplate($strBuffer, $strTemplate)
+	{
 		// I totally admit it. This function sucks big time. It is ugly, a hack, but non the less the only possibility to get this working.
 		// We can't even check to only parse templates starting with 'fe_', as fe_page will get parsed before(!) the hook get's called.
 		// So we will store our calculated value into the global and hope that no one will ever want to use this.
 		// We also hope, that Leo will never ever change his for each inclusion in the page rendering.
 		// And we definately hope that all of this will get more easy and Leo will add a hook.
-		if(!isset($GLOBALS['TL_HEAD']['CATALOGFEED'])) {
+		if(!isset($GLOBALS['TL_HEAD']['CATALOGFEED']))
+		{
 			global $objPage;
 			$GLOBALS['TL_HEAD']['CATALOGFEED']='';
 			// here we are getting dirty, we have to import the page layout as we have no other way to get the layout from it.

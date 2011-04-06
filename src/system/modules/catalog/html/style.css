@@ -1,7 +1,11 @@
 /* TYPOlight catalog fields style sheet */
 .header_css_export { padding:2px 0px 3px 20px; background-image:url("export.gif"); background-position:left center; background-repeat:no-repeat; }
 .header_manualsort { padding:2px 0px 3px 20px; background-image:url("cut.gif"); background-position:left center; background-repeat:no-repeat; }
-
+.header_catalog_maintenance { padding:2px 0px 3px 20px; background-image:url("maintenance.gif"); background-position:left center; background-repeat:no-repeat; }
 .field_heading { color:#aaa; }
 .field_type img { vertical-align: middle; }
 .field_type span.legend { color:#8ab858; }
+#tl_catalogtagsmaintenance .tl_submit_container {background:none repeat scroll 0 0 transparent;border:0 none;margin:5px 0 28px;padding:0;}
+#catalogtags_note{margin:24px 0 18px 0;padding:11px 12px 12px 12px;background:#ffc;border:1px solid #f90;line-height:1;font-size:14px;}
+#catalogtags_loading{margin:0 0 12px 0;padding:12px 12px 12px 36px;background:url("loading.gif") no-repeat 2px center;line-height:1;font-size:16px;color:#5c9ac9;}
+#catalogtags_complete{margin:0 0 12px 0;padding:12px 12px 12px 36px;background:url("help.gif") no-repeat left center;line-height:1;font-size:16px;color:#8ab858;}

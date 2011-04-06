@@ -40,6 +40,58 @@
 class Catalog extends Backend
 {
 
+/*
+ * Helper functions
+ */
+
+	public static function array_replace_recursive_recurse($array, $array1)
+	{
+		foreach ($array1 as $key => $value)
+		{
+			// create new key in $array, if it is empty or not an array
+			if (!isset($array[$key]) || (isset($array[$key]) && !is_array($array[$key])))
+			{
+				$array[$key] = array();
+			}	
+			// overwrite the value in the base array
+			if (is_array($value))
+			{
+				$value = self::array_replace_recursive_recurse($array[$key], $value);
+			}
+			$array[$key] = $value;
+		}
+		return $array;
+	}
+	/**
+	 * array_replace_recursive — Replaces elements from passed arrays into the first array recursively
+	 * work around for the method as it is only available in PHP >5.3
+	 * Thanks to Gregor at der-meyer dot de (found on php.net)
+	 */
+	public static function array_replace_recursive($array, $array1)
+	{
+		// as of PHP 5.3.0 array_replace_recursive() does the work for us
+		if (function_exists('array_replace_recursive'))
+		{
+			return call_user_func_array('array_replace_recursive', func_get_args());
+		}
+
+		// handle the arguments, merge one by one
+		$args = func_get_args();
+		$array = $args[0];
+		if (!is_array($array))
+		{
+			return $array;
+		}
+		for ($i = 1; $i < count($args); $i++)
+		{
+			if (is_array($args[$i]))
+			{
+				$array = self::array_replace_recursive_recurse($array, $args[$i]);
+			}
+		}
+		return $array;
+	}
+
 /**
  * Callbacks: tl_catalog_items 
  */
@@ -61,20 +113,23 @@ class Catalog extends Backend
 			$this->Session->set('CURRENT_ID', $catid);
 			$this->redirect(str_replace('&catid='.$catid, '', $this->Environment->request));
 		}
-				
+
 		$objType = $this->Database->prepare("SELECT tableName FROM tl_catalog_types where id=?")
 				->limit(1)
 				->execute(CURRENT_ID);
 
-
-		// load default language
-		$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
-												 ? array_merge_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
-												 : $GLOBALS['TL_LANG']['tl_catalog_items'];
-		// load dca
-		$GLOBALS['TL_DCA'][$objType->tableName] = is_array($GLOBALS['TL_DCA'][$objType->tableName])
-												? array_merge_recursive($this->getCatalogDca(CURRENT_ID), $GLOBALS['TL_DCA'][$objType->tableName])
-												: $this->getCatalogDca(CURRENT_ID);
+		if(!$GLOBALS['TL_DCA'][$objType->tableName]['Cataloggenerated'])
+		{
+			// load default language
+			$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
+													 ? self::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
+													 : $GLOBALS['TL_LANG']['tl_catalog_items'];
+			// load dca
+			$GLOBALS['TL_DCA'][$objType->tableName] = is_array($GLOBALS['TL_DCA'][$objType->tableName])
+													? self::array_replace_recursive($this->getCatalogDca(CURRENT_ID), $GLOBALS['TL_DCA'][$objType->tableName])
+													: $this->getCatalogDca(CURRENT_ID);
+			$GLOBALS['TL_DCA'][$objType->tableName]['Cataloggenerated'] = true;
+		}
 
 		$this->purgeInvalidFields($objType->tableName);
 
@@ -203,6 +258,16 @@ class Catalog extends Backend
 		if(TL_MODE != 'BE')
 			return;
 		$columns = $this->Database->listFields($tableName, true);
+		
+		// skip the indexes
+		foreach($columns as $key => $column)
+		{
+			if($column['type'] == 'index')
+			{
+				unset($columns[$key]);
+			}
+		}
+		
 		$invalid=array();
 		$valid=array_merge(array_keys($GLOBALS['TL_DCA'][$tableName]['fields']), $this->systemColumns);
 		foreach($columns as $col)
@@ -640,21 +705,55 @@ class Catalog extends Backend
 		return ($varValue);
 	}
 
+	public static function setTags($intCatalogId, $intFieldId, $intItemId, $arrValues)
+	{
+		$db = Database::getInstance();
+		$objTags=$db->prepare('SELECT * FROM tl_catalog_tag_rel WHERE catid=? AND itemid=? AND fieldid=?')
+							->execute($intCatalogId, $intItemId, $intFieldId);
+		$arrTags=$objTags->fetchEach('valueid');
+		// all new tags.
+		$arrNew = array_diff($arrValues, $arrTags);
+		// all tags that shall get removed.
+		$arrOld = array_diff($arrTags, $arrValues);
+
+		$arrData = array(
+						'catid' => $intCatalogId,
+						'itemid' => $intItemId,
+						'fieldid' => $intFieldId,
+						'valueid' => 0
+					);
+		// add missing tags to db.
+		foreach($arrNew as $id)
+		{
+			$arrData['valueid'] = $id;
+			$db->prepare('INSERT INTO tl_catalog_tag_rel %s')->set($arrData)->execute();
+		}
+		// delete tags that shall not be attached anymore from db.
+		foreach($arrOld as $id)
+		{
+			$db->prepare('DELETE FROM tl_catalog_tag_rel WHERE catid=? AND itemid=? AND fieldid=? AND valueid=?')
+							->execute($intCatalogId, $intItemId, $intFieldId, $id);
+		}
+	}
+
 	public function saveTags($varValue, DataContainer $dc)
 	{
 		$options = deserialize($varValue, true);
+		$this->setTags($dc->activeRecord->pid, $objField->id, $dc->activeRecord->id, $options);
 		if (!is_array($options))
 		{
 			return '';
 		}
-
 		return implode(',', $options);
-		
 	}
 	
 	public function loadTags($varValue, DataContainer $dc)
 	{
-		$values = explode(',', trim($varValue));
+		$objTags=$this->Database->prepare('SELECT * FROM tl_catalog_tag_rel WHERE catid=? AND itemid=? AND fieldid=?')
+							->execute($dc->activeRecord->pid, $dc->activeRecord->id, $dc->field);
+		// TODO: either move this to update routine or remove after some grace period in the future.
+		$values = array_merge(explode(',', trim($varValue)), $objTags->fetchEach('valueid'));
+		//$values = explode(',', trim($varValue));
 		$valueList = array();
 		foreach($values as $value)
 		{
@@ -1031,7 +1130,6 @@ class Catalog extends Backend
 					);
 			}
 		}
-
 		if($objCatalog->publishField && version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
 		{
 			$this->publishField=$objCatalog->publishField;
@@ -1293,10 +1391,9 @@ class Catalog extends Backend
 	{
 		$this->configOptions($field, $objRow, true);
 		$field['eval']['catalog']['fieldId'] = $objRow->id;
-		
+		$field['eval']['alwaysSave'] = true;
 		$field['save_callback'][] = array('Catalog', 'saveTags');
 		$field['load_callback'][] = array('Catalog', 'loadTags');
-
 	}
 
 	//added by thyon

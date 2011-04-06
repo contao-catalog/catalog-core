@@ -564,7 +564,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_navigation'],
 		'exclude'                 => true,
 		'inputType'               => 'select',
-		'options_callback'        => array('tl_module_catalog', 'getCatalogOptionSelectFields'),
+		'options_callback'        => array('tl_module_catalog', 'getCatalogOptionSelectAndTagFields'),
 		'eval'                    => array('mandatory'=>true, 'includeBlankOption'=>true)
 	),
 
@@ -744,12 +744,12 @@ class tl_module_catalog extends Backend
 
 
 	/**
-	 * Get only Select fields and return them as array
+	 * Get only Select and Tags fields and return them as array
 	 * @return array
 	 */
-	public function getCatalogOptionSelectFields(DataContainer $dc)
+	public function getCatalogOptionSelectAndTagFields(DataContainer $dc)
 	{
-		return $this->getCatalogFields($dc, array('select'));
+		return $this->getCatalogFields($dc, array('select', 'tags'));
 	}
 
 

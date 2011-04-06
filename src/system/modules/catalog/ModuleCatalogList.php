@@ -162,7 +162,7 @@ class ModuleCatalogList extends ModuleCatalog
 			// issue #81
 			if($this->catalog_list_use_limit && ($this->catalog_limit || $this->catalog_list_offset))
 			{
-				$limit = (is_numeric($this->catalog_limit) && $limit)? $this->catalog_limit : NULL;
+				$limit = (is_numeric($this->catalog_limit)/* && $limit*/)? $this->catalog_limit : NULL;
 				if($this->catalog_list_offset)
 					$offset = $this->catalog_list_offset;
 			}
@@ -212,6 +212,7 @@ class ModuleCatalogList extends ModuleCatalog
 				$objCatalogStmt->limit($limit, $offset);
 			}
 			$objCatalog = $objCatalogStmt->execute($params);
+
 			if (!$limit)
 				$total = $objCatalog->numRows;
 			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);

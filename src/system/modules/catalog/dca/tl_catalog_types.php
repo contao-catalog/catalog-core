@@ -76,6 +76,13 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 				'class'               => 'header_edit_all',
 				'attributes'          => 'onclick="Backend.getScrollOffset();"'
 			),
+			'maintenance'             => array
+			(
+				'label'               => &$GLOBALS['TL_LANG']['tl_catalog_types']['maintenance'],
+				'href'                => 'key=maintenance',
+				'class'               => 'header_catalog_maintenance',
+				'attributes'          => 'onclick="Backend.getScrollOffset();"'
+			)
 		),
 
 		'operations' => array

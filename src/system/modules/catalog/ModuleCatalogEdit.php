@@ -26,6 +26,70 @@
  * @filesource
  */
 
+require_once(TL_ROOT . '/system/drivers/DC_DynamicTable.php');
+/**
+ * Class DC_DynamicTableEdit
+ * NOTE TO EXTENSION DEVELOPERS!
+ * watch out, this is a massive compromise and subject to change.
+ * I came up with this ad-hoc solution in order to supply a valid DataContainer in the onload and onsave callbacks
+ * but will rewrite the frontend editing from scratch in the future using a real FE DC driver.
+ * Therefore you should not rely on the concrete implementation of this class below.
+ *
+ * @copyright	CyberSpectrum 2011
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @package		Controller
+ *
+ */
+class DC_DynamicTableEdit extends DC_DynamicTable
+{
+	protected function combiner($names) {}
+	protected function generateButtons($arrRow, $strTable, $arrRootIds=array(), $blnCircularReference=false, $arrChildRecordIds=null, $strPrevious=null, $strNext=null) {}
+	protected function generateGlobalButtons($blnForceSeparator=false) {}
+	protected function row() {}
+	protected function switchToEdit($id) {}
+	protected function copyChilds($table, $insertID, $id, $parentId) {}
+	protected function filterMenu() {}
+	protected function formatCurrentValue($field, $value, $mode) {}
+	protected function formatGroupHeader($field, $value, $mode, $row) {}
+	protected function generateTree($table, $id, $arrPrevNext, $blnHasSorting, $intMargin=0, $arrClipboard=false, $blnCircularReference=false, $protectedPage=false) {}
+	protected function getNewPosition($mode, $pid=null, $insertInto=false) {}
+	protected function limitMenu($blnOptional=false) {}
+	protected function listView() {}
+	protected function panel() {}
+	protected function parentView() {}
+	protected function reviseTable() {}
+	protected function save($varValue) {}
+	protected function searchMenu() {}
+	protected function sortMenu() {}
+	protected function treeView() {}
+
+	public function help() {}
+//	public function __get($strKey) {}
+	public function ajaxTreeView($id, $level) {}
+	public function copy($blnDoNotRedirect=false) {}
+	public function copyAll() {}
+	public function create($set=array()) {}
+	public function cut($blnDoNotRedirect=false) {}
+	public function cutAll() {}
+	public function delete($blnDoNotRedirect=false) {}
+	public function deleteAll() {}
+	public function deleteChilds($table, $id, &$delete) {}
+	public function edit($intID=false, $ajaxId=false) {}
+	public function editAll($intId=false, $ajaxId=false) {}
+	public function getPalette() {}
+	public function move() {}
+	public function overrideAll() {}
+	public function show() {}
+	public function showAll() {}
+	public function undo() {}
+	public function __construct($strTable, $arrData)
+	{
+		// TODO: is anything missing in here? remember to only include stuff that we really need in this stub implementation.
+		$this->objActiveRecord = (object)$arrData;
+		$this->intId = $arrData['id'];
+	}
+}
+
 
 /**
  * Class ModuleCatalogEdit
@@ -168,7 +232,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$objCatalog = false;
 		if(strlen($value))
 		{
-			$strAlias = is_numeric($value) ? "id" : ($objCatalogType->aliasField ? $objCatalogType->aliasField : '');
+			$strAlias = is_numeric($value) ? 'id' : ($objCatalogType->aliasField ? $objCatalogType->aliasField : '');
 			if(strlen($strAlias))
 			{
 				$objCatalog = $this->Database->prepare('SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=' . $this->strTable . '.pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo FROM '.$this->strTable.' WHERE '. $strAlias . '=?')
@@ -656,38 +720,9 @@ class ModuleCatalogEdit extends ModuleCatalog
 		// Add ID to alias
 		if ($objAlias->numRows && $autoAlias)
 		{
-			$arrData[$aliasCol] .= '.' . $id;
+			$arrData[$aliasCol] .= '-' . $id;
 		}
 	}
-
-/*
-
-	private function saveTags($varValue, $id, $field)
-	{
-		$options = $varValue;
-//		$options = @deserialize($varValue);
-		if (!is_array($options))
-		{
-				$options = array();
-		}
-
-		$fieldId = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field]['eval']['catalog']['fieldId'];
-		if ($fieldId)
-		{
-				$this->Database->prepare("DELETE FROM tl_catalog_rel WHERE item_id=? AND field_id=?")->execute($id, $fieldId);
-
-				foreach ($options as $option)
-				{
-						$this->Database->prepare("INSERT INTO tl_catalog_rel %s")
-								->set(array('item_id' => $id, 'field_id' => $fieldId, 'related_id' => $option))
-								->execute();
-				}
-		}
-
-		return join(',', $options);
-	}
-*/
-
 
 	private function saveTags($varValue)
 	{
@@ -702,12 +737,12 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 	private function handleOnLoadCallbacks($arrData)
 	{
-		require_once(TL_ROOT . '/system/drivers/DC_DynamicTable.php');
-		$tmptbl=new DC_DynamicTable($this->strTable);
 		if(!is_array($arrData))
 		{
 			return $arrData;
 		}
+		$tmptbl=new DC_DynamicTableEdit($this->strTable, $arrData);
+		$tmptbl->show();
 		foreach($arrData as $field=>$data)
 		{
 			$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
@@ -717,8 +752,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				foreach ($fieldType['fieldDef']['load_callback'] as $callback)
 				{
 					$this->import($callback[0]);
-					// TODO: Do we need more parameters here?
-					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl, $arrData);
+					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl);
 				}
 			}
 		}
@@ -728,19 +762,17 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 	private function handleOnSaveCallbacks($arrData)
 	{
-		require_once(TL_ROOT . '/system/drivers/DC_DynamicTable.php');
-		$tmptbl=new DC_DynamicTable($this->strTable);
+		$tmptbl=new DC_DynamicTableEdit($this->strTable, $arrData);
 		foreach($arrData as $field=>$data)
 		{
 			$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
-			if(is_array($fieldType) && array_key_exists('save_callback', $fieldType['fieldDef']) && is_array($fieldType['fieldDef']['save_callback']))
+			if(is_array($fieldType) && array_key_exists('fieldDef', $fieldType)  && array_key_exists('save_callback', $fieldType['fieldDef']) && is_array($fieldType['fieldDef']['save_callback']))
 			{
 				foreach ($fieldType['fieldDef']['save_callback'] as $callback)
 				{
 					$this->import($callback[0]);
-					// TODO: Do we need more parameters here?
-					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl, $arrData);
+					$arrData[$field]=$this->$callback[0]->$callback[1]($data, $tmptbl);
 				}
 			}
 		}
@@ -754,10 +786,9 @@ class ModuleCatalogEdit extends ModuleCatalog
 	 */
 	private function itemUpdate($arrData, $id, $aliasTitle, $aliasCol)
 	{
-		$arrData=$this->handleOnSaveCallbacks($arrData);
 		$arrData['tstamp'] = time();
+		$arrData=$this->handleOnSaveCallbacks($arrData);
 		$this->generateAlias($arrData, $id, $aliasTitle, $aliasCol);
-
 		// Update item
 		$objUpdatedItem = $this->Database->prepare("UPDATE ".$this->strTable." %s WHERE id=?")
 				->set($arrData)
@@ -799,17 +830,18 @@ class ModuleCatalogEdit extends ModuleCatalog
 	 */
 	private function itemInsert($arrData, $aliasTitle, $aliasCol)
 	{
-		$arrData=$this->handleOnSaveCallbacks($arrData);
-		$arrData['tstamp'] = time();
 		$arrData['pid'] = $this->catalog;
-		// Create item
-		$objNewItem = $this->Database->prepare("INSERT INTO ".$this->strTable." %s")->set($arrData)->execute();
+		$arrData['tstamp'] = time();
+		$this->generateAlias($arrData, 0, $aliasTitle, $aliasCol);
+		$objNewItem = $this->Database->prepare("INSERT INTO ".$this->strTable." %s")->set(array('pid' => $arrData['pid'], 'tstamp' => $arrData['tstamp']))->execute();
 		$insertId = $objNewItem->insertId;
+		$arrData['id'] = $insertId;
 		// we have to update now, as we need to generate an alias.
 		$this->itemUpdate($arrData, $insertId, $aliasTitle, $aliasCol);
 		// HOOK: pass data to HOOKs to be able to do something when we inserted an item.
 		if (isset($GLOBALS['TL_HOOKS']['catalogFrontendInsert']) && is_array($GLOBALS['TL_HOOKS']['catalogFrontendInsert']))
 		{
+			// load the entry from the DB again.
 			$objEntry = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE id=?")
 											->limit(1)
 											->execute($id);
@@ -821,16 +853,6 @@ class ModuleCatalogEdit extends ModuleCatalog
 				$this->$callback[0]->$callback[1]($arrData, $this, $this->strTable);
 			}
 		}
-/*
-		$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
-		foreach($arrData as $field=>$data)
-		{
-			if ($fieldConf['eval']['catalog']['type'] == 'tags')
-			{
-				$this->saveTags($data, $insertId, $field);
-			}
-		}
-*/
 	}
 }
 
