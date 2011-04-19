@@ -212,6 +212,7 @@ $GLOBALS['TL_HOOKS']['parseFrontendTemplate'][] = array('CatalogExt', 'parseFron
 // register hook to inject our catalog names into the comments module as source.
 $GLOBALS['TL_HOOKS']['loadDataContainer'][] = array('CatalogExt', 'addCatalogsToComments');
 $GLOBALS['TL_HOOKS']['listComments'][] = array('CatalogExt', 'listComments');
+$GLOBALS['TL_HOOKS']['isAllowedToEditComment'][] = array('CatalogExt', 'isAllowedToEditComment');
 
 /**
  * Cron jobs

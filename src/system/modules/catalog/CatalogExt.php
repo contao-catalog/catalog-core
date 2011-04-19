@@ -371,6 +371,23 @@ class CatalogExt extends Frontend
 			return ' (<a href="contao/main.php?do=catalog&amp;table=tl_catalog_items&amp;act=edit&amp;id=' . $objItem->id . '&amp;catid=' . $GLOBALS['TL_CATALOG_ITEMS'][$arrRow['source']]['id'] . '">' . $objItem->$titleField . '</a>)';
 		}
 	}
+
+	public function isAllowedToEditComment($intParent, $strSource)
+	{
+		$this->import('BackendUser', 'User');
+		if($GLOBALS['TL_CATALOG_ITEMS'][$strSource]['id'])
+		{
+			if ($this->User->hasAccess('catalog', 'modules'))
+			{
+				if($this->User->hasAccess($GLOBALS['TL_CATALOG_ITEMS'][$strSource]['id'], 'catalogs'))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 }
 
 ?>
