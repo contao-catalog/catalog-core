@@ -224,6 +224,14 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 		}
 	}
 
+	protected function getEditableFieldnames()
+	{
+		$arrFields=array_merge(array('tstamp', 'pid'), $this->objModule->catalog_edit);
+		if($this->objCatalogType->aliasField)
+			$arrFields[] = $this->objCatalogType->aliasField;
+		return $arrFields;
+	}
+
 	public function itemUpdate()
 	{
 		$this->generateAlias();
@@ -233,7 +241,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 		$this->objActiveRecord->pid = $this->objCatalogType->id;
 		$this->objActiveRecord->tstamp = time();
 		$arrRecordData=array();
-		foreach(array_merge($this->objModule->catalog_edit, array('tstamp', 'pid', $this->objCatalogType->aliasField)) as $field)
+		foreach($this->getEditableFieldnames() as $field)
 		{
 			$arrRecordData[$field] = $this->objActiveRecord->$field;
 		}
@@ -272,7 +280,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 		$this->intId = $arrData['id'];
 		$this->handleOnSaveCallbacks();
 		$arrRecordData=array();
-		foreach(array_merge($this->objModule->catalog_edit, array('tstamp', 'pid', $this->objCatalogType->aliasField)) as $field)
+		foreach($this->getEditableFieldnames() as $field)
 		{
 			$arrRecordData[$field] = $this->objActiveRecord->$field;
 		}
