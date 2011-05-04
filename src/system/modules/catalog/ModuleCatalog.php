@@ -103,7 +103,7 @@ abstract class ModuleCatalog extends Module
 			{
 				// load default language
 				$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
-													 ? self::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
+													 ? Catalog::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
 													 : $GLOBALS['TL_LANG']['tl_catalog_items'];
 				// load dca
 				$GLOBALS['TL_DCA'][$objCatalog->tableName] = 
@@ -476,7 +476,6 @@ abstract class ModuleCatalog extends Module
 						}
 				}
 			} // of search
-
 
 			// GET range values
 			if (substr_count($this->Input->get($field),'__'))
@@ -1120,18 +1119,15 @@ abstract class ModuleCatalog extends Module
 														->execute($query['params']);
 							$itemIds = implode(',',$objFilter->fetchEach('id'));
 						}
-						if($itemIds)
+						foreach ($fieldConf['options'] as $id=>$option)
 						{
-							foreach ($fieldConf['options'] as $id=>$option)
-							{
-									$tmpTags[] = '(SELECT COUNT(itemid) FROM tl_catalog_tag_rel WHERE valueid='.$id.' AND fieldid='.$fieldConf['eval']['catalog']['fieldId'].($query['query']?' AND itemid IN('.$itemIds:'').')) AS '.$field.$id;
-							}
-							if(count($tmpTags)==0)
-								$tmpTags = array($field);
-							$objFilter = $this->Database->prepare('SELECT '.implode(', ',$tmpTags))
-									->execute($query['params']);
+							$tmpTags[] = '(SELECT COUNT(itemid) FROM tl_catalog_tag_rel WHERE valueid='.$id.' AND fieldid='.$fieldConf['eval']['catalog']['fieldId'].($query['query'] && $itemIds?' AND itemid IN('.$itemIds.')':'').') AS '.$field.$id;
 						}
-						if ($itemIds && $objFilter->numRows)
+						if(count($tmpTags)==0)
+							$tmpTags = array($field);
+						$objFilter = $this->Database->prepare('SELECT '.implode(', ',$tmpTags))
+													->execute($query['params']);
+						if ($objFilter->numRows)
 						{
 							$row = $objFilter->row();
 
@@ -1188,7 +1184,25 @@ abstract class ModuleCatalog extends Module
 					case 'number':
 					case 'decimal':
 					case 'date':
-
+						$query['query'] = '';
+						// TODO: this is an evil hack - we DEFINATELY have to rewrite this lookup mechanism.
+						if(count($filterurl['procedure']['where']))
+						foreach($filterurl['procedure']['where'] as $k=>$v)
+						{
+							if(strpos($v, $field) !== false)
+							{
+								unset($filterurl['procedure']['where'][$k]);
+								unset($filterurl['values']['where'][$k]);
+							}
+						}
+						
+						$query['params'] = is_array($filterurl['values']['where'])? $filterurl['values']['where'] : array();
+						if (is_array($filterurl['values']['tags']))
+							$query['params'] = array_merge($query['params'], $filterurl['values']['tags']);
+						if(count($filterurl['procedure']['where']))
+							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['where']);
+						if(count($filterurl['procedure']['tags']))
+							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['tags']);
 						// get existing options in DB
 						$options = array();
 						$objFilter = $this->Database->prepare("SELECT DISTINCT ".$field." FROM ".$this->strTable . ($query['query'] ? " WHERE ".$query['query'] : '') . " ORDER BY ".$field)

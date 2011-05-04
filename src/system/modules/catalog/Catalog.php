@@ -63,7 +63,7 @@ class Catalog extends Backend
 		return $array;
 	}
 	/**
-	 * array_replace_recursive — Replaces elements from passed arrays into the first array recursively
+	 * array_replace_recursive â€” Replaces elements from passed arrays into the first array recursively
 	 * work around for the method as it is only available in PHP >5.3
 	 * Thanks to Gregor at der-meyer dot de (found on php.net)
 	 */
@@ -151,7 +151,6 @@ class Catalog extends Backend
 
 	protected $renameTableStatement = "ALTER TABLE `%s` RENAME TO `%s`";
 	protected $dropTableStatement = "DROP TABLE `%s`";
-        
 
 	public function renameTable($varValue, DataContainer $dc)
 	{
@@ -772,8 +771,6 @@ class Catalog extends Backend
 		return $this->getCalc($varValue, $dc, false);
 	}
 
-    
-
 	/**
 	 * Check if number and decimal values are within limits
 	 * @param mixed
@@ -937,7 +934,7 @@ class Catalog extends Backend
 			return '<span class="image_not_found" style="width:'.$params['w'].'px;height:'.$params['h'].'px;">'.specialchars($label).'</span>';
 		}
 	}
-    
+
 	private function formatTitle($value, &$fieldConf, $tableName, $id)
 	{
 		$blnCalc = ($fieldConf['eval']['catalog']['type'] == 'calc' && strlen($fieldConf['eval']['catalog']['calcValue']));
@@ -986,9 +983,7 @@ class Catalog extends Backend
 						{
 							$value = '';
 						}
-
 						break;
-
 
 				default:;
 			}
@@ -998,7 +993,7 @@ class Catalog extends Backend
 				case 'string':
 						$value = sprintf($fieldConf['eval']['catalog']['formatStr'], $value);
 						break;
-						
+
 				case 'number':
 						$decimalPlaces = is_numeric($fieldConf['eval']['catalog']['formatStr']) ? 
 								intval($fieldConf['eval']['catalog']['formatStr']) : 
@@ -1007,13 +1002,7 @@ class Catalog extends Backend
 								$GLOBALS['TL_LANG']['MSC']['decimalSeparator'],
 								$GLOBALS['TL_LANG']['MSC']['thousandsSeparator']);
 						break;
-						
-/*
-				case 'money':
-						$value = money_format($fieldConf['eval']['catalog']['formatStr'], $value);
-						break;
-*/
-						
+
 				case 'date':
 						$value = date($fieldConf['eval']['catalog']['formatStr'], $value);
 						break;
@@ -1053,9 +1042,8 @@ class Catalog extends Backend
 
 		$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']['date']['fieldDef']['eval'] = array('datepicker' => $this->getDatePickerString());
 
-
 		// load default catalog dca
-		$dca = $this->getDefaultDca();        
+		$dca = $this->getDefaultDca();
 
 		$fields = array();
 		$titleFields = array();
@@ -1064,9 +1052,7 @@ class Catalog extends Backend
 		$selectors = array();
 
 		// load DCA, as we're calling it now in Catalog
-		$this->loadDataContainer('tl_catalog_fields');			
-
-
+		$this->loadDataContainer('tl_catalog_fields');
 
 		// check if import is enabled
 		$objCatalog = $this->Database->prepare("SELECT * FROM tl_catalog_types WHERE id=?")
@@ -1122,7 +1108,6 @@ class Catalog extends Backend
 			);
 		}
 
-
 		$filter=$search=$sort=false;
 		while ($objFields->next())
 		{
@@ -1131,10 +1116,9 @@ class Catalog extends Backend
 			
 			$visibleOptions = trimsplit('[,;]', $GLOBALS['TL_DCA']['tl_catalog_fields']['palettes'][$colType]);
 
-			// Changed by c.schiffler to allow custom editors to register themselves.
 			$field = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType]['fieldDef'];
 			$fields[] = $colName;
-			// if we have a legend, we have to transport the text via the lang array to allow special chars to occur (issue #178)
+
 			if($objFields->insertBreak && strlen($objFields->legendTitle))
 			{
 				$legendName = $colName.'_legend';
@@ -1142,6 +1126,7 @@ class Catalog extends Backend
 				$separators[] = ((count($separators)>0 ? ';':'') . '{'.$legendName.(($objFields->legendHide)?':hide':'').'},');
 			} else
 				$separators[] = ',';
+
 			// Ammend field with catalog field settings
 			if(!$GLOBALS['TL_LANG'][$objCatalog->tableName][$colName])
 				$GLOBALS['TL_LANG'][$objCatalog->tableName][$colName] = array($objFields->name, $objFields->description);
@@ -1172,7 +1157,7 @@ class Catalog extends Backend
 			{
 				$this->$configFunction($dca['fields'][$colName], $objFields);
 			}
-			// Added by c.schiffler to allow custom editors to register themselves.
+
 			// HOOK: try to format the fieldtype as it might be a custom added one.
 			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType];
 			if(is_array($fieldType) && array_key_exists('generateFieldEditor', $fieldType) && is_array($fieldType['generateFieldEditor']))
@@ -1183,7 +1168,6 @@ class Catalog extends Backend
 					$this->$callback[0]->$callback[1]($dca['fields'][$colName], $objFields);
 				}
 			}
-			// End of addition by c.schiffler to allow custom editors to register themselves.
 
 			if ($objFields->titleField && in_array('titleField', $visibleOptions))
 			{
@@ -1222,7 +1206,7 @@ class Catalog extends Backend
 			$filter=$filter||$field['filter'];
 			$search=$search||$field['search'];
 			$sort=$sort||$field['sorting'];
-			
+
 			// HOOK: allow third party extension developers to modify the dca on the fly
 			if(is_array($GLOBALS['TL_HOOKS']['getCatalogDca']) && count($GLOBALS['TL_HOOKS']['getCatalogDca']))
 			{
@@ -1281,7 +1265,7 @@ class Catalog extends Backend
 			'format' => $titleFormat,
 			'label_callback' => array('Catalog', 'renderField'),
 		);
-		
+
 		// set sorting fields
 		if (count($sortingFields) > 1 || (count($sortingFields) == 1 && $dca['fields'][$sortingFields[0]]['flag'] > 0))
 		{
@@ -1515,6 +1499,9 @@ class Catalog extends Backend
 
 		list($sourceTable, $sourceColumn) = explode('.', $foreignKey);
 		$ids = is_array($ids) ? $ids : array($ids);
+
+		// replace insert tags (issue #1418)
+		$itemFilter = $this->replaceInsertTags($itemFilter);
 
 		// check if this tree has a pid or a flat table
 		try
@@ -1833,10 +1820,6 @@ class Catalog extends Backend
 				$this->redirect($referer);
 			}
 
-
-			$objCatalog = $this->Database->prepare("SELECT id,tableName,name FROM tl_catalog_types WHERE id=?")
-						->limit(1)
-						->execute($this->Input->get('id'));
 
 			if (!$objCatalog->numRows)
 			{

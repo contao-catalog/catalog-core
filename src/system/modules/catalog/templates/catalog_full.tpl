@@ -4,6 +4,7 @@
 
 <?php foreach ($this->entries as $entry): ?>
 <div class="item<?php echo $entry['class'] ? ' '.$entry['class'] : ''; ?>">
+<?php if($entry['linkEdit']): ?><?php echo $entry['linkEdit']; ?><?php endif; ?>
 <?php foreach ($entry['data'] as $field=>$data): ?>
 <?php if (strlen($data['raw']) && !in_array($field, array('catalog_name','parentJumpTo'))): ?>
 <div class="field <?php echo $field; ?>">
