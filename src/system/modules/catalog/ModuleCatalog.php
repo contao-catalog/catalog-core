@@ -689,9 +689,13 @@ abstract class ModuleCatalog extends Module
 		list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
 		$aliasField = $this->getAliasField($itemTable);
 
+		// determine item sorting.
+		$strSorting=($fieldConf['eval']['catalog']['sortCol']
+					?' ORDER BY '.$fieldConf['eval']['catalog']['sortCol']
+					:($this->Database->fieldExists('sorting', $itemTable)?' ORDER BY sorting':''));
 		// get existing alias values of options in DB
 		$objList = $this->Database->prepare('SELECT id,'.$aliasField.' FROM '.$itemTable . 
-						($fieldConf['options'] ? ' WHERE id IN ('.implode(',',array_keys($fieldConf['options'])).')':''))
+						($fieldConf['options'] ? ' WHERE id IN ('.implode(',',array_keys($fieldConf['options'])).')':'') . $strSorting)
 				->execute();
 		
 		$return = array();
