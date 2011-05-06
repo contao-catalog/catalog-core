@@ -866,6 +866,7 @@ abstract class ModuleCatalog extends Module
 					{
 						foreach ($fieldTypeArr['generateFilterWidget'] as $callback)
 						{
+							$this->import($callback[0]);
 							$tmp=$this->$callback[0]->$callback[1]($fieldType, $field, $config, $fieldConf, $filterurl, $query, $tree);
 							if($tmp)
 							{

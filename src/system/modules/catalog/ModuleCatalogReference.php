@@ -179,8 +179,9 @@ class ModuleCatalogReference extends ModuleCatalog
 			}
 			
 			// convert to string
-			$strReference = implode(' OR ', $strReference);
-
+//			$strReference = implode(' OR ', $strReference);
+			// if nothing hit in the reference, force 0=1
+			$strReference = $strReference?implode(' OR ', $strReference):'0=1';
 
 			$arrQuery = $this->processFieldSQL($this->catalog_visible);		
 			if($this->strAliasField)
