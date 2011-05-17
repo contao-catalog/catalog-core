@@ -304,7 +304,7 @@ class CatalogExt extends Frontend
 	{
 		// when called in Backend - this happens within editing of articles for example as we are getting called from a content element.
 		if(TL_MODE!='FE')
-			return;
+			return $strBuffer;
 
 		// I totally admit it. This function sucks big time. It is ugly, a hack, but non the less the only possibility to get this working.
 		// We can't even check to only parse templates starting with 'fe_', as fe_page will get parsed before(!) the hook get's called.
