@@ -226,7 +226,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 
 	protected function getEditableFieldnames()
 	{
-		$arrFields=array_merge(array('tstamp', 'pid'), $this->objModule->catalog_edit);
+		$arrFields=array_merge(array('tstamp', 'pid'), $this->objModule->catalog_edit, array_keys($this->objModule->catalog_edit_default_value));
 		if($this->objCatalogType->aliasField)
 			$arrFields[] = $this->objCatalogType->aliasField;
 		return $arrFields;
