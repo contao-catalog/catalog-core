@@ -684,7 +684,7 @@ abstract class ModuleCatalog extends Module
 	{
 		if($fieldConf['optionslist'])
 			return $fieldConf['optionslist'];
-			
+
 		// get alias column
 		list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
 		$aliasField = $this->getAliasField($itemTable);
@@ -1096,8 +1096,9 @@ abstract class ModuleCatalog extends Module
 							$query['params'] = array_merge($query['params'], $filterurl['values']['tags']);
 						if(count($filterurl['procedure']['where']))
 							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['where']);
-						if(count($filterurl['procedure']['tags']))
-							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['tags']);
+						// TODO: we have a problem here if more than one tag field exists - we simply ignore the other one in here.
+//						if(count($filterurl['procedure']['tags']))
+//							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['tags']);
 
 						// clear option
 						$selected = !strlen($current[$field]);

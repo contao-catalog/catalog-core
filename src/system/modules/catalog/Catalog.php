@@ -1147,7 +1147,8 @@ class Catalog extends Backend
 
 			if ($objFields->width50)
 			{
-				$field['eval']['tl_class'] = 'w50' . (in_array($colType, $GLOBALS['BE_MOD']['content']['catalog']['typesWizardFields']) ? ' wizard' : '' );
+				$field['eval']['tl_class'] = 'w50' . (in_array($colType, $GLOBALS['BE_MOD']['content']['catalog']['typesWizardFields']) ? ' wizard' : '' )
+											. (($colType == 'checkbox') ? ' m12' : '' );
 			}
 
 			$dca['fields'][$colName] = $field;
