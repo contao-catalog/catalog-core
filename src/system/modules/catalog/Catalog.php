@@ -890,11 +890,11 @@ class Catalog extends Backend
 							parse_str($params[1], $formats);
 							if (strlen($replace) && array_key_exists('pre', $formats))
 							{
-								$replace = stripslashes(stripslashes($formats['pre'])).$replace;								
+								$replace = stripslashes(stripslashes($formats['pre'])).$replace;
 							}
 							if (strlen($replace) && array_key_exists('post', $formats))
 							{
-								$replace = $replace.stripslashes(stripslashes($formats['post']));								
+								$replace = $replace.stripslashes(stripslashes($formats['post']));
 							}
 
 					}
@@ -1203,6 +1203,7 @@ class Catalog extends Backend
 			{
 				$dca['fields'][$colName]['eval']['catalog']['editGroups'] = unserialize($objFields->editGroups);
 			}
+var_dump($colName, $field['eval']);
 
 			$filter=$filter||$field['filter'];
 			$search=$search||$field['search'];
@@ -1216,7 +1217,7 @@ class Catalog extends Backend
 					$this->import($callback[0]);
 					$this->$callback[0]->$callback[1]($objFields, $dca, $objCatalog, $this);
 				}
-			}			
+			}
 		}
 		$panelLayout=array();
 		if($filter)

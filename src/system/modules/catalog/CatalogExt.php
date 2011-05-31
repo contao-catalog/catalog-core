@@ -276,15 +276,32 @@ class CatalogExt extends Frontend
 	 */
 	protected function getPageLayout($intId)
 	{
-		$objLayout = $this->Database->prepare("SELECT l.*, t.templates FROM tl_layout l LEFT JOIN tl_theme t ON l.pid=t.id WHERE l.id=?")
-									->limit(1)
-									->execute($intId);
-		// Fallback layout
-		if ($objLayout->numRows < 1)
+		if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
 		{
-			$objLayout = $this->Database->prepare("SELECT l.*, t.templates FROM tl_layout l LEFT JOIN tl_theme t ON l.pid=t.id WHERE l.fallback=?")
+			$objLayout = $this->Database->prepare('SELECT l.*, t.templates FROM tl_layout l LEFT JOIN tl_theme t ON l.pid=t.id WHERE l.id=?')
 										->limit(1)
-										->execute(1);
+										->execute($intId);
+			// Fallback layout
+			if ($objLayout->numRows < 1)
+			{
+				$objLayout = $this->Database->prepare('SELECT l.*, t.templates FROM tl_layout l LEFT JOIN tl_theme t ON l.pid=t.id WHERE l.fallback=?')
+											->limit(1)
+											->execute(1);
+			}
+		}
+		else // pre Contao phase, no themes available.
+			
+		{
+			$objLayout = $this->Database->prepare('SELECT * FROM tl_layout WHERE id=?')
+										->limit(1)
+										->execute($intId);
+			// Fallback layout
+			if ($objLayout->numRows < 1)
+			{
+				$objLayout = $this->Database->prepare('SELECT * FROM tl_layout WHERE fallback=?')
+											->limit(1)
+											->execute(1);
+			}
 		}
 		// Die if there is no layout at all
 		if ($objLayout->numRows < 1)
@@ -295,7 +312,7 @@ class CatalogExt extends Frontend
 		}
 		return $objLayout;
 	} 
-		
+
 	/**
 	 * get called by hook to inject all RSS feeds for the current layout into the template
 	 * @param string
