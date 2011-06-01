@@ -2072,17 +2072,19 @@ abstract class ModuleCatalog extends Module
 			$arrData = $objCatalog->row();
 			// check if editing of this record is disabled for frontend.
 			$editingallowedByFields=true;
-			foreach ($GLOBALS['TL_DCA'][$this->strTable]['fields'] as $field)
+			foreach ($GLOBALS['TL_DCA'][$this->strTable]['fields'] as $fieldname=>$field)
 			{
+				if(is_array($visible) && !in_array($fieldname, $visible))
+					continue;
 				// HOOK: additional permission checks if this field allows editing of this record (for the current user).
 				$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$field['eval']['catalog']['type']];
-				if(is_array($fieldType) && array_key_exists('checkPermissionFEEdit', $fieldType) && is_array($fieldType['checkPermissionFERecordEdit']))
+				if(is_array($fieldType) && array_key_exists('checkPermissionFERecordEdit', $fieldType) && is_array($fieldType['checkPermissionFERecordEdit']))
 				{
 					foreach ($fieldType['checkPermissionFERecordEdit'] as $callback)
 					{
 						$this->import($callback[0]);
 						// TODO: Do we need more parameters here?
-						if(!($this->$callback[0]->$callback[1]($this->strTable, $arrData)))
+						if(!($this->$callback[0]->$callback[1]($this->strTable, $fieldname, $arrData)))
 						{
 							$editingallowedByFields=false;
 							break;
