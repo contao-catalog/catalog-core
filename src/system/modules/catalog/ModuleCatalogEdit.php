@@ -130,7 +130,8 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 	public function generateAlias()
 	{
 		// without an aliasCol there is no need for generating an alias
-		if (!strlen($this->objCatalogType->aliasField))
+		// and without an title, we simply can not generate an alias
+		if (!(strlen($this->objCatalogType->aliasField) && strlen($this->objCatalogType->titleField)))
 		{
 			return;
 		}

@@ -1203,7 +1203,6 @@ class Catalog extends Backend
 			{
 				$dca['fields'][$colName]['eval']['catalog']['editGroups'] = unserialize($objFields->editGroups);
 			}
-var_dump($colName, $field['eval']);
 
 			$filter=$filter||$field['filter'];
 			$search=$search||$field['search'];
