@@ -80,8 +80,9 @@ $GLOBALS['TL_LANG']['MSC']['clearFilter'] = 'Clear all filters';
 $GLOBALS['TL_LANG']['MSC']['clearAll'] = 'Clear %s'; // %s=field label
 $GLOBALS['TL_LANG']['MSC']['selectNone'] = 'Select %s'; // %s=field label
 $GLOBALS['TL_LANG']['MSC']['optionselected'] 	= '%s'; // %s=field label
-
 $GLOBALS['TL_LANG']['MSC']['invalidFilter'] = 'Invalid filter type';
+$GLOBALS['TL_LANG']['MSC']['rangeFrom'] = 'from';
+$GLOBALS['TL_LANG']['MSC']['rangeTo'] = 'to';
 
 
 // Checkbox options

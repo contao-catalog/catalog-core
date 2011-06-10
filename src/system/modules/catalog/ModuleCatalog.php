@@ -1668,8 +1668,12 @@ abstract class ModuleCatalog extends Module
 					window.addEvent(\'domready\', function() { ' . sprintf($widget['datepicker'], 'ctrl_' . $widget['id'] .'_'.$i) . ' });
 					//--><!]]></script>'
 					: '');
+					
+					// adding a <label for=""> to the inputs
+					$strLabel = ($i == 0) ? $GLOBALS['TL_LANG']['MSC']['rangeFrom'] : $GLOBALS['TL_LANG']['MSC']['rangeTo'];
 		
-					$arrFields[] = sprintf('<input type="text" name="%s[]" id="ctrl_%s" class="text%s" value="%s"%s />',
+					$arrFields[] = sprintf('%s<input type="text" name="%s[]" id="ctrl_%s" class="text%s" value="%s"%s />',
+							(strlen($strLabel)) ? '<label for="ctrl_' . $widget['id'].'_'.$i . '">' . $strLabel . '</label>' : '',
 							$widget['name'],
 							$widget['id'].'_'.$i,
 							(strlen($widget['class']) ? ' ' . $widget['class'] : ''),
