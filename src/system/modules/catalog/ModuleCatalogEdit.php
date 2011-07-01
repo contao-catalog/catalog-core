@@ -752,23 +752,58 @@ class ModuleCatalogEdit extends ModuleCatalog
 			}
 
 			// Add datepicker
+			$datepicker = '';
 			if (in_array($arrData['eval']['rgxp'], array('date', 'time', 'datim')))
 			{
 				$objDate = new Date($objWidget->value, $GLOBALS['TL_CONFIG'][$arrData['eval']['rgxp'] . 'Format']);
 				$objWidget->value = $objDate->$arrData['eval']['rgxp'];
-				//$objWidget->datepicker = '
-				$GLOBALS['TL_HEAD'][]='
-				<script type="text/javascript"><!--//--><![CDATA[//><!--
-				window.addEvent(\'domready\', function() { ' . sprintf($this->getDatePickerString(), 'ctrl_' . $objWidget->id) . ' });
-				//--><!]]></script>';
-				// files moved since 2.8 RC1
-				if(version_compare(VERSION.'.'.BUILD, '2.8.0', '<'))
+				// date picker was changed in 2.10
+				if(version_compare(VERSION.'.'.BUILD, '2.10.0', '>='))
 				{
-					$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/calendar.js" type="text/javascript"></script>';
-					$GLOBALS['TL_CSS'][] = 'plugins/calendar/calendar.css';
+					switch ($arrData['eval']['rgxp'])
+					{
+						case 'datim':
+							$time = ",\n      timePicker: true";
+							break;
+						case 'time':
+							$time = ",\n      timePickerOnly: true";
+							break;
+						default:
+							$time = '';
+							break;
+					}
+					$datepicker = '<img src="plugins/datepicker/icon.gif" width="20" height="20" id="toggle_' . $objWidget->id . '" style="vertical-align:-6px;">';
+					$GLOBALS['TL_HEAD'][]=
+					'window.addEvent(\'domready\', function() {
+						new DatePicker(\'#ctrl_' . $objWidget->id . '\', {
+							allowEmpty: true,
+							toggleElements: \'#toggle_' . $objWidget->id . '\',
+							pickerClass: \'datepicker_dashboard\',
+							format: \'' . $format . '\',
+							inputOutputFormat: \'' . $format . '\',
+							positionOffset: { x:130, y:-185 }' . $time . ',
+							startDay: ' . $GLOBALS['TL_LANG']['MSC']['weekOffset'] . ',
+							days: [\''. implode("','", $GLOBALS['TL_LANG']['DAYS']) . '\'],
+							dayShort: ' . $GLOBALS['TL_LANG']['MSC']['dayShortLength'] . ',
+							months: [\''. implode("','", $GLOBALS['TL_LANG']['MONTHS']) . '\'],
+							monthShort: ' . $GLOBALS['TL_LANG']['MSC']['monthShortLength'] . '
+						});
+					});';
 				} else {
-					$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/js/calendar.js" type="text/javascript"></script>';
-					$GLOBALS['TL_CSS'][] = 'plugins/calendar/css/calendar.css';
+					//$objWidget->datepicker = '
+					$GLOBALS['TL_HEAD'][]='
+					<script type="text/javascript"><!--//--><![CDATA[//><!--
+					window.addEvent(\'domready\', function() { ' . sprintf($this->getDatePickerString(), 'ctrl_' . $objWidget->id) . ' });
+					//--><!]]></script>';
+					// files moved since 2.8 RC1
+					if(version_compare(VERSION.'.'.BUILD, '2.8.0', '<'))
+					{
+						$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/calendar.js" type="text/javascript"></script>';
+						$GLOBALS['TL_CSS'][] = 'plugins/calendar/calendar.css';
+					} else {
+						$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/js/calendar.js" type="text/javascript"></script>';
+						$GLOBALS['TL_CSS'][] = 'plugins/calendar/css/calendar.css';
+					}
 				}
 			}
 
@@ -791,7 +826,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				// file uploads need 'multipart/form-data'
 				$hasUpload=true;
 			}
-			$arrFields[$field] .= $objWidget->parse();
+			$arrFields[$field] .= $objWidget->parse().$datepicker;
 
 			++$i;
 		}

@@ -1040,7 +1040,11 @@ class Catalog extends Backend
 		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? ORDER BY sorting")
 					->execute($catalogId);
 
-		$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']['date']['fieldDef']['eval'] = array('datepicker' => $this->getDatePickerString());
+		// date picker was changed in 2.10
+		if (version_compare(VERSION.'.'.BUILD, '2.10.0', '>='))
+			$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']['date']['fieldDef']['eval'] = array('datepicker' => true);
+		else
+			$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']['date']['fieldDef']['eval'] = array('datepicker' => $this->getDatePickerString());
 
 		// load default catalog dca
 		$dca = $this->getDefaultDca();

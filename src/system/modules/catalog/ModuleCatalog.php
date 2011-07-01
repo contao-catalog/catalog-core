@@ -1378,9 +1378,13 @@ abstract class ModuleCatalog extends Module
 							$date = array
 							(
 								'maxlength' => 10,
-								'rgxp' 			=> 'date',
-								'datepicker' => $this->getDatePickerString(),
+								'rgxp' 			=> 'date'
 							);
+							// date picker was changed in 2.10
+							if (version_compare(VERSION.'.'.BUILD, '2.10.0', '>='))
+								$date['datepicker'] = true;
+							else
+								$date['datepicker'] = $this->getDatePickerString();
 							$widget = array_merge($widget, $date);
 						}
 
