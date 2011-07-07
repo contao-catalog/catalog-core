@@ -72,7 +72,8 @@ class Catalog extends Backend
 		// as of PHP 5.3.0 array_replace_recursive() does the work for us
 		if (function_exists('array_replace_recursive'))
 		{
-			return call_user_func_array('array_replace_recursive', func_get_args());
+			// ugly fix, I know but somehow we're getting a recursion in the array sometimes. see #1644
+			return @call_user_func_array('array_replace_recursive', func_get_args());
 		}
 
 		// handle the arguments, merge one by one

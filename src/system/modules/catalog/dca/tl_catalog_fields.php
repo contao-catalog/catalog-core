@@ -555,7 +555,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['editGroups'],
 			'inputType'               => 'checkbox',
 			'foreignKey'              => 'tl_member_group.name',
-			'eval'                    => array('title' => &$GLOBALS['TL_LANG']['tl_catalog_fields']['useridfield'], 'multiple'=>true , 'tl_class'=>'w50 clr')
+			'eval'                    => array('title' => &$GLOBALS['TL_LANG']['tl_catalog_fields']['useridfield'], 'multiple'=>true , 'tl_class'=>'w50 m12') // class m12, see #1627
 		),
 		
 	)
