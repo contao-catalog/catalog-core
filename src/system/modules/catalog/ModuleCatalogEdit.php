@@ -618,7 +618,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 					{
 						$objWidget->uploadFolder = $fieldConf[$field]['eval']['path'] . '/' . $this->strTable;
 					} else {
-						$objWidget->uploadFolder = 'tl_files/catalog_' . $this->strTable;
+						$objWidget->uploadFolder = $GLOBALS['TL_CONFIG']['uploadPath'].'/catalog_' . $this->strTable;
 					}
 					// ensure folder exists. So we create a Folder object which will create the folder if it
 					// does not exist and unset it immediately again as we do not need it for anything else.

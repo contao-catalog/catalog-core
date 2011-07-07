@@ -485,7 +485,8 @@ class Catalog extends Backend
 
 		$id = strlen($this->Input->get('id')) ? $this->Input->get('id') : CURRENT_ID;
 
-		
+		$urlError = ((version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))?'contao':'typolight').'/main.php?act=error';
+
 		// Check current action
 		switch ($this->Input->get('act'))
 		{
@@ -507,7 +508,7 @@ class Catalog extends Backend
 				if (!strlen($checkid) || !in_array($checkid, $root))
 				{
 					$this->log('Not enough permissions to create catalog items in catalog type ID "'.$checkid.'"', 'Catalog checkPermission', 5);
-					$this->redirect('typolight/main.php?act=error');
+					$this->redirect($urlError);
 				}
 				break;
 
@@ -534,13 +535,13 @@ class Catalog extends Backend
 				if ($rows < 1)
 				{
 					$this->log('Invalid catalog item ID "'.$id.'"', 'Catalog checkPermission', 5);
-					$this->redirect('typolight/main.php?act=error');
+					$this->redirect($urlError);
 				}
 
 				if (!in_array($objType->pid, $root))
 				{
 					$this->log('Not enough permissions to '.$this->Input->get('act').' catalog item ID "'.$id.'" of catalog type ID "'.$objType->pid.'"', 'Catalog checkPermission', 5);
-					$this->redirect('typolight/main.php?act=error');
+					$this->redirect($urlError);
 				}
 				break;
 
@@ -549,7 +550,7 @@ class Catalog extends Backend
 				if (!in_array($id, $root))
 				{
 					$this->log('Not enough permissions to access catalog type ID "'.$id.'"', 'Catalog checkPermission', 5);
-					$this->redirect('typolight/main.php?act=error');
+					$this->redirect($urlError);
 				}
 
 				$rows = 0;
@@ -567,7 +568,7 @@ class Catalog extends Backend
 				if ($rows < 1)
 				{
 					$this->log('Invalid catalog type ID "'.$id.'"', 'Catalog checkPermission', 5);
-					$this->redirect('typolight/main.php?act=error');
+					$this->redirect($urlError);
 				}
 
 				$session = $this->Session->getData();
@@ -579,12 +580,12 @@ class Catalog extends Backend
 				if (strlen($this->Input->get('act')))
 				{
 					$this->log('Invalid command "'.$this->Input->get('act').'"', 'Catalog checkPermission', 5);
-					$this->redirect('typolight/main.php?act=error');
+					$this->redirect($urlError);
 				}
 				if (!in_array($id, $root))
 				{
 					$this->log('Not enough permissions to access catalog type ID "'.$id.'"', 'Catalog checkPermission', 5);
-					$this->redirect('typolight/main.php?act=error');
+					$this->redirect($urlError);
 				}
 				break;
 		}
@@ -1901,7 +1902,7 @@ class Catalog extends Backend
     <option value="tabulator">'.$GLOBALS['TL_LANG']['MSC']['tabulator'].'</option>
   </select>'.(strlen($GLOBALS['TL_LANG']['MSC']['separator'][1]) ? '
   <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['MSC']['separator'][1].'</p>' : '').'
-  <h3><label for="source">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][0].'</label> <a href="typolight/files.php" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['fileManager']) . '" onclick="Backend.getScrollOffset(); this.blur(); Backend.openWindow(this, 750, 500); return false;">' . $this->generateImage('filemanager.gif', $GLOBALS['TL_LANG']['MSC']['fileManager'], 'style="vertical-align:text-bottom;"') . '</a></h3>
+  <h3><label for="source">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][0].'</label> <a href="'.((version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))?'contao':'typolight').'/files.php" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['fileManager']) . '" onclick="Backend.getScrollOffset(); this.blur(); Backend.openWindow(this, 750, 500); return false;">' . $this->generateImage('filemanager.gif', $GLOBALS['TL_LANG']['MSC']['fileManager'], 'style="vertical-align:text-bottom;"') . '</a></h3>
 '.$objTree->generate().(strlen($GLOBALS['TL_LANG']['tl_catalog_items']['source'][1]) ? '
   <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][1].'</p>' : ''). 
 ($blnDelete ? '
