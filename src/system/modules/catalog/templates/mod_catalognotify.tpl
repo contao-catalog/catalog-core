@@ -13,6 +13,7 @@
 <?php else: ?>
 <form action="<?php echo $this->action; ?>" method="post">
 <div class="formbody">
+<?php if((version_compare(VERSION, '2.10', '>='))): ?><input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}"><?php endif; ?>
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>" />
 <table cellspacing="0" cellpadding="0" summary="Table holds form input fields">
 <?php echo $this->fields; ?>

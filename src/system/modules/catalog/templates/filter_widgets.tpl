@@ -53,7 +53,7 @@ if ($this->filterOptions): ?>
 
 <ul class="list">
 <?php $i = 0; foreach(deserialize($filterWidget['options']) as $filterOption): ?>
-<li class="option <?php echo ($i==0 ? 'list_none' : 'list_id-'.$filterOption['id']); ?><?php if ($filterOption['selected']) echo ' active'; ?>"><a href="<?php echo $filterOption['value']; ?>" title="<?php echo $filterOption['label']; ?>"><?php echo $filterOption['label']; ?> (<?php echo $filterOption[resultcount']; ?>)</a></li>
+<li class="option <?php echo ($i==0 ? 'list_none' : 'list_id-'.$filterOption['id']); ?><?php if ($filterOption['selected']) echo ' active'; ?>"><a href="<?php echo $filterOption['value']; ?>" title="<?php echo $filterOption['label']; ?>"><?php echo $filterOption['label']; ?> (<?php echo $filterOption['resultcount']; ?>)</a></li>
 <?php $i++; endforeach; ?>
 </ul>
 
@@ -76,8 +76,9 @@ if ($this->rangeOptions): ?>
 <<?php echo $this->range_hl; ?>><?php echo $this->range_headline; ?></<?php echo $this->range_hl; ?>>
 <?php endif; ?>
 
-<form method="post" id="<?php echo $this->table; ?>_range" action="<?php echo $this->action; ?>">	
+<form method="post" id="<?php echo $this->table; ?>_range" action="<?php echo $this->action; ?>">
 <div class="range">
+<?php if((version_compare(VERSION, '2.10', '>='))): ?><input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}"><?php endif; ?>
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>" />
 <input type="hidden" name="FORM_DATA" value="range" />
 <?php foreach($this->widgets['range'] as $rangeWidget): ?>
@@ -162,6 +163,7 @@ if ($this->dateOptions): ?>
 
 <form method="post" id="<?php echo $this->table; ?>_date" action="<?php echo $this->action; ?>">	
 <div class="date">
+<?php if((version_compare(VERSION, '2.10', '>='))): ?><input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}"><?php endif; ?>
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>" />
 <input type="hidden" name="FORM_DATA" value="date" />
 <?php foreach($this->widgets['date'] as $dateWidget): ?>
@@ -224,6 +226,7 @@ if ($this->searchOptions): ?>
 
 <form method="post" id="<?php echo $this->table; ?>_search" action="<?php echo $this->action; ?>"> 
 <div class="search">
+<?php if((version_compare(VERSION, '2.10', '>='))): ?><input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}"><?php endif; ?>
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>" />
 <input type="hidden" name="FORM_DATA" value="search" />
 <div class="widget <?php echo $this->widgets['search']['id']; ?>">

@@ -1381,7 +1381,7 @@ abstract class ModuleCatalog extends Module
 								'rgxp' 			=> 'date'
 							);
 							// date picker was changed in 2.10
-							if (version_compare(VERSION.'.'.BUILD, '2.10.0', '>='))
+							if (version_compare(VERSION, '2.10', '>='))
 								$date['datepicker'] = true;
 							else
 								$date['datepicker'] = $this->getDatePickerString();

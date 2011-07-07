@@ -23,6 +23,7 @@
 
 <form method="post" id="<?php echo $this->table; ?>_range" action="<?php echo $this->action; ?>">	
 <div class="range">
+<?php if((version_compare(VERSION, '2.10', '>='))): ?><input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}"><?php endif; ?>
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>" />
 <input type="hidden" name="FORM_DATA" value="range" />
 <?php foreach($this->rangeOptions as $rangeOption): ?>

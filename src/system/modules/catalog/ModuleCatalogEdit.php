@@ -758,7 +758,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 				$objDate = new Date($objWidget->value, $GLOBALS['TL_CONFIG'][$arrData['eval']['rgxp'] . 'Format']);
 				$objWidget->value = $objDate->$arrData['eval']['rgxp'];
 				// date picker was changed in 2.10
-				if(version_compare(VERSION.'.'.BUILD, '2.10.0', '>='))
+				if(version_compare(VERSION, '2.10', '>='))
 				{
 					switch ($arrData['eval']['rgxp'])
 					{

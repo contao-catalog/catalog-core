@@ -15,6 +15,7 @@
 
 <form action="<?php echo $this->action; ?>" class="tl_form" method="post">
 <div class="tl_formbody_edit">
+<?php if(version_compare(VERSION, '2.10', '>=')): ?><input type="hidden" name="REQUEST_TOKEN" value="<?php echo REQUEST_TOKEN; ?>"><?php endif; ?>
 <input type="hidden" name="act" value="tags" />
 <div class="fields">
 <?php echo $this->tagsContent; ?>

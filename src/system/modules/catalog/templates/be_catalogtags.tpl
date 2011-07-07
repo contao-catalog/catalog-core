@@ -31,6 +31,7 @@ window.addEvent('load', function() {
 
 <form action="<?php echo $this->href; ?>" class="tl_form" method="get">
 <div class="tl_submit_container">
+<?php if(version_compare(VERSION, '2.10', '>=')): ?><input type="hidden" name="REQUEST_TOKEN" value="<?php echo REQUEST_TOKEN; ?>"><?php endif; ?>
 <input type="hidden" name="do" value="catalog" />
 <input type="hidden" name="key" value="maintenance" />
 <input type="submit" id="index" class="tl_submit" value="<?php echo $this->tagsContinue; ?>" /> 

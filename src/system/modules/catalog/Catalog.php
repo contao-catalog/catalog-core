@@ -1042,7 +1042,7 @@ class Catalog extends Backend
 					->execute($catalogId);
 
 		// date picker was changed in 2.10
-		if (version_compare(VERSION.'.'.BUILD, '2.10.0', '>='))
+		if (version_compare(VERSION, '2.10', '>='))
 			$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']['date']['fieldDef']['eval'] = array('datepicker' => true);
 		else
 			$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']['date']['fieldDef']['eval'] = array('datepicker' => $this->getDatePickerString());

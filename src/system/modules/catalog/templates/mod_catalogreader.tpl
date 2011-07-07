@@ -26,6 +26,7 @@
 
 <form action="<?php echo $this->action; ?>" id="<?php echo $this->formId; ?>" method="post">
 <div class="formbody">
+<?php if((version_compare(VERSION, '2.10', '>='))): ?><input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}"><?php endif; ?>
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>" />
 <?php foreach ($this->fields as $objWidget): ?>
 <div class="widget">
