@@ -290,7 +290,8 @@ class ModuleCatalogNotify extends ModuleCatalog
 			
 			foreach($this->catalog_recipients as $recipient) 
 			{
-				if($recipient)
+				// prevent uncool Swift_RfcComplianceExceptions when having checked recipient fields that aren't valid email addresses
+				if($this->isValidEmailAddress($recipient))
 					$objEmail->sendTo($recipient);
 			}
 			
