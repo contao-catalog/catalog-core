@@ -281,18 +281,26 @@ class ModuleCatalogNotify extends ModuleCatalog
 			$objEmail->text =  $text. "\n\n" . $notify;
 
 			$additionalRecipients = array();
-			foreach(deserialize($this->catalog_recipient_fields) as $field)
-			{
-				if($arrCatalog[$field])
-					$additionalRecipients[] = $arrCatalog[$field];
-			}
-			$this->catalog_recipients = array_unique(array_merge($this->catalog_recipients, $additionalRecipients));
+			$arrRecipientFields = deserialize($this->catalog_recipient_fields);
 			
-			foreach($this->catalog_recipients as $recipient) 
+			if(is_array($arrRecipientFields) && count($arrRecipientFields))
 			{
-				// prevent uncool Swift_RfcComplianceExceptions when having checked recipient fields that aren't valid email addresses
-				if($this->isValidEmailAddress($recipient))
-					$objEmail->sendTo($recipient);
+				foreach($arrRecipientFields as $field)
+				{
+					if($arrCatalog[$field])
+						$additionalRecipients[] = $arrCatalog[$field];
+				}
+				$this->catalog_recipients = array_unique(array_merge($this->catalog_recipients, $additionalRecipients));				
+			}
+			
+			if(is_array($this->catalog_recipients) && count($this->catalog_recipients))
+			{
+				foreach($this->catalog_recipients as $recipient) 
+				{
+					// prevent uncool Swift_RfcComplianceExceptions when having checked recipient fields that aren't valid email addresses
+					if($this->isValidEmailAddress($recipient))
+						$objEmail->sendTo($recipient);
+				}				
 			}
 			
 			$this->log('A user has notified you of interest in the following catalog item: '.$url, 'ModuleCatalogNotify compile()', TL_GENERAL);
