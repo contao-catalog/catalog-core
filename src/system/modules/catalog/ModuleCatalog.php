@@ -101,6 +101,10 @@ abstract class ModuleCatalog extends Module
 			$this->Import('Catalog');
 			if(!$GLOBALS['TL_DCA'][$objCatalog->tableName]['Cataloggenerated'])
 			{
+				// load language files and DC.
+				$this->loadLanguageFile($objCatalog->tableName);
+				$this->loadDataContainer($objCatalog->tableName);
+				
 				// load default language
 				$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
 													 ? Catalog::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])

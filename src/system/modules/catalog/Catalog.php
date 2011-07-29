@@ -121,6 +121,10 @@ class Catalog extends Backend
 
 		if(!$GLOBALS['TL_DCA'][$objType->tableName]['Cataloggenerated'])
 		{
+			// load language files and DC. langconfig.php and dcaconfig.php is loaded here but not the data in system/modules
+			$this->loadLanguageFile($objType->tableName);
+			$this->loadDataContainer($objType->tableName);
+				
 			// load default language
 			$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
 													 ? self::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
