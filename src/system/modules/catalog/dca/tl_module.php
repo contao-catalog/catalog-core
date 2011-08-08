@@ -34,7 +34,7 @@
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogfilter']    = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,catalog_filter_cond_from_lister;{catalog_filter_legend},catalog_filter_enable;{catalog_range_legend:hide},catalog_range_enable;{catalog_date_legend:hide},catalog_date_enable;{catalog_search_legend:hide},catalog_search_enable;{catalog_sort_legend:hide},catalog_sort_enable;{template_legend:hide},catalog_filtertemplate,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['cataloglist']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override,catalog_link_window;{catalog_filter_legend:hide},catalog_condition_enable,catalog_search,catalog_query_mode,catalog_tags_mode,catalog_where,perPage,catalog_list_use_limit,catalog_order;{catalog_thumb_legend:hide},catalog_thumbnails_override;{catalog_edit_legend:hide},catalog_edit_enable;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['cataloglist']  = '{title_legend},name,headline,type;{config_legend},catalog,jumpTo,catalog_visible,catalog_link_override,catalog_link_window;{catalog_filter_legend:hide},deny_catalog_filter_cond_from_lister,catalog_condition_enable,catalog_search,catalog_query_mode,catalog_tags_mode,catalog_where,perPage,catalog_list_use_limit,catalog_order;{catalog_thumb_legend:hide},catalog_thumbnails_override;{catalog_edit_legend:hide},catalog_edit_enable;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreader']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_visible,catalog_goback_disable,catalog_comments_disable;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
@@ -675,6 +675,12 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 	'catalog_filter_cond_from_lister' => array
 	(
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_filter_cond_from_lister'],
+		'exclude'                 => true,
+		'inputType'               => 'checkbox',
+	),
+	'deny_catalog_filter_cond_from_lister' => array
+	(
+		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['deny_catalog_filter_cond_from_lister'],
 		'exclude'                 => true,
 		'inputType'               => 'checkbox',
 	),

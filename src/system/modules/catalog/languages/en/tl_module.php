@@ -98,7 +98,7 @@ $GLOBALS['TL_LANG']['tl_module']['catalog_search'] = array('Search Fields', 'Ple
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_condition_enable'] = array('Enable Conditional List', 'Enable the conditional list mode, to prevent listing until the conditions below are first met.');
 $GLOBALS['TL_LANG']['tl_module']['catalog_condition'] = array('Condition List Fields', 'Select the fields that must first appear in the filter before any items are displayed, e.g. Area, City - this will display an empty list until the user has selected both the Area AND City fields in the filter.');
-
+$GLOBALS['TL_LANG']['tl_module']['deny_catalog_filter_cond_from_lister'] = array('Deny Catalog Filter usage for this module', 'Deny Catalog Filter modules to use this lister for filtering when the option "Use filter condition from lister on same page." is active');
 
 $GLOBALS['TL_LANG']['tl_module']['catalog_thumbnails_override'] = array('Override Image sizes', 'Enables you to override the default catalog image sizes with new image size and fullscreen options.');
 

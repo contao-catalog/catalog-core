@@ -223,6 +223,9 @@ CREATE TABLE `tl_module` (
   `catalog_where` text NULL,
   `catalog_order` text NULL,
 
+-- catalog list
+  `deny_catalog_filter_cond_from_lister` char(1) NOT NULL default '0',
+
 -- catalog related
   `catalog_related` blob NULL,
   `catalog_related_tagcount` smallint(3) unsigned NOT NULL default '0',

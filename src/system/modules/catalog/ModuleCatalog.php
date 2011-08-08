@@ -936,7 +936,7 @@ abstract class ModuleCatalog extends Module
 						if(($this instanceof ModuleCatalogFilter) && $this->catalog_filter_cond_from_lister)
 						{
 							$ids=$this->getModulesForThisPage();
-							$objModules = $this->Database->prepare('SELECT * FROM tl_module WHERE id IN (' . implode(', ', $ids) . ') AND type=\'cataloglist\' AND catalog='.$this->catalog)
+							$objModules = $this->Database->prepare('SELECT * FROM tl_module WHERE id IN (' . implode(', ', $ids) . ') AND deny_catalog_filter_cond_from_lister=0 AND type=\'cataloglist\' AND catalog='.$this->catalog)
 									->execute();
 							while($objModules->next())
 							{
