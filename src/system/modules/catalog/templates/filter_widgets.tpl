@@ -37,7 +37,7 @@ if ($this->filterOptions): ?>
 
 <select class="<?php echo ($filterWidget['multiple'] ? 'multiselect' : 'select'); ?>" id="ctrl_<?php echo $filterWidget['id']; ?>"<?php echo ($filterWidget['multiple'] ? ' multiple="multiple"' : ''); ?> <?php echo $filterWidget['attributes']; ?> name="<?php echo ($filterWidget['multiple'] ? $filterWidget['name'].'[]' : $filterWidget['name']); ?>">
 <?php $i = 0; foreach(deserialize($filterWidget['options']) as $filterOption): ?>
-<option <?php if ($filterOption['selected']) echo 'selected="selected" '; ?>value="<?php echo $filterOption['value']; ?>"><?php echo ($i==0 ? 'Beliebig' : $filterOption['label']); ?></option>
+<option <?php if ($filterOption['selected']) echo 'selected="selected" '; ?>value="<?php echo $filterOption['value']; ?>"><?php echo ($i==0 ? sprintf($GLOBALS['TL_LANG']['MSC']['clearAll'], $filterWidget['label']) : $filterOption['label']); ?></option>
 <?php $i++; endforeach; ?>
 </select>
 
@@ -53,7 +53,7 @@ if ($this->filterOptions): ?>
 
 <ul class="list">
 <?php $i = 0; foreach(deserialize($filterWidget['options']) as $filterOption): ?>
-<li class="option <?php echo ($i==0 ? 'list_none' : 'list_id-'.$filterOption['id']); ?><?php if ($filterOption['selected']) echo ' active'; ?>"><a href="<?php echo $filterOption['value']; ?>" title="<?php echo $filterOption['label']; ?>"><?php echo $filterOption['label']; ?> (<?php echo $filterOption['resultcount']; ?>)</a></li>
+<li class="option <?php echo ($i==0 ? 'list_none' : 'list_id-'.$filterOption['id']); ?><?php if ($filterOption['selected']) echo ' active'; ?>"><a href="<?php echo $filterOption['value']; ?>" title="<?php echo $filterOption['label']; ?>"><?php echo $filterOption['label']; ?><?php if($i>0): ?> (<?php echo $filterOption['resultcount']; ?>)<?php endif; ?></a></li>
 <?php $i++; endforeach; ?>
 </ul>
 

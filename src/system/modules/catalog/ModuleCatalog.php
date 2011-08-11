@@ -571,12 +571,15 @@ abstract class ModuleCatalog extends Module
 					case 'decimal':
 					case 'select':
 						$value = $current[$field];
-						$procedure['where'][] = $field."=?";
-						$values['where'][] = $value;
-						if ($blnTree && in_array($field, $arrTree)) 
+						if($value!==NULL)
 						{
-							$procedure['tree'][$field] = $field."=?";
-							$values['tree'][$field] = $value;
+							$procedure['where'][] = $field."=?";
+							$values['where'][] = $value;
+							if ($blnTree && in_array($field, $arrTree)) 
+							{
+								$procedure['tree'][$field] = $field."=?";
+								$values['tree'][$field] = $value;
+							}
 						}
 						break;
 					case 'date':
