@@ -2957,7 +2957,7 @@ abstract class ModuleCatalog extends Module
 		}
 		if (!$this->objNavField->treeView || ($objNodes->numRows == 0 && $level == 1))
 		{
-			$objNodes = $this->Database->execute('SELECT id, '.$this->objNavField->valueField.', 0 AS childCount, '. $this->objNavField->sourceColumn .' AS name FROM '. $this->objNavField->sourceTable .', 0 AS itemCount ORDER BY '.$this->objNavField->sort);
+			$objNodes = $this->Database->execute('SELECT id, '.$this->objNavField->valueField.', 0 AS childCount, '. $this->objNavField->sourceColumn .' AS name, 0 AS itemCount FROM '. $this->objNavField->sourceTable .' ORDER BY '.$this->objNavField->sort);
 		}
 		// no entries for the given pid
 		if (!$objNodes->numRows)
