@@ -367,7 +367,7 @@ class Catalog extends Backend
 	public function getDefaultDca()
 	{
 		$this->loadLanguageFile('tl_catalog_items');
-		return array
+		$arrDCA = array
 		(
 			'config' => array
 			(
@@ -461,6 +461,23 @@ class Catalog extends Backend
 			(
 			)
 		);
+		
+		// add a direct link to the fields but for admins only
+		$this->import('BackendUser', 'User');
+		if(!$this->User->isAdmin)
+		{
+			return $arrDCA;
+		}
+		
+		$arrDCA['list']['global_operations']['fields'] = array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_catalog_items']['fields'],
+			'href'                => 'table=tl_catalog_fields&id=' . $this->Input->get('id'),
+			'class'               => 'header_css_fields',
+			'attributes'          => 'onclick="Backend.getScrollOffset();"'		
+		);
+		
+		return $arrDCA;
 	}
 
 	/**

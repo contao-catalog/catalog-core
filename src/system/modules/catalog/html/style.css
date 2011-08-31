@@ -1,5 +1,6 @@
 /* TYPOlight catalog fields style sheet */
 .header_css_export { padding:2px 0px 3px 20px; background-image:url("export.gif"); background-position:left center; background-repeat:no-repeat; }
+.header_css_fields { padding:2px 0px 3px 20px; background-image:url("fields.gif"); background-position:left center; background-repeat:no-repeat; }
 .header_manualsort { padding:2px 0px 3px 20px; background-image:url("cut.gif"); background-position:left center; background-repeat:no-repeat; }
 .header_catalog_maintenance { padding:2px 0px 3px 20px; background-image:url("maintenance.gif"); background-position:left center; background-repeat:no-repeat; }
 .field_heading { color:#aaa; }

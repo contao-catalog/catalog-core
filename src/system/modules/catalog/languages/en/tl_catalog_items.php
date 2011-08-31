@@ -32,6 +32,7 @@
  */
 $GLOBALS['TL_LANG']['tl_catalog_items']['import'] = array('CSV import', 'Import data to the catalog from a CSV file');
 $GLOBALS['TL_LANG']['tl_catalog_items']['export'] = array('CSV export', 'Export items data to a CSV file');
+$GLOBALS['TL_LANG']['tl_catalog_items']['fields'] = array('Define fields', 'Define fields for this catalog');
 $GLOBALS['TL_LANG']['tl_catalog_items']['source'] = array('File source', 'Please choose the CSV file you want to import from the files directory.');
 $GLOBALS['TL_LANG']['tl_catalog_items']['dataPerCycle'] = array('Data imports per cycle', 'Enter the amount of data rows to import per cycle.');
 $GLOBALS['TL_LANG']['tl_catalog_items']['removeData'] = array('Remove existing data', 'Select to remove all existing data in the database, before importing.');
