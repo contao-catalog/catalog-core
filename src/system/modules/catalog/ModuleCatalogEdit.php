@@ -760,7 +760,8 @@ class ModuleCatalogEdit extends ModuleCatalog
 				// date picker was changed in 2.10
 				if(version_compare(VERSION, '2.10', '>='))
 				{
-					switch ($arrData['eval']['rgxp'])
+					$rgxp = $arrData['eval']['rgxp'];
+					switch ($rgxp)
 					{
 						case 'datim':
 							$time = ",\n      timePicker: true";
@@ -772,6 +773,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 							$time = '';
 							break;
 					}
+					$format = $GLOBALS['TL_CONFIG'][$rgxp.'Format'];
 					$datepicker = '<img src="plugins/datepicker/icon.gif" width="20" height="20" id="toggle_' . $objWidget->id . '" style="vertical-align:-6px;">';
 					$GLOBALS['TL_HEAD'][]=
 					'window.addEvent(\'domready\', function() {
