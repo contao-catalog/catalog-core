@@ -3216,8 +3216,24 @@ abstract class ModuleCatalog extends Module
 		$objConfig->moderate = $objArchive->moderate;
 		// TODO: add notifies here.
 		$arrNotifies=array($GLOBALS['TL_ADMIN_EMAIL']);
+
+		// issue #1690 hide member details not working anymore.
+		if($objArchive->hideMember && ($this->Input->post('FORM_SUBMIT')=='com_'. $this->strTable .'_'. $objCatalog->id))
+		{
+			// we have to trick the comments module into beliving that the user inserted his name and email as those are hardcoded mandatory.
+			$this->import('FrontendUser', 'Member');
+			$this->Input->setPost('name', trim($this->Member->firstname . ' ' . $this->Member->lastname));
+			$this->Input->setPost('email', trim($this->Member->email));
+		}
 		$this->Comments->addCommentsToTemplate($this->Template, $objConfig, $this->strTable, $objCatalog->id, $arrNotifies);
 
+		if($objArchive->hideMember)
+		{
+			$fields = $this->Template->fields;
+			unset($fields['name']);
+			unset($fields['email']);
+			$this->Template->fields=$fields;
+		}
 		if($objArchive->disableWebsite)
 		{
 			$fields = $this->Template->fields;
