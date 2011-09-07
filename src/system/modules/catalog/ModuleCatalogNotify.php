@@ -205,23 +205,20 @@ class ModuleCatalogNotify extends ModuleCatalog
 
 		$field = 'message';
 		$inputType = 'textarea';
-		// Long text message
+		$strClass = $GLOBALS['TL_FFL'][$inputType];
+		// Continue if the class is not defined
+		if ($this->classFileExists($strClass))
+		{
+			// Long text message
 			$arrMessage = array
 			(
 				'id'=> $field,
 				'label'=> $GLOBALS['TL_LANG']['MSC'][$field],
-				'mandatory'=>true,
-				'required'=>true,
-				'inputType'               => $inputType,
-				'eval'                    => array('mandatory'=>true)
+				'mandatory'	=>true,
+				'required'	=>true,
+				'inputType'	=> $inputType,
+				'eval'		=> array('mandatory'=>true)
 			);
-
-			$strClass = $GLOBALS['TL_FFL'][$inputType];
-			// Continue if the class is not defined
-			if (!$this->classFileExists($strClass))
-			{
-				continue;
-			}
 			$objMessage = new $strClass($this->prepareForWidget($arrMessage, $field));
 			$objMessage->rowClass = 'row_'.$i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
 			if($this->Input->post('FORM_SUBMIT') == $formId)
@@ -230,6 +227,10 @@ class ModuleCatalogNotify extends ModuleCatalog
 				if ($objMessage->hasErrors())
 				{
 					$doNotSubmit = true;
+				} elseif ($objWidget->submitInput())
+				{
+					$arrStore[$field]['label'] = $arrMessage['label'];
+					$arrStore[$field]['value'] = $objWidget->value;
 				}
 			}
 			$strMessage = $objMessage->parse();
@@ -237,6 +238,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 			$arrFields[$field] = $strMessage;
 			$arrWidgets[$field] = $objMessage;
 			++$i;
+		}
 
 		// Captcha
 		if (!$this->disableCaptcha)
