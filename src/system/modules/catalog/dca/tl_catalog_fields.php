@@ -671,34 +671,53 @@ class tl_catalog_fields extends Backend
 		return $tables;
 	}
 	
+	/**
+	 * list all index fields with type int from a table
+	 * @param DataContainer $dc
+	 * @return array : string fieldname => string fieldname
+	 */
 	public function getTableKeys(DataContainer $dc)
 	{
 		$objTable = $this->Database->prepare("SELECT itemTable FROM tl_catalog_fields WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
 		 
-		if ($objTable->numRows > 0 && $this->Database->tableExists($objTable->itemTable))
+		if($objTable->numRows > 0 && $this->Database->tableExists($objTable->itemTable))
 		{
 			$fields = $this->Database->listFields($objTable->itemTable);
-			return array_map(create_function('$x', 'return $x["name"];'), 
-					array_filter($fields, create_function('$x', 'return array_key_exists("index", $x) && $x["type"] == "int";')));
+			$result = array();
+			
+			foreach($fields as $field)
+			{
+				if(array_key_exists('index', $field) && $field['type'] == 'int')
+					$result[$field['name']] = $field['name'];
+			}
+			
+			return $result;
 		}
 	}
-	
- 
+
+	/**
+	 * list all fields of a table (excluding indexes)
+	 * @param DataContainer $dc
+	 * @return array : string fieldname => string fieldname
+	 */
 	public function getTableFields(DataContainer $dc)
 	{
 		$objTable = $this->Database->prepare("SELECT itemTable FROM tl_catalog_fields WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
-		 
-		if ($objTable->numRows > 0 && $this->Database->tableExists($objTable->itemTable))
+		if(($objTable->numRows>0) && $this->Database->tableExists($objTable->itemTable))
 		{
-			$fields = $this->Database->listFields($objTable->itemTable);
-			return array_map(create_function('$x', 'return $x["name"];'), $fields);
+			$result = array();
+			foreach($fields as $field)
+			{
+				if($field['type'] != 'index')
+					$result[$field['name']] = $field['name'];
+			}
+			return $result;
 		}
 	}
-
 
 	public function getItems(DataContainer $dc)
 	{
