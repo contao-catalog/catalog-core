@@ -681,20 +681,18 @@ class tl_catalog_fields extends Backend
 		$objTable = $this->Database->prepare("SELECT itemTable FROM tl_catalog_fields WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
-		 
+		$result = array();
 		if($objTable->numRows > 0 && $this->Database->tableExists($objTable->itemTable))
 		{
 			$fields = $this->Database->listFields($objTable->itemTable);
-			$result = array();
-			
 			foreach($fields as $field)
 			{
 				if(array_key_exists('index', $field) && $field['type'] == 'int')
 					$result[$field['name']] = $field['name'];
 			}
 			
-			return $result;
 		}
+		return $result;
 	}
 
 	/**
@@ -707,16 +705,17 @@ class tl_catalog_fields extends Backend
 		$objTable = $this->Database->prepare("SELECT itemTable FROM tl_catalog_fields WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
+		$result = array();
 		if(($objTable->numRows>0) && $this->Database->tableExists($objTable->itemTable))
 		{
-			$result = array();
+			$fields = $this->Database->listFields($objTable->itemTable);
 			foreach($fields as $field)
 			{
 				if($field['type'] != 'index')
 					$result[$field['name']] = $field['name'];
 			}
-			return $result;
 		}
+		return $result;
 	}
 
 	public function getItems(DataContainer $dc)
