@@ -1548,7 +1548,8 @@ class Catalog extends Backend
 					->execute($sourceTable);
 			$blnCatalog = ($objCatalog->numRows == 1);
 
-			$treeView = $this->Database->fieldExists('pid', $sourceTable) && !$blnCatalog;
+			// tree view only self referenced tables
+			$treeView = ($GLOBALS['TL_DCA'][$sourceTable]['config']['ptable'] === $sourceTable) && $this->Database->fieldExists('pid', $sourceTable) && !$blnCatalog;
 
 			if ($treeView)
 			{
