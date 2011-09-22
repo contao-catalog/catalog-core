@@ -926,6 +926,10 @@ class Catalog extends Backend
 				$strFormat = str_replace('{{'.$match.'}}', $replace, $strFormat);
 			}
 		}
+
+		// now we have a final string but we would also like to let the users use if-else conditions like for the newsletter
+		$strFormat = $this->parseSimpleTokens($strFormat, $values);
+
 		return $strFormat;
 	}
 
