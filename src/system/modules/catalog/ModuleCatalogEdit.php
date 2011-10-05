@@ -537,13 +537,19 @@ class ModuleCatalogEdit extends ModuleCatalog
 			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$arrData['eval']['catalog']['type']];
 			if(is_array($fieldType) && array_key_exists('checkPermissionFEEdit', $fieldType) && is_array($fieldType['checkPermissionFEEdit']))
 			{
+				$allowFieldEditing = true;
 				foreach ($fieldType['checkPermissionFEEdit'] as $callback)
 				{
 					$this->import($callback[0]);
 					// TODO: Do we need more parameters here?
 					if(!($this->$callback[0]->$callback[1]($fieldConf)))
-						continue;
+					{
+						$allowFieldEditing = false;
+						break;
+					}
 				}
+				if(!$allowFieldEditing)
+					continue;
 			}
 			unset($objWidgetUpload);
 			//$strUpload = '';
