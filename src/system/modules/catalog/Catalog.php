@@ -1385,9 +1385,9 @@ class Catalog extends Backend
 		$ids = deserialize($objRow->items);
 		$sortCol = $objRow->itemSortCol;
 		
-		if (!$objRow->limitItems || ($objRow->limitItems && ($objRow->childrenSelMode == 'items' || $objRow->childrenSelMode == 'children'))) 
+		if (!$limitItems || ($limitItems && ($objRow->childrenSelMode == 'items' || $objRow->childrenSelMode == 'children'))) 
 		{
-			if (!$objRow->limitItems)
+			if (!$limitItems)
 			{
 				// select all items in tree starting at root
 				$ids = array(0);
@@ -1395,7 +1395,7 @@ class Catalog extends Backend
 
 			if ($blnTags) 
 			{
-				$field['inputType'] = 'checkbox';		
+				$field['inputType'] = 'checkbox';
 				$field['eval']['multiple'] = true;
 			}
 			else
@@ -1417,13 +1417,13 @@ class Catalog extends Backend
 		$field['eval']['catalog']['limitItems'] = $limitItems;
 		$field['eval']['catalog']['selectedIds'] = $ids;
 		$field['eval']['catalog']['sortCol'] = $sortCol;
-		$field['eval']['catalog']['childrenSelMode'] = $objRow->limitItems ? $objRow->childrenSelMode : '';
+		$field['eval']['catalog']['childrenSelMode'] = $limitItems ? $objRow->childrenSelMode : '';
 		$field['eval']['catalog']['itemFilter'] = $objRow->itemFilter;
 
-		$blnItems = (!$objRow->limitItems || ($objRow->limitItems && $objRow->childrenSelMode == 'items'));
+		$blnItems = (!$limitItems || ($limitItems && $objRow->childrenSelMode == 'items'));
 
 
-		$parentFilter = $objRow->limitItems ? $objRow->parentFilter : '';
+		$parentFilter = $limitItems ? $objRow->parentFilter : '';
 
 		// only filter items further if in editing mode in BE
 		$idsFilter = '';
@@ -1447,14 +1447,6 @@ class Catalog extends Backend
 		$field['eval']['tableColumn'] = $foreignKey;
 		$field['eval']['sortColumn'] = $sortCol;
 		$field['eval']['root'] = $ids;
-
-/*
-		if (!$objRow->limitItems || ($objRow->limitItems && ($objRow->childrenSelMode == 'items' || $objRow->childrenSelMode == 'children'))) 
-		{
-			// sort and keep associative array
-			asort($field['options']);
-		}
-*/
 
 		// default is "Select %s"
 		$field['eval']['title'] = sprintf($GLOBALS['TL_LANG']['MSC']['optionsTitle'], $objRow->name);
@@ -1560,7 +1552,6 @@ class Catalog extends Backend
 
 			if ($treeView)
 			{
-
 				if (strlen($idsFilter) && $level == 0 && strlen($this->Input->get('id')) && $this->Input->get('act') == 'edit')
 				{
 					$arrWhere['items'] = 'pid IN ('.$idsFilter.')';	
@@ -1568,7 +1559,8 @@ class Catalog extends Backend
 				}
 				else
 				{
-					$arrWhere['items'] = ($blnItems ? 'id' : 'pid')." IN (" . implode(',', $ids) . ")";
+					// added check for $ids array to either contain more than one element or the single element is not zero to fix #2204 addendum
+					$arrWhere['items'] = ($blnItems && (count($ids)!=1 || $ids[0]!=0) ? 'id' : 'pid')." IN (" . implode(',', $ids) . ")";
 				}
 				
 				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? implode(' AND ', $arrWhere) : '';
