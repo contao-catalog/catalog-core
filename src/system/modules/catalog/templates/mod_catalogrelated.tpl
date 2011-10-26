@@ -1,4 +1,3 @@
-
 <?php if (!$this->searchable): ?>
 <!-- indexer::stop -->
 <?php endif; ?>

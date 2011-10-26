@@ -23,8 +23,9 @@
 
 <form method="post" id="<?php echo $this->table; ?>_range" action="<?php echo $this->action; ?>">	
 <div class="range">
-<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>" />
-<input type="hidden" name="FORM_DATA" value="range" />
+<input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}">
+<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>">
+<input type="hidden" name="FORM_DATA" value="range">
 <?php foreach($this->rangeOptions as $rangeOption): ?>
 <?php echo $rangeOption; ?>
 <?php endforeach; ?>
@@ -44,8 +45,9 @@
 
 <form method="post" id="<?php echo $this->table; ?>_date" action="<?php echo $this->action; ?>">	
 <div class="date">
-<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>" />
-<input type="hidden" name="FORM_DATA" value="date" />
+<input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}">
+<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>">
+<input type="hidden" name="FORM_DATA" value="date">
 <?php foreach($this->dateOptions as $dateOption): ?>
 <?php echo $dateOption; ?>
 <?php endforeach; ?>
@@ -65,8 +67,9 @@
 
 <form method="post" id="<?php echo $this->table; ?>_search" action="<?php echo $this->action; ?>"> 
 <div class="search">
-<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>" />
-<input type="hidden" name="FORM_DATA" value="search" />
+<input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}">
+<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->table; ?>">
+<input type="hidden" name="FORM_DATA" value="search">
 <?php echo $this->searchOptions; ?>
 </div>
 </form> 

@@ -12,6 +12,7 @@
 <?php else: ?>
 <form action="<?php echo $this->action; ?>" method="post">
 <div class="formbody">
+<input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}" />
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>" />
 <table cellspacing="0" cellpadding="0" summary="Table holds form input fields">
 <?php echo $this->fields; ?>

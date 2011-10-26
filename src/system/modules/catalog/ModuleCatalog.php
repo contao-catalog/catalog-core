@@ -2252,6 +2252,7 @@ abstract class ModuleCatalog extends Module
 		}
 		$objTemplate->entries         = $arrCatalog;
 		$objTemplate->moduleTemplate  = $this->Template;
+		$objTemplate->noItemsMsg	  = $GLOBALS['TL_LANG']['MSC']['noItemsMsg'];
 
 		return $objTemplate->parse();
 	}

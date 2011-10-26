@@ -132,7 +132,7 @@ $GLOBALS['TL_LANG']['MSC']['notifyConfirm']	= 'Your notification has been sent.'
 /**
  * Miscellaneous
  */
-
+$GLOBALS['TL_LANG']['MSC']['noItemsMsg'] = 'No entry that matches the conditions has been found. You can customize this message using <strong>$GLOBALS[\'TL_LANG\'][\'MSC\'][\'noItemsMsg\'] = \'My message\';</strong> in your system/config/langconfig.php';
 $GLOBALS['TL_LANG']['MSC']['catalogCondition']	= 'Please first select the following filter(s): %s';
 $GLOBALS['TL_LANG']['MSC']['catalogInvalid'] 		= 'Invalid Catalog!';
 $GLOBALS['TL_LANG']['MSC']['catalogNoFields'] 	= 'No Catalog fields defined!';
