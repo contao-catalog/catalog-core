@@ -2343,8 +2343,22 @@ abstract class ModuleCatalog extends Module
 		$arrItems = deserialize($value, true);
 		$arrValues = deserialize($value, true);
 		$strHtml = $value;
-		
 		$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
+
+		if((version_compare(VERSION, '2.10', '>=')) && $fieldConf['eval']['rte'] && $GLOBALS['TL_CONFIG']['useRTE'])
+		{
+			global $objPage;
+			$this->import('String');
+			// reformat the RTE output to the proper format
+			if($objPage->outputFormat == 'xhtml')
+			{
+				$strHtml = $this->String->toXhtml($strHtml);
+			}
+			if($objPage->outputFormat == 'html5')
+			{
+				$strHtml = $this->String->toHtml5($strHtml);
+			}
+		}
 
 		switch ($fieldConf['eval']['catalog']['type'])
 		{
