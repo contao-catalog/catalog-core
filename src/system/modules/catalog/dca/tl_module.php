@@ -532,7 +532,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_where'],
 		'exclude'                 => true,
 		'inputType'               => 'textarea',
-		'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;')
+		'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;', 'allowHtml'=>true, 'preserveTags'=>true)
 	),	
 
 	'catalog_order' => array
