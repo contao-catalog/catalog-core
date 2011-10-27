@@ -2498,7 +2498,8 @@ abstract class ModuleCatalog extends Module
 		$sortBy = $blnThumnailOverride ? $this->sortBy : $fieldConf['eval']['catalog']['sortBy'];
 		
 		$files = deserialize($files,true);
-		if (!is_array($files) || count($files) < 1)
+		$countFiles = count($files);
+		if (!is_array($files) || $countFiles < 1)
 		{
 			return array('files'=>array(),'src'=>array(),'html'=>array());
 		}	
@@ -2537,7 +2538,7 @@ abstract class ModuleCatalog extends Module
 				$showImage = $objFile->isGdImage && $fieldConf['eval']['catalog']['showImage'];
 				if (!$showImage && in_array($objFile->extension, $allowedDownload) || $showImage) 
 				{
-					$class = (($counter == 0) ? ' first' : '') . ((($counter % 2) == 0) ? ' even' : ' odd');
+					$class = (($counter == 0) ? ' first' : '') . (($counter == ($countFiles -1 )) ? ' last' : '') . ((($counter % 2) == 0) ? ' even' : ' odd');
 
 					$this->parseMetaFile(dirname($file), true);
 					$strBasename = strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : specialchars($objFile->basename);
