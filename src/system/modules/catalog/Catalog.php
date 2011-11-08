@@ -1117,12 +1117,23 @@ class Catalog extends Backend
 						'button_callback'     => array('Catalog', 'toggleIcon')
 						))
 					);
-			if($this->Input->post('action')=='toggleVisibility')
+			if(version_compare(VERSION, '2.10', '>='))
 			{
-				// Update database
-				$this->Database->prepare('UPDATE '.$objCatalog->tableName.' SET ' . $this->publishField . '=? WHERE id=?')
-							   ->execute($this->Input->post('state')=='1'?'1':'', $this->Input->post('id'));
-				exit;
+				if($this->Input->get('tid'))
+				{
+					// Update database
+					$this->Database->prepare('UPDATE '.$objCatalog->tableName.' SET ' . $this->publishField . '=? WHERE id=?')
+									->execute($this->Input->get('state')=='1'?'1':'', $this->Input->post('tid'));
+					exit;
+				}
+			} else {
+				if($this->Input->post('action')=='toggleVisibility')
+				{
+					// Update database
+					$this->Database->prepare('UPDATE '.$objCatalog->tableName.' SET ' . $this->publishField . '=? WHERE id=?')
+								   ->execute($this->Input->post('state')=='1'?'1':'', $this->Input->post('id'));
+					exit;
+				}
 			}
 		}
 
