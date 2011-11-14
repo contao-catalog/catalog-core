@@ -1123,7 +1123,7 @@ class Catalog extends Backend
 				{
 					// Update database
 					$this->Database->prepare('UPDATE '.$objCatalog->tableName.' SET ' . $this->publishField . '=? WHERE id=?')
-									->execute($this->Input->get('state')=='1'?'1':'', $this->Input->post('tid'));
+									->execute($this->Input->get('state')=='1'?'1':'', $this->Input->get('tid'));
 					exit;
 				}
 			} else {
