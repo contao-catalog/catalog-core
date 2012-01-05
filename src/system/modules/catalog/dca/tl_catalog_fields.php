@@ -124,7 +124,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'select'       => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{advanced_legend:hide},mandatory,includeBlankOption;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems,treeMinLevel,treeMaxLevel;{feedit_legend},editGroups',
 		'tags'         => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},searchableField;{advanced_legend:hide},mandatory;{options_legend},itemTable,itemTableValueCol,itemSortCol,itemFilter,limitItems,treeMinLevel,treeMaxLevel;{feedit_legend},editGroups',
 		'checkbox'     => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField;{feedit_legend},editGroups',
-		'url'          => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,uniqueItem;{format_legend:hide},formatPrePost,{feedit_legend},editGroups',
+		'url'          => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,uniqueItem,allowedHosts;{format_legend:hide},formatPrePost,{feedit_legend},editGroups',
 		'file'         => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,customFiletree,multiple;{format_legend},showImage,showLink;{feedit_legend},editGroups',
 		'calc'         => '{title_legend},name,description,colName,type,calcValue;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		
@@ -309,6 +309,16 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['uniqueItem'],
 			'inputType'               => 'checkbox'
+		),
+
+		'allowedHosts' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['allowedHosts'],
+			'inputType'               => 'listWizard',
+			'save_callback'           => array
+			(
+				array('tl_catalog_fields', 'saveAllowedHosts')
+			),
 		),
 		
 		'minValue' => array
@@ -748,6 +758,37 @@ class tl_catalog_fields extends Backend
 			
 			return $result;
 		}
+	}
+	
+	/**
+	 * Extract the hosts from the given urls
+	 * @param string
+	 * @param DataContainer
+	 */
+	public function saveAllowedHosts($varValue, DataContainer $dc)
+	{
+		$arrData = deserialize($varValue, true);
+		
+		if (empty($arrData))
+		{
+			return $varValue;
+		}
+
+		foreach ($arrData as $k => $strUrl)
+		{			
+			// the user doesn't know the host, extract it for him
+			if (strpos($strUrl, 'http://') !== false)
+			{
+				$arrUrl = parse_url($strUrl);
+				
+				$arrData[$k] = $arrUrl['host'];
+			}
+		}
+		
+		// make unique entries
+		$arrData = array_values(array_unique($arrData));
+
+		return serialize($arrData);
 	}
 
 	public function getCheckboxSelectors(DataContainer $dc)

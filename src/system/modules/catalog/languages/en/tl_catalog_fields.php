@@ -51,6 +51,7 @@ $GLOBALS['TL_LANG']['tl_catalog_fields']['parentFilter'] = array('Parent filter'
 $GLOBALS['TL_LANG']['tl_catalog_fields']['treeMinLevel'] = array('Start level', 'Enter a value greater than 0 to only allow seletion of items from a certain sublevel.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['treeMaxLevel'] = array('Stop level', 'Enter a value greater than 0 to limit the nesting level of the selectable tree.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['uniqueItem'] = array('Unique', 'Whether this field is unique within the table.');
+$GLOBALS['TL_LANG']['tl_catalog_fields']['allowedHosts'] = array('Allowed hosts', 'Enter a list of allowed hosts for this field. If you don\'t know the host, enter the whole domain incl. "http://".');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['defValue'] = array('Default value', 'Please enter the default value for the field.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['calcValue'] = array('Calculation formula', 'Enter the SQL calculation for the field, e.g. (price*1.15)*qty.');
 $GLOBALS['TL_LANG']['tl_catalog_fields']['minValue'] = array('Minimum', 'Specifies the minimal value user can input.');

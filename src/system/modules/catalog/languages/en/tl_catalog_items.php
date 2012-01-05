@@ -57,5 +57,10 @@ $GLOBALS['TL_LANG']['tl_catalog_items']['manualsort_leave'] = array('Automatic s
 $GLOBALS['TL_LANG']['tl_catalog_items']['toggle']['0'] = 'Published';
 $GLOBALS['TL_LANG']['tl_catalog_items']['toggle']['1'] = 'Unpublished';
 
+/**
+ * Errors
+ */
+$GLOBALS['TL_LANG']['tl_catalog_items']['wrongUrl'] = 'The host of the URL you entered is not allowed!';
+
 
 ?>

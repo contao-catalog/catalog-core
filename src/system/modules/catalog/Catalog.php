@@ -1656,6 +1656,10 @@ class Catalog extends Backend
 		$field['eval']['rgxp'] = 'url';
 		$field['wizard'] = array(array('Catalog', 'pagePicker'));
 		$field['eval']['catalog']['showLink'] = $objRow->showLink ? true : false;
+		$field['save_callback'] = array
+		(
+			array('Catalog', 'saveUrl')
+		);
 	}
 
 
@@ -1978,6 +1982,32 @@ class Catalog extends Backend
 			$icon = 'invisible.gif';
 		}		
 		return '<a href="'.$this->addToUrl($href).'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
+	}
+	
+	
+	/**
+	 * Save callback for url's to ensure the user has entered a valid url
+	 * @param string
+	 * @param DataContainer
+	 */
+	public function saveUrl($varValue, DataContainer $dc)
+	{
+		$objField = $this->Database->prepare('SELECT allowedHosts FROM tl_catalog_fields WHERE pid=? AND colName=?')->execute($dc->activeRecord->pid, $dc->field);
+		$arrHosts = deserialize($objField->allowedHosts, true);
+		
+		if (!count($arrHosts))
+		{
+			return;
+		}
+		
+		$arrUrl = parse_url($varValue);
+		
+		if (!in_array($arrUrl['host'], $arrHosts))
+		{
+			throw new Exception($GLOBALS['TL_LANG']['tl_catalog_items']['wrongUrl']);
+		}
+		
+		return $varValue;
 	}
 }
 

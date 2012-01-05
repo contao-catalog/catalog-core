@@ -129,6 +129,7 @@ CREATE TABLE `tl_catalog_fields` (
   `validFileTypes` varchar(255) NOT NULL default '',
   `filesOnly` char(1) NOT NULL default '',
   `editGroups` blob NULL,
+  `allowedHosts` blob NULL,
 
   PRIMARY KEY  (`id`),
   KEY `pid` (`pid`)
