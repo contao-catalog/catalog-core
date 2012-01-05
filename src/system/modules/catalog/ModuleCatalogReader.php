@@ -93,7 +93,7 @@ class ModuleCatalogReader extends ModuleCatalog
 		$this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
 		$this->Template->gobackDisable = $this->catalog_goback_disable;
 
-		$objCatalogType = $this->Database->prepare("SELECT aliasField,titleField,descriptionField,keywordsField FROM tl_catalog_types WHERE id=?")
+		$objCatalogType = $this->Database->prepare("SELECT * FROM tl_catalog_types WHERE id=?")
 										->execute($this->catalog);
 
 		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';
@@ -189,6 +189,83 @@ class ModuleCatalogReader extends ModuleCatalog
 		{
 			$this->processComments($objCatalog);	
 		}
+		
+		// add a reporting form if activated
+		if ($objCatalogType->activateReporting)
+		{
+			$this->Template->activateReporting = true;
+			
+			// prepare the form
+			$arrWidgets = $this->prepareReportingForm();
+			
+			// check if the form has been submitted already
+			if ($this->Input->post('FORM_SUBMIT') == 'catalog_reporting')
+			{
+				$arrIds = deserialize($objCatalogType->notifyUsers, true);
+				
+				foreach ($arrWidgets as $name => $objWidget)
+				{
+					$objWidget->validate();
+
+					if ($objWidget->hasErrors())
+					{
+						$doNotSubmit = true;
+					}
+				}
+				
+				if (!$doNotSubmit)
+				{
+					// get all the mail adresses of all users
+					if (empty($arrIds))
+					{
+						return;
+					}
+					
+					$arrRecipients = $this->Database->query('SELECT email FROM tl_user WHERE id IN(' . implode(',', $arrIds) . ')')->fetchEach('email');
+					
+					$objEMail = new Email();
+
+					// Set the admin e-mail as "from" address
+					$objEMail->from = $GLOBALS['TL_ADMIN_EMAIL'];
+					$objEMail->fromName = $GLOBALS['TL_ADMIN_NAME'];
+
+					$objEMail->subject = 'New abuse report on a catalog item';
+
+					// Send e-mail
+					$strText = 'Hi, somebody reported an abuse. The id of the suspicious catalog entry is: ' . $objCatalog->id . "\n";
+					$strText .= 'The message of the user was the following:' . "\n\n";
+					$strText .= $this->Input->post('catalog_reporting_msg');
+					
+					$objEMail->text = $strText;
+					$objEMail->sendTo($arrRecipients);
+				}
+			}
+			
+			$objForm = new FrontendTemplate('form');
+			$objForm->formSubmit = 'catalog_reporting';
+			$objForm->tableless = true;
+			$objForm->method = 'post';	
+			$objForm->hasError = $doNotSubmit;
+			$objForm->enctype = 'application/x-www-form-urlencoded';
+			$objForm->formId = 'catalog_reporting';
+			$objForm->action = $this->Environment->request;
+			
+			$strFields = '';
+			
+			foreach ($arrWidgets as $name => $objWidget)
+			{
+				$strFields .= $objWidget->parse();
+			}
+		
+			$objForm->fields = $strFields;
+			
+			$this->Template->reportingFormRaw = new stdClass();
+			$this->Template->reportingFormRaw->arrWidgets = $arrWidgets;
+			$this->Template->reportingFormRaw->objForm = $objForm;
+			$this->Template->reportingForm = $objForm->parse();
+		}
+		
+		
 		// Keep this at the end to allow the reader template to manipulate $objPage
 		$this->Template->catalog = $this->parseCatalog($objCatalog, false, $this->catalog_template, $this->catalog_visible);
 	}
@@ -234,6 +311,46 @@ class ModuleCatalogReader extends ModuleCatalog
 	}
 	
 	
+	/**
+	 * Prepare a reporting form
+	 * @return array
+	 */
+	protected function prepareReportingForm()
+	{
+		$arrReturn = array();
+		
+		// text area	
+		$arrData = array();
+		$arrData['mandatory']		= true;
+		$arrData['required']		= true;
+		$arrData['id']				= 'catalog_reporting_msg';
+		$arrData['name']			= 'catalog_reporting_msg';
+
+		$objTextArea = new FormTextArea($arrData);
+		
+		$arrReturn['textarea'] = $objTextArea;
+		
+		// captcha
+		$arrCaptcha = array();
+		$arrCaptcha['id']			= 'catalog_reporting_captcha';
+		$arrCaptcha['label']		= $GLOBALS['TL_LANG']['MSC']['securityQuestion'];
+		$arrCaptcha['mandatory']	= true;
+		$arrCaptcha['required']		= true;
+
+		$objCaptcha = new FormCaptcha($arrCaptcha);		
+		
+		$arrReturn['captcha'] = $objCaptcha;
+		
+		// submit button
+		$arrSubmit = array();
+		$arrSubmit['slabel'] = $GLOBALS['TL_LANG']['MSC']['reportAbuse'];
+
+		$objSubmit = new FormSubmit($arrSubmit);
+		
+		$arrReturn['submit'] = $objSubmit;
+		
+		return $arrReturn;
+	}
 }
 
 ?>

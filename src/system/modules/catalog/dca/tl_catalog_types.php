@@ -136,8 +136,8 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 	// Palettes
 	'palettes' => array
 	(
-		'__selector__'    => array('addImage', 'import', 'searchable', 'allowComments', 'makeFeed'),
-		'default'         => '{title_legend},name,tableName,aliasField,publishField,allowManualSort,jumpTo;{page_legend:hide},titleField,descriptionField,keywordsField;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed',
+		'__selector__'    => array('addImage', 'import', 'searchable', 'allowComments', 'makeFeed', 'activateReporting'),
+		'default'         => '{title_legend},name,tableName,aliasField,publishField,allowManualSort,jumpTo;{page_legend:hide},titleField,descriptionField,keywordsField;{display_legend:hide},addImage,format;{comments_legend:hide},allowComments;{search_legend:hide},searchable;{import_legend:hide},import;{feed_legend:hide},makeFeed;{reporting_legend:hide},activateReporting;',
 	),
 
 	// Subpalettes
@@ -148,6 +148,7 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 		'import'				=> 'importAdmin,importDelete',
 		'searchable'			=> 'searchCondition',
 		'makeFeed'				=> 'feedFormat,language,source,datesource,feedBase,alias,maxItems,feedTitle,description',
+		'activateReporting'		=> 'notifyUsers',
 	),
 
 	// Fields
@@ -497,6 +498,21 @@ $GLOBALS['TL_DCA']['tl_catalog_types'] = array
 			'inputType'               => 'text',
 			'eval'                    => array('tl_class'=>'long')
 		),
+		'activateReporting' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['activateReporting'],
+			'exclude'                 => true,
+			'inputType'               => 'checkbox',
+			'eval'                    => array('submitOnChange'=>true)
+		),
+		'notifyUsers' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_types']['notifyUsers'],
+			'exclude'                 => true,
+			'inputType'               => 'checkbox',
+			'foreignKey'			  => 'tl_user.name',
+			'eval'                    => array('multiple'=>true, 'mandatory'=>true)
+		)
 	)
 );
 

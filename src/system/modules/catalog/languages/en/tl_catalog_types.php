@@ -81,6 +81,10 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['upgrade'] = array('Upgrade Catalog Inst
 </ul>
 Once you have removed this extension/folder, you will have access to the catalog application.');
 
+$GLOBALS['TL_LANG']['tl_catalog_types']['activateReporting'] = array('Activate reporting', 'Enabling this option will give you the possibility to show a contact form directly in the Catalog entry so visitors can report abuses.');
+$GLOBALS['TL_LANG']['tl_catalog_types']['notifyUsers'] = array('Users to notify', 'Choose one or more users that will receive an e-mail when someone reports an abuse using the form.');
+
+
 /**
  * RSS Feeds.
  */
@@ -105,6 +109,7 @@ $GLOBALS['TL_LANG']['tl_catalog_types']['comments_legend']	= 'Comments';
 $GLOBALS['TL_LANG']['tl_catalog_types']['search_legend']		= 'Search';
 $GLOBALS['TL_LANG']['tl_catalog_types']['import_legend']		= 'Import';
 $GLOBALS['TL_LANG']['tl_catalog_types']['feed_legend']			= 'RSS/Atom feed';
+$GLOBALS['TL_LANG']['tl_catalog_types']['reporting_legend']		= 'Report entries';
 
 
 /**

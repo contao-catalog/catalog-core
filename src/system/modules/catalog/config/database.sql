@@ -62,7 +62,8 @@ CREATE TABLE `tl_catalog_types` (
   `alias` varbinary(128) NOT NULL default '',
   `feedTitle` varchar(255) NOT NULL default '',
   `description` text NULL,
-  
+  `activateReporting` char(1) NOT NULL default '',
+  `notifyUsers` blob NULL,
   PRIMARY KEY  (`id`),
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

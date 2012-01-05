@@ -56,3 +56,14 @@ window.scrollTo(null, ($('<?php echo $this->formId; ?>').getElement('p.error').g
 
 
 </div>
+
+<?php
+// example for the reporting
+// NOTE: you can also access the form object and the form widgets
+//$this->reportingFormRaw->arrWidgets
+//$this->reportingFormRaw->objForm
+?>
+
+<?php if ($this->activateReporting): ?>
+	<?php echo $this->reportingForm; ?>
+<?php endif; ?>

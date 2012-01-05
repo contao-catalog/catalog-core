@@ -150,5 +150,10 @@ $GLOBALS['TL_LANG']['MSC']['com_catalog_message']  = "Catalog Name: %s\nItem Tit
  */
 $GLOBALS['TL_LANG']['MSC']['removeImage'] = 'Remove %s';
 
+/**
+ * Reporting
+ */
+$GLOBALS['TL_LANG']['MSC']['reportAbuse'] = 'Report abuse';
+
 
 ?>
