@@ -511,6 +511,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$hasUpload = false;
 		// Build form
 		$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'];
+		$arrWidgets = array();
 		foreach ($this->catalog_edit as $field)
 		{
 
@@ -835,6 +836,9 @@ class ModuleCatalogEdit extends ModuleCatalog
 				$hasUpload=true;
 			}
 			$arrFields[$field] .= $objWidget->parse().$datepicker;
+			
+			// also store the widget
+			$arrWidgets[$field] = $objWidget;
 
 			++$i;
 		}
@@ -846,6 +850,9 @@ class ModuleCatalogEdit extends ModuleCatalog
 			$strCaptcha = $objCaptcha->parse();
 
 			$arrFields['captcha'] .= $strCaptcha;
+			
+			// also store the widget
+			$arrWidgets['captcha'] = $objCaptcha;
 		}
 
 		$this->Template->rowLast = 'row_' . ++$i . ((($i % 2) == 0) ? ' even' : ' odd');
@@ -882,6 +889,10 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$objTemplate->enctype = $hasUpload ? 'multipart/form-data' : 'application/x-www-form-urlencoded';
 
 		$objTemplate->field = implode('',$arrFields);
+		
+		// also pass the widgets to the template
+		$objTemplate->arrWidgets = $arrWidgets;
+		
 		$objTemplate->formId = 'tl_catalog_items';
 		$objTemplate->action = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 
