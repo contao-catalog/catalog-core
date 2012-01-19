@@ -733,7 +733,7 @@ class Catalog extends Backend
 		$objTags=$this->Database->prepare('SELECT * FROM tl_catalog_tag_rel WHERE catid=? AND itemid=? AND fieldid=?')
 							->execute($dc->activeRecord->pid, $dc->activeRecord->id, $dc->field);
 		// TODO: either move this to update routine or remove after some grace period in the future.
-		$values = array_merge(explode(',', trim($varValue)), $objTags->fetchEach('valueid'));
+		$values = array_filter(array_merge(explode(',', trim($varValue)), $objTags->fetchEach('valueid')));
 		//$values = explode(',', trim($varValue));
 		$valueList = array();
 		foreach($values as $value)
@@ -747,9 +747,35 @@ class Catalog extends Backend
 		{
 			$GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['eval']['title'] =  implode(', ',$valueList);
 		}
+
+		if(TL_MODE == 'BE')
+		{
+			// expand the tree
+			$session = $this->Session->getData();
+			$this->expandTree($values, $session, $dc);
+			$this->Session->setData($session);
+		}
 		return serialize($values);
 	}
 
+	protected function expandTree($values, &$session, DataContainer $dc)
+	{
+		$values = array_filter(array_map('intval', $values));
+		
+		if (count($values)) {
+			$node = 'tree_' . $dc->table . '_' . $dc->field;
+			foreach ($values as $value)
+			{
+				$session[$node][$value] = 1;
+			}
+			$table = preg_replace('#\..*$#', '', $GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['eval']['tableColumn']);
+			$objData = $this->Database->execute('SELECT * FROM ' . $table . ' WHERE id IN (' . implode(',', $values) . ') AND pid > 0 AND id!=pid');
+			if ($objData->numRows)
+			{
+				$this->expandTree($objData->fetchEach('pid'), $session, $dc);
+			}
+		}
+	}
 
 	public function getCalc($varValue, DataContainer $dc, $blnReturn=false)
 	{

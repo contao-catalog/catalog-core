@@ -122,6 +122,27 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 	// our private functions to automate the catalog saving...
 
 	/**
+	 * Checks all tag fields which are stored and fixes the tag relations
+	 * @pre $this->objDCEdit->activeRecord is up to date, especially the id
+	 * @return void
+	 */
+	protected function fixTags()
+	{
+	$values = (array) $this->objActiveRecord;
+	$fieldsConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'];
+	foreach ($values as $fieldName => $value)
+	{
+		$fieldConfCatalog = $fieldsConf[$fieldName]['eval']['catalog'];
+		if ($fieldConfCatalog['type'] == 'tags')
+		{
+			// explode always returns at least one element
+			$tags = strlen($value) ? explode(',', $value) : array();
+			Catalog::setTags($values['pid'], $fieldConfCatalog['fieldId'], $values['id'], $tags);
+			}
+		}
+	}
+
+	/**
 	 * Autogenerate a catalog alias if it has not been set yet
 	 * @param mixed
 	 * @param object
@@ -252,6 +273,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 		$objUpdatedItem = $this->Database->prepare('UPDATE '.$this->strTable.' %s WHERE id=?')
 				->set($arrRecordData)
 				->execute($this->objActiveRecord->id);
+		$this->fixTags();
 		$this->handleOnSubmit();
 		// HOOK: pass data to HOOKs to be able to do something when we updated an item.
 		if (isset($GLOBALS['TL_HOOKS']['catalogFrontendUpdate']) && is_array($GLOBALS['TL_HOOKS']['catalogFrontendUpdate']))
@@ -290,6 +312,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 		$objUpdatedItem = $this->Database->prepare('UPDATE '.$this->strTable.' %s WHERE id=?')
 				->set($arrRecordData)
 				->execute($this->objActiveRecord->id);
+		$this->fixTags();
 		// HOOK: pass data to HOOKs to be able to do something when we inserted an item.
 		$this->handleOnSubmit();
 		if (isset($GLOBALS['TL_HOOKS']['catalogFrontendInsert']) && is_array($GLOBALS['TL_HOOKS']['catalogFrontendInsert']))

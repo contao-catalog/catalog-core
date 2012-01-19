@@ -271,8 +271,8 @@ class CatalogExt extends Frontend
 	/**
 	 * Get a page layout and return it as database result object.
 	 * This is a copy from PageRegular, see comments in parseFrontendTemplate() below for the reason why this is here.
-	 * @param integer
-	 * @return object
+	 * @param integer $intId id of the requested layout.
+	 * @return DatabaseResult
 	 */
 	protected function getPageLayout($intId)
 	{
@@ -303,12 +303,10 @@ class CatalogExt extends Frontend
 											->execute(1);
 			}
 		}
-		// Die if there is no layout at all
+		// Return the defined value  of NULL to allow the calling function to cope with this issue.
 		if ($objLayout->numRows < 1)
 		{
-			$this->log('Could not find layout ID "' . $intId . '"', 'Catalog getPageLayout()', TL_ERROR);
-			header('HTTP/1.1 501 Not Implemented');
-			die('No layout specified');
+			return NULL;
 		}
 		return $objLayout;
 	} 
@@ -335,20 +333,23 @@ class CatalogExt extends Frontend
 			// here we are getting dirty, we have to import the page layout as we have no other way to get the layout from it.
 			// I know it does exist already as we are being called from it but hey, we got no Hook in PageRegular::createStyleSheets
 			// and therefore have to suffer the hard way... :(
-			$objLayout=$this->getPageLayout($objPage->layout);
-
-			$catalogfeeds = deserialize($objLayout->catalogfeeds); 
-			// Add catalogfeeds
-			if (is_array($catalogfeeds) && count($catalogfeeds) > 0)
+			$objLayout = $this->getPageLayout($objPage->layout);
+			// if the layout has not been found, we skip generating the RSS feeds, see issue #2549
+			if ($objLayout)
 			{
-				$objFeeds = $this->Database->execute("SELECT * FROM tl_catalog_types WHERE id IN(" . implode(',', $catalogfeeds) . ")");
-				while($objFeeds->next())
+				$catalogfeeds = deserialize($objLayout->catalogfeeds); 
+				// Add catalogfeeds
+				if (is_array($catalogfeeds) && count($catalogfeeds) > 0)
 				{
-					$objFeeds->feedName = strlen($objFeeds->alias) ? $objFeeds->alias : 'catalog' . $objFeeds->id;
-					$base = strlen($objFeeds->feedBase) ? $objFeeds->feedBase : $this->Environment->base;
-					$GLOBALS['TL_HEAD']['CATALOGFEED'] .= '<link rel="alternate" href="' . $base . $objFeeds->feedName . '.xml" type="application/' . $objFeeds->feedFormat . '+xml" title="' . $objFeeds->description . '" />' . "\n";
+					$objFeeds = $this->Database->execute("SELECT * FROM tl_catalog_types WHERE id IN(" . implode(',', $catalogfeeds) . ")");
+					while($objFeeds->next())
+					{
+						$objFeeds->feedName = strlen($objFeeds->alias) ? $objFeeds->alias : 'catalog' . $objFeeds->id;
+						$base = strlen($objFeeds->feedBase) ? $objFeeds->feedBase : $this->Environment->base;
+						$GLOBALS['TL_HEAD']['CATALOGFEED'] .= '<link rel="alternate" href="' . $base . $objFeeds->feedName . '.xml" type="application/' . $objFeeds->feedFormat . '+xml" title="' . $objFeeds->description . '" />' . "\n";
+					}
 				}
-			} 
+			}
 		}
 		// Return buffer no matter if we added something to the global array or not.
 		// We simply to not want to tamper with it.

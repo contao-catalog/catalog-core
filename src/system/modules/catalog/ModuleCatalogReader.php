@@ -163,22 +163,19 @@ class ModuleCatalogReader extends ModuleCatalog
 		$this->Template->visible = $this->catalog_visible;
 
 
-		// Overwrite page title
+		// Extend page title
 		if (strlen($objCatalogType->titleField)) 
 		{
-			$objPage->pageTitle = $objCatalog->$titleField;
+			$objPage->pageTitle .= $objCatalog->$titleField;
 		}
 
-		// Overwrite page description
+		// Extend page description
 		if (strlen($objCatalogType->descriptionField)) 
 		{
-			// according to issue #176 we should rather add the description instead of rewriting it.
-			// This is harmless as the reader is on a own page anyway and therefore the editor can leave
-			// the description blank for this page then.
 			$objPage->description .= strip_tags($objCatalog->$descriptionField);
 		}
 
-		// Overwrite page keywords
+		// Extend page keywords
 		if (strlen($objCatalogType->keywordsField)) 
 		{
 			$GLOBALS['TL_KEYWORDS'] .= $this->gererateKeywords($objCatalog->$keywordsField);
