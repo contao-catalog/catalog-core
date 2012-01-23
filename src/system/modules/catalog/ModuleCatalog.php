@@ -525,6 +525,7 @@ abstract class ModuleCatalog extends Module
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'tags':
+						$tags = array();
 						list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
 						// TODO: add support for string values here and get rid of the convertAliasInput call on the beginning.
 						foreach(explode(',', $current[$field]) as $tag)
