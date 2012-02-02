@@ -2018,6 +2018,11 @@ class Catalog extends Backend
 	 */
 	public function saveUrl($varValue, DataContainer $dc)
 	{
+		if ($varValue == '')
+		{
+			return $varValue;
+		}
+		
 		$objField = $this->Database->prepare('SELECT allowedHosts FROM tl_catalog_fields WHERE pid=? AND colName=?')->execute($dc->activeRecord->pid, $dc->field);
 		$arrHosts = deserialize($objField->allowedHosts, true);
 		
