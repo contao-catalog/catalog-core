@@ -150,6 +150,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 
 	/**
 	 * Autogenerate a catalog alias if it has not been set yet
+	 * @pre isset($this->objActiveRecord->id)
 	 * @return void
 	 */
 	public function generateAlias()
@@ -302,13 +303,16 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 	{
 		$this->objActiveRecord->pid = $this->objCatalogType->id;
 		$this->objActiveRecord->tstamp = time();
-		$this->generateAlias();
-		$arrData = (array)$this->objActiveRecord;
+
 		// insert an "empty" dataset to get an id.
 		$objNewItem = $this->Database->prepare('INSERT INTO '.$this->strTable.' %s')
-				->set(array('pid' => $this->objActiveRecord->pid, 'tstamp' => $this->objActiveRecord->tstamp))
+				->set(array('pid' => $this->objActiveRecord->pid,
+				            'tstamp' => $this->objActiveRecord->tstamp))
 				->execute();
-		$arrData['id'] = $this->objActiveRecord->id = $objNewItem->insertId;
+		$this->objActiveRecord->id = $objNewItem->insertId;
+		
+		$this->generateAlias();
+		$arrData = (array)$this->objActiveRecord;
 		$this->intId = $arrData['id'];
 		$this->handleOnSaveCallbacks();
 		$arrRecordData=array();
