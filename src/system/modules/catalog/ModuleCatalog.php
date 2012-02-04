@@ -233,7 +233,7 @@ abstract class ModuleCatalog extends Module
 		$blnTree = (count($arrTree)>0);
 
 		$current = $this->convertAliasInput();
-		$searchFields = deserialize($searchFields);
+		$searchFields = $searchFields?deserialize($searchFields):array();
 
 		// Setup Fields
 		$fields = $this->getCatalogFields();
@@ -266,7 +266,7 @@ abstract class ModuleCatalog extends Module
 			foreach ($fields as $field=>$data)
 			{
 				// check if this is a filter
-				if (array_key_exists($field, $_POST))
+				if (array_key_exists($field, $_POST) && in_array($field, $searchFields))
 				{
 					$doPost = true;
 					$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
@@ -359,6 +359,9 @@ abstract class ModuleCatalog extends Module
 
 		foreach ($fields as $field=>$data)
 		{
+			if (!in_array($field, $searchFields)) {
+				continue;
+			}
 			$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 
 			// GET search value
@@ -516,7 +519,7 @@ abstract class ModuleCatalog extends Module
 					$values['where'][] = $rangeValues[1];
 				else
 					$strSqlWhereClause = '('.$field.' > ?)';
-				$procedure['where'][] = $strSqlWhereClause;
+				$procedure['where'][$field] = $strSqlWhereClause;
 				$current[$field] = $this->Input->get($field);
 			}
 			//GET filter values
@@ -530,35 +533,44 @@ abstract class ModuleCatalog extends Module
 						// TODO: add support for string values here and get rid of the convertAliasInput call on the beginning.
 						foreach(explode(',', $current[$field]) as $tag)
 							$tags[] = (int)$tag;
-						if($this->catalog_tags_mode == 'AND')
+						$tags = array_intersect($tags, ($fieldConf['options']?array_keys($fieldConf['options']):$tags));
+						if(!count($tags))
 						{
-							$sql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid=%s', 
-											 $fieldConf['eval']['catalog']['fieldId'], 
-											 $tag);
-							foreach($tags as $tag)
-								$sql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid=%s AND itemid IN(%s)', 
-												 $fieldConf['eval']['catalog']['fieldId'], 
-												 $tag,
-												 $sql);
-							$sql = sprintf('id IN (SELECT DISTINCT(itemid) FROM tl_catalog_tag_rel WHERE fieldid=%s AND itemid IN (%s) AND valueid IN (%s))',
-											$fieldConf['eval']['catalog']['fieldId'], 
-											$sql,
-											implode(',', array_intersect($tags, ($fieldConf['options']?array_keys($fieldConf['options']):array())))
-											);
-							$tagQuery = $sql;
+							$tagQuery = 'id=0';
 						} else {
-							// perform search by using a subselect over the tables.
-							$tagQuery = 'id IN(SELECT DISTINCT(itemid) as id FROM tl_catalog_tag_rel WHERE fieldid='.$fieldConf['eval']['catalog']['fieldId'].' AND valueid IN ('.implode(',', array_intersect($tags, ($fieldConf['options']?array_keys($fieldConf['options']):array()))).'))';
+							if($this->catalog_tags_mode == 'AND')
+							{
+								$fieldId=$fieldConf['eval']['catalog']['fieldId'];
+								$strAllTags=implode(',', $tags);
+								$subSql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid=%s',
+												$fieldId,
+												array_shift($tags));
+								foreach($tags as $tag)
+									$subSql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid=%s AND itemid IN(%s)', 
+													$fieldId,
+													$tag,
+													$subSql);
+								$sql = sprintf('id IN (SELECT DISTINCT(itemid) FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid IN (%s)) AND %s',
+												$fieldId,
+												$strAllTags,
+												sprintf('id IN (%s)', $subSql)
+												);
+								$tagQuery = $sql;
+							} else {
+								// perform search by using a subselect over the tables.
+								$tagQuery = 'id IN(SELECT DISTINCT(itemid) as id FROM tl_catalog_tag_rel WHERE fieldid='.$fieldConf['eval']['catalog']['fieldId'].' AND valueid IN ('.implode(',', array_intersect($tags, ($fieldConf['options']?array_keys($fieldConf['options']):array()))).'))';
+							}
 						}
-						$procedure['tags'][] = $tagQuery;
+						$procedure['where'][$field] = $tagQuery;
+						$procedure['tags'][$field] = $tagQuery;
 						if ($blnTree && in_array($field, $arrTree))
 						{
-							$procedure['tree'][] = $tagQuery;
+							$procedure['tree'][$field] = $tagQuery;
 						}
 						break;
 					case 'checkbox':
-						$procedure['where'][] = $field."=?";
-						$values['where'][] = ($this->Input->get($field) == 'true' ? 1 : 0);
+						$procedure['where'][$field] = $field."=?";
+						$values['where'][$field] = ($this->Input->get($field) == 'true' ? 1 : 0);
 						//$current[$field] = $this->Input->get($field);
 						if ($blnTree && in_array($field, $arrTree)) 
 						{
@@ -574,8 +586,8 @@ abstract class ModuleCatalog extends Module
 						$value = $current[$field];
 						if($value!==NULL)
 						{
-							$procedure['where'][] = $field."=?";
-							$values['where'][] = $value;
+							$procedure['where'][$field] = $field."=?";
+							$values['where'][$field] = $value;
 							if ($blnTree && in_array($field, $arrTree)) 
 							{
 								$procedure['tree'][$field] = $field."=?";
@@ -584,8 +596,8 @@ abstract class ModuleCatalog extends Module
 						}
 						break;
 					case 'date':
-						$procedure['where'][] = $field."=?";
-						$values['where'][] = strtotime($this->Input->get($field));
+						$procedure['where'][$field] = $field."=?";
+						$values['where'][$field] = strtotime($this->Input->get($field));
 						//$current[$field] = $this->Input->get($field);
 
 						if ($blnTree && in_array($field, $arrTree)) 
@@ -596,8 +608,8 @@ abstract class ModuleCatalog extends Module
 						break;
 					case 'file':
 					case 'url':
-						$procedure['where'][] = $field."=?";
-						$values['where'][] = urldecode($this->Input->get($field));
+						$procedure['where'][$field] = $field."=?";
+						$values['where'][$field] = urldecode($this->Input->get($field));
 						$current[$field] = $this->Input->get($field);
 
 						if ($blnTree && in_array($field, $arrTree)) 
@@ -830,17 +842,115 @@ abstract class ModuleCatalog extends Module
 		return sprintf($GLOBALS['TL_LANG']['MSC']['clearAll'], $label);
 	}
 
+	public function getFilterFromListerOnSamePage()
+	{
+		$query = array('query' => '', 'params' => array());
+		if(($this instanceof ModuleCatalogFilter) && $this->catalog_filter_cond_from_lister)
+		{
+			$ids=$this->getModulesForThisPage();
+			$objModules = $this->Database->prepare('SELECT * FROM tl_module WHERE id IN (' . implode(', ', $ids) . ') AND deny_catalog_filter_cond_from_lister=0 AND type=\'cataloglist\' AND catalog='.$this->catalog)
+					->execute();
+			while($objModules->next())
+			{
+				$objModules->catalog_search=deserialize($objModules->catalog_search);
+				$moduleFilterUrl = $this->parseFilterUrl($objModules->catalog_search);
+				if (is_array($objModules->catalog_search) && strlen($objModules->catalog_search[0]) && is_array($moduleFilterUrl['procedure']['search']))
+				{
+					// reset arrays
+					$searchProcedure = array();
+					$searchValues = array();
+					foreach($objModules->catalog_search as $searchfield)
+					{
+						if (($searchfield != $field)
+							&& array_key_exists($searchfield, $moduleFilterUrl['current'])
+							&& array_key_exists($searchfield, $moduleFilterUrl['procedure']['search']))
+						{
+							$searchProcedure[] = $moduleFilterUrl['procedure']['search'][$searchfield];
+							if (is_array($moduleFilterUrl['values']['search'][$searchfield]))
+							{
+								foreach($moduleFilterUrl['values']['search'][$searchfield] as $item)
+								{
+									$searchValues[] = $item;
+								}
+							}
+							else
+							{
+								$searchValues[] = $moduleFilterUrl['values']['search'][$searchfield];
+							}
+						}
+					}
+					if(count($searchProcedure))
+					{
+						$moduleFilterUrl['procedure']['where'][] = ' ('.implode(' OR ', $searchProcedure).')';
+						$moduleFilterUrl['values']['where'] = is_array($moduleFilterUrl['values']['where']) ? (array_merge($moduleFilterUrl['values']['where'],$searchValues)) : $searchValues;
+					}
+				}
+				if(is_array($moduleFilterUrl['procedure']['where']))
+				{
+					foreach($moduleFilterUrl['procedure']['where'] as $key=>$value)
+					{
+						if(strpos($value, $field) !== false)
+						{
+							unset($moduleFilterUrl['procedure']['where'][$key]);
+							unset($moduleFilterUrl['values']['where'][$key]);
+						}
+					}
+				}
+				if(is_array($moduleFilterUrl['procedure']['tags']))
+				{
+					foreach($moduleFilterUrl['procedure']['tags'] as $key=>$value)
+					{
+						if(strpos($value, $field) !== false)
+						{
+							unset($moduleFilterUrl['procedure']['tags'][$key]);
+							unset($moduleFilterUrl['values']['tags'][$key]);
+						}
+					}
+				}
+				if (is_array($moduleFilterUrl['values']['where'])) {
+					$query['params'] = array_merge($query['params'], $moduleFilterUrl['values']['where']);
+				}
+
+				if (is_array($moduleFilterUrl['values']['tags'])) {
+					$query['params'] = array_merge($query['params'], $moduleFilterUrl['values']['tags']);
+				}
+
+				if($objModules->catalog_where)
+				{
+					$strCondition = $this->replaceInsertTags($objModules->catalog_where);
+					if(strlen($strCondition))
+						$query['query'] .= (strlen($query['query'])?' AND ':'').$strCondition;
+				}
+				if(count($moduleFilterUrl['procedure']['where']))
+					$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_query_mode.' ', $moduleFilterUrl['procedure']['where']);
+				if(count($moduleFilterUrl['procedure']['tags']))
+					$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_tags_mode.' ', $moduleFilterUrl['procedure']['tags']);
+			}
+		}
+		return $query;
+	}
 
 	protected function generateFilter()
 	{
-		$filterurl = $this->parseFilterUrl();		
-		$current 	= $filterurl['current'];
+		$filterurl = $this->parseFilterUrl(deserialize($this->catalog_search));
+		$current	= $filterurl['current'];
 
 		$arrFilters = deserialize($this->catalog_filters, true);
 		if ($this->catalog_filter_enable && count($arrFilters))
 		{
 			// Get Tree View
 			$tree = $this->getTree();
+
+			$arrQueryFromLister = $this->getFilterFromListerOnSamePage();
+			if(!BE_USER_LOGGED_IN && $this->publishField)
+			{
+				if(strlen($arrQueryFromLister['query']))
+				{
+					$arrQueryFromLister['query'].=' AND '.$this->publishField.'=1 ';
+				} else {
+					$arrQueryFromLister['query']=$this->publishField.'=1 ';
+				}
+			}
 
 			// Setup filters and option values
 			$filterOptions = array();
@@ -857,15 +967,32 @@ abstract class ModuleCatalog extends Module
 				$blnLast = $this->lastInTree($field, $current, $tree);
 
 				$query = $this->buildTreeQuery($field, $filterurl, $tree);
-				if(!BE_USER_LOGGED_IN && $this->publishField)
+
+				// combine together all other query params we are using.
+				// TODO: take the tree into account here.
+				if(is_array($filterurl['procedure']['where']))
 				{
-					if(strlen($query['query']))
+					$arrQuery=array();
+					$arrParam=array();
+					foreach($filterurl['procedure']['where'] as $key=>$value)
 					{
-						$query['query'].=' AND '.$this->publishField.'=1 ';
-					} else {
-						$query['query']=$this->publishField.'=1 ';
+						if(!(($key==$field) || (is_numeric($key) && strpos($value, $field) !== false)))
+						{
+							$arrQuery[] = $value;
+							if($filterurl['values']['where'][$key])
+								$arrParam[] = $filterurl['values']['where'][$key];
+						}
 					}
+					if($arrQuery)
+						$query['query'] .= ($query['query']?' AND ':'').implode(' AND ', $arrQuery);
+					if($arrParam)
+						$query['params'] = array_merge($query['params'], $arrParam);
 				}
+
+				if($arrQueryFromLister['query'])
+					$query['query'] .= ($query['query']?' AND ':'').$arrQueryFromLister['query'];
+				if($arrQueryFromLister['params'])
+					$query['params'] = array_merge($query['params'], $arrQueryFromLister['params']);
 
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 
@@ -887,7 +1014,6 @@ abstract class ModuleCatalog extends Module
 						}
 					}
 				}
-
 				$options = array();
 				switch ($fieldType)
 				{
@@ -935,90 +1061,7 @@ abstract class ModuleCatalog extends Module
 
 						break;
 
-
 					case 'select':
-						if(($this instanceof ModuleCatalogFilter) && $this->catalog_filter_cond_from_lister)
-						{
-							$ids=$this->getModulesForThisPage();
-							$objModules = $this->Database->prepare('SELECT * FROM tl_module WHERE id IN (' . implode(', ', $ids) . ') AND deny_catalog_filter_cond_from_lister=0 AND type=\'cataloglist\' AND catalog='.$this->catalog)
-									->execute();
-							while($objModules->next())
-							{
-								$objModules->catalog_search=deserialize($objModules->catalog_search);
-								$moduleFilterUrl = $this->parseFilterUrl($objModules->catalog_search);
-								if (is_array($objModules->catalog_search) && strlen($objModules->catalog_search[0]) && is_array($moduleFilterUrl['procedure']['search']))
-								{
-									// reset arrays
-									$searchProcedure = array();
-									$searchValues = array();
-									foreach($objModules->catalog_search as $searchfield)
-									{
-										if (($searchfield != $field)
-											&& array_key_exists($searchfield, $moduleFilterUrl['current'])
-											&& array_key_exists($searchfield, $moduleFilterUrl['procedure']['search']))
-										{
-											$searchProcedure[] = $moduleFilterUrl['procedure']['search'][$searchfield];
-											if (is_array($moduleFilterUrl['values']['search'][$searchfield]))
-											{
-												foreach($moduleFilterUrl['values']['search'][$searchfield] as $item)
-												{
-													$searchValues[] = $item;
-												}
-											}
-											else
-											{
-												$searchValues[] = $moduleFilterUrl['values']['search'][$searchfield];
-											}
-										}
-									}
-									if(count($searchProcedure))
-									{
-										$moduleFilterUrl['procedure']['where'][] = ' ('.implode(' OR ', $searchProcedure).')';
-										$moduleFilterUrl['values']['where'] = is_array($moduleFilterUrl['values']['where']) ? (array_merge($moduleFilterUrl['values']['where'],$searchValues)) : $searchValues;
-									}
-								}
-								if(is_array($moduleFilterUrl['procedure']['where']))
-								{
-									foreach($moduleFilterUrl['procedure']['where'] as $key=>$value)
-									{
-										if(strpos($value, $field) !== false)
-										{
-											unset($moduleFilterUrl['procedure']['where'][$key]);
-											unset($moduleFilterUrl['values']['where'][$key]);
-										}
-									}
-								}
-								if(is_array($moduleFilterUrl['procedure']['tags']))
-								{
-									foreach($moduleFilterUrl['procedure']['tags'] as $key=>$value)
-									{
-										if(strpos($value, $field) !== false)
-										{
-											unset($moduleFilterUrl['procedure']['tags'][$key]);
-											unset($moduleFilterUrl['values']['tags'][$key]);
-										}
-									}
-								}
-								if (is_array($moduleFilterUrl['values']['where'])) {
-									$query['params'] = array_merge($query['params'], $moduleFilterUrl['values']['where']);
-								}
-						
-								if (is_array($moduleFilterUrl['values']['tags'])) {
-									$query['params'] = array_merge($query['params'], $moduleFilterUrl['values']['tags']);
-								}
-
-								if($objModules->catalog_where)
-								{
-									$strCondition = $this->replaceInsertTags($objModules->catalog_where);
-									if(strlen($strCondition))
-										$query['query'] .= (strlen($query['query'])?' AND ':'').$strCondition;
-								}
-								if(count($moduleFilterUrl['procedure']['where']))
-									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_query_mode.' ', $moduleFilterUrl['procedure']['where']);
-								if(count($moduleFilterUrl['procedure']['tags']))
-									$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_tags_mode.' ', $moduleFilterUrl['procedure']['tags']);
-							}
-						}
 						// get existing options in DB
 						$objFilter = $this->Database->prepare('SELECT DISTINCT('.$field.') FROM '.$this->strTable . ($query['query'] ? ' WHERE '.$query['query'] : '') )
 								->execute($query['params']);
@@ -1098,16 +1141,6 @@ abstract class ModuleCatalog extends Module
 						break;
 	
 					case 'tags' :
-						$query['query'] = '';
-						$query['params'] = is_array($filterurl['values']['where'])? $filterurl['values']['where'] : array();
-						if (is_array($filterurl['values']['tags']))
-							$query['params'] = array_merge($query['params'], $filterurl['values']['tags']);
-						if(count($filterurl['procedure']['where']))
-							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['where']);
-						// TODO: we have a problem here if more than one tag field exists - we simply ignore the other one in here.
-//						if(count($filterurl['procedure']['tags']))
-//							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['tags']);
-
 						// clear option
 						$selected = !strlen($current[$field]);
 						$newcurrent = $current;
@@ -1126,46 +1159,69 @@ abstract class ModuleCatalog extends Module
 						array_push($options, $addOption);
 
 						$tmpTags = array();
-						// get ids of matches according to all other filters.
+						$strWhere = '';
+						if(!BE_USER_LOGGED_IN && $this->publishField)
+						{
+							$strWhere = $this->publishField.'=1';
+						}
 						if($query['query'])
-						{
-							$objFilter = $this->Database->prepare('SELECT id FROM '.$this->strTable.' WHERE '.$query['query'])
-														->execute($query['params']);
-							$itemIds = implode(',',$objFilter->fetchEach('id'));
-						}
-						foreach ($fieldConf['options'] as $id=>$option)
-						{
-							$tmpTags[] = '(SELECT COUNT(itemid) FROM tl_catalog_tag_rel WHERE valueid='.$id.' AND fieldid='.$fieldConf['eval']['catalog']['fieldId'].($query['query'] && $itemIds?' AND itemid IN('.$itemIds.')':'').') AS '.$field.$id;
-						}
-						if(count($tmpTags)==0)
-							$tmpTags = array($field);
-						$objFilter = $this->Database->prepare('SELECT '.implode(', ',$tmpTags))
-													->execute($query['params']);
-						if ($objFilter->numRows)
-						{
-							$row = $objFilter->row();
+							$strWhere .= ($strWhere?' AND ':'').$query['query'];
 
+						// get ids of matches according to all other filters.
+						$itemIds = array_keys($fieldConf['options']);
+						if($strWhere)
+						{
+							$objFilter = $this->Database->prepare(sprintf('SELECT DISTINCT(valueid) FROM tl_catalog_tag_rel WHERE fieldid=%s AND itemid IN (SELECT id FROM %s WHERE %s)',
+																$fieldConf['eval']['catalog']['fieldId'],
+																$this->strTable,
+																$strWhere
+																))
+														->execute($query['params']);
+							$itemIds = array_intersect($itemIds, $objFilter->fetchEach('valueid'));
+						}
+						if($itemIds)
+						{
+							$strItemIdWhere = ' AND itemid IN('.implode(',', $itemIds).')';
 							foreach ($fieldConf['options'] as $id=>$option)
 							{
-								if ($row[$field.$id])
+								$tmpTags[] = sprintf('(SELECT COUNT(itemid) FROM tl_catalog_tag_rel WHERE valueid=%s AND fieldid=%s %s) AS %s', 
+									$id,
+									$fieldConf['eval']['catalog']['fieldId'],
+									$strItemIdWhere,
+									$field.$id
+									);
+							}
+						}
+						// no options reachable, skip this widget.
+						if(count($tmpTags))
+						{
+							$objFilter = $this->Database->prepare('SELECT '.implode(', ',$tmpTags))
+														->execute($query['params']);
+							if ($objFilter->numRows)
+							{
+								$row = $objFilter->row();
+
+								foreach ($itemIds as $id)
 								{
-									$selected = in_array($id, explode(',',$current[$field]));
-									$newcurrent = $current;
-									$newids = strlen($current[$field]) ? explode(',', $current[$field]) : array();
-									$newids = array_unique(!$selected ? array_merge($newids, array($id)) : array_diff($newids, array($id)));
-									$newcurrent[$field] = ($this->catalog_tags_multi ? implode(',',$newids) : $id);
-									$this->clearTree($field, $newcurrent, $tree);
-									$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
-
-									$blnList = ($selected && $input=='list');
-
-									$addOption = array();
-									$addOption['value'] = $url;
-									$addOption['label'] = $blnList ? sprintf($GLOBALS['TL_LANG']['MSC']['optionselected'], $option) : $option;
-									$addOption['id'] = $id;
-									$addOption['resultcount'] = $row[$field.$id];
-									$addOption['selected'] = $selected;
-									array_push($options, $addOption);
+									$option=$fieldConf['options'][$id];
+									if ($row[$field.$id])
+									{
+										$selected = in_array($id, explode(',',$current[$field]));
+										$newcurrent = $current;
+										$newids = strlen($current[$field]) ? explode(',', $current[$field]) : array();
+										$newids = array_unique(!$selected ? array_merge($newids, array($id)) : array_diff($newids, array($id)));
+										$newcurrent[$field] = ($this->catalog_tags_multi ? implode(',',$newids) : $id);
+										$this->clearTree($field, $newcurrent, $tree);
+										$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
+										$blnList = ($selected && $input=='list');
+										$addOption = array();
+										$addOption['value'] = $url;
+										$addOption['label'] = $blnList ? sprintf($GLOBALS['TL_LANG']['MSC']['optionselected'], $option) : $option;
+										$addOption['id'] = $id;
+										$addOption['resultcount'] = $row[$field.$id];
+										$addOption['selected'] = $selected;
+										array_push($options, $addOption);
+									}
 								}
 							}
 						}
