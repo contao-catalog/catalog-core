@@ -815,9 +815,12 @@ class ModuleCatalogEdit extends ModuleCatalog
 							break;
 					}
 					$format = $GLOBALS['TL_CONFIG'][$rgxp.'Format'];
-					$datepicker = '<img src="plugins/datepicker/icon.gif" width="20" height="20" id="toggle_' . $objWidget->id . '" style="vertical-align:-6px;">';
+					$datepicker = '<img src="plugins/datepicker/icon.gif" width="20" height="20" id="toggle_' . $objWidget->id . '" class="datepicker_' . $objWidget->id . '">';
+					$GLOBALS['TL_CSS'][] = 'plugins/datepicker/dashboard.css'; 
+					$GLOBALS['TL_JAVASCRIPT'][] = 'plugins/datepicker/datepicker.js'; 
 					$GLOBALS['TL_HEAD'][]=
-					'window.addEvent(\'domready\', function() {
+					'<script type="text/javascript"><!--//--><![CDATA[//><!-- 
+					window.addEvent(\'domready\', function() {
 						new DatePicker(\'#ctrl_' . $objWidget->id . '\', {
 							allowEmpty: true,
 							toggleElements: \'#toggle_' . $objWidget->id . '\',
@@ -831,7 +834,8 @@ class ModuleCatalogEdit extends ModuleCatalog
 							months: [\''. implode("','", $GLOBALS['TL_LANG']['MONTHS']) . '\'],
 							monthShort: ' . $GLOBALS['TL_LANG']['MSC']['monthShortLength'] . '
 						});
-					});';
+					});
+					//--><!]]></script>';
 				} else {
 					//$objWidget->datepicker = '
 					$GLOBALS['TL_HEAD'][]='
@@ -866,11 +870,17 @@ class ModuleCatalogEdit extends ModuleCatalog
 			if(is_object($objWidgetUpload))
 			{
 				$arrFields[$field] .= $objWidgetUpload->parse();
+				$arrWidgets[$field.'_upload'] = $objWidgetUpload;
 				// file uploads need 'multipart/form-data'
 				$hasUpload=true;
 			}
-			$arrFields[$field] .= $objWidget->parse().$datepicker;
-			
+			if($datepicker)
+			{
+				$objWidget->datepicker=$datepicker;
+				$arrFields[$field] .= preg_replace('#(</td>.+)(</td>.+</tr>)#s', ' \\1'.$datepicker.' \\2', $objWidget->parse(), 1); 
+			} else {
+				$arrFields[$field] .= $objWidget->parse();
+			}
 			// also store the widget
 			$arrWidgets[$field] = $objWidget;
 
