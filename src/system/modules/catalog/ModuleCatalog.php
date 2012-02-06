@@ -1168,43 +1168,26 @@ abstract class ModuleCatalog extends Module
 							$strWhere .= ($strWhere?' AND ':'').$query['query'];
 
 						// get ids of matches according to all other filters.
-						$itemIds = array_keys($fieldConf['options']);
-						if($strWhere)
-						{
-							$objFilter = $this->Database->prepare(sprintf('SELECT DISTINCT(valueid) FROM tl_catalog_tag_rel WHERE fieldid=%s AND itemid IN (SELECT id FROM %s WHERE %s)',
-																$fieldConf['eval']['catalog']['fieldId'],
-																$this->strTable,
-																$strWhere
-																))
-														->execute($query['params']);
-							$itemIds = array_intersect($itemIds, $objFilter->fetchEach('valueid'));
-						}
-						if($itemIds)
-						{
-							$strItemIdWhere = ' AND itemid IN('.implode(',', $itemIds).')';
-							foreach ($fieldConf['options'] as $id=>$option)
-							{
-								$tmpTags[] = sprintf('(SELECT COUNT(itemid) FROM tl_catalog_tag_rel WHERE valueid=%s AND fieldid=%s %s) AS %s', 
-									$id,
-									$fieldConf['eval']['catalog']['fieldId'],
-									$strItemIdWhere,
-									$field.$id
-									);
-							}
-						}
+						$valueIds = array_keys($fieldConf['options']);
+						$objFilter = $this->Database->prepare(sprintf('SELECT COUNT(itemid) as itemcount, valueid FROM tl_catalog_tag_rel WHERE fieldid=%s AND itemid IN (SELECT id FROM %s%s) GROUP BY valueid',
+															$fieldConf['eval']['catalog']['fieldId'],
+															$this->strTable,
+															$strWhere?' WHERE '.$strWhere:''
+															))
+													->execute($query['params']);
+						$valueIds = array_intersect($valueIds, $objFilter->fetchEach('valueid'));
 						// no options reachable, skip this widget.
-						if(count($tmpTags))
+						if(count($valueIds))
 						{
-							$objFilter = $this->Database->prepare('SELECT '.implode(', ',$tmpTags))
-														->execute($query['params']);
+							$objFilter->first();
 							if ($objFilter->numRows)
 							{
 								$row = $objFilter->row();
 
-								foreach ($itemIds as $id)
+								foreach ($valueIds as $id)
 								{
 									$option=$fieldConf['options'][$id];
-									if ($row[$field.$id])
+									if ($row['itemcount'])
 									{
 										$selected = in_array($id, explode(',',$current[$field]));
 										$newcurrent = $current;
@@ -1218,7 +1201,7 @@ abstract class ModuleCatalog extends Module
 										$addOption['value'] = $url;
 										$addOption['label'] = $blnList ? sprintf($GLOBALS['TL_LANG']['MSC']['optionselected'], $option) : $option;
 										$addOption['id'] = $id;
-										$addOption['resultcount'] = $row[$field.$id];
+										$addOption['resultcount'] = $row['itemcount'];
 										$addOption['selected'] = $selected;
 										array_push($options, $addOption);
 									}
