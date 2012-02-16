@@ -6,7 +6,8 @@
 
 <<?php echo $this->hl; ?>><?php echo $this->headline; ?></<?php echo $this->hl; ?>>
 <?php endif; ?>
-<span class="total"><?php echo $this->total; ?></span>
+
+<p class="header"><?php echo $this->header; ?></p>
 
 <?php if ($this->editEnable): ?>
 <div class="addUrl"><a href="<?php echo $this->addUrl; ?>">Add New Item</a></div>

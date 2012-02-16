@@ -189,7 +189,8 @@ class ModuleCatalogList extends ModuleCatalog
 				}
 
 				// Set limit and offset
-				$offset += (max($page, 1) - 1) * $this->perPage;
+				$pageOffset = (max($page, 1) - 1) * $this->perPage; 
+				$offset += $pageOffset;
 				$limit = is_null($limit)?$this->perPage:min($limit - $offset, $this->perPage);
 
 				// Add pagination menu
@@ -211,12 +212,37 @@ class ModuleCatalogList extends ModuleCatalog
 			{
 				$objCatalogStmt->limit($limit, $offset);
 			}
+			
 			$objCatalog = $objCatalogStmt->execute($params);
 
 			if (!$limit)
 				$total = $objCatalog->numRows;
+			
 			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);
-
+		  $this->Template->total = $total;
+		  
+		  if ($total > 0)
+		  {
+		    if ($limit)
+		      $pageLimit = min($pageOffset + $limit, $total);
+		    else
+		      $pageLimit = $total;
+		    
+		    // stats in the header
+  		  $this->Template->header = sprintf($GLOBALS['TL_LANG']['MSC']['catalogSearchResults'],
+  		                                    $pageOffset +1, $pageLimit, $total);
+  		                                    
+        // page stats
+        if ($this->perPage > 0)
+        {
+  		    $this->Template->header .= ' ' . sprintf($GLOBALS['TL_LANG']['MSC']['catalogSearchPages'],
+  		                                             $page, ceil($total/$this->perPage));
+        }
+		  }
+      else
+        $this->Template->header = $GLOBALS['TL_LANG']['MSC']['catalogSearchEmpty'];
+      
+			
 		} // condition check
 		else 
 		{
@@ -251,9 +277,7 @@ class ModuleCatalogList extends ModuleCatalog
 		}
 
 		// Template variables
-		$this->Template->total = $total;
 		$this->Template->visible = $this->catalog_visible;
-
 	}
 
 }

@@ -76,6 +76,9 @@ $GLOBALS['TL_LANG']['MSC']['catalogItemEditingDenied'] = 'You are not allowed to
  */
 
 $GLOBALS['TL_LANG']['MSC']['catalogSearch'] = 'Go';
+$GLOBALS['TL_LANG']['MSC']['catalogSearchResults'] = 'Results %u - %u of %u';
+$GLOBALS['TL_LANG']['MSC']['catalogSearchPages'] = '(page %u of %u)';
+$GLOBALS['TL_LANG']['MSC']['catalogSearchEmpty'] = 'No matches for your search';
 $GLOBALS['TL_LANG']['MSC']['clearFilter'] = 'Clear all filters';
 $GLOBALS['TL_LANG']['MSC']['clearAll'] = 'Clear %s'; // %s=field label
 $GLOBALS['TL_LANG']['MSC']['selectNone'] = 'Select %s'; // %s=field label
