@@ -359,79 +359,89 @@ abstract class ModuleCatalog extends Module
 		$baseurl = $this->generateFilterUrl();
 		$procedure = array('search' => null);
 		$values = array('search' => null);
-
+    $searchPhrases = self::splitSearchKeywords($this->Input->get($this->strSearch));
+    
+		// GET search value if several phrases are used
+		// all search fields need to be used to find search phrases which are
+		// contained in different fields 
+		if (count($searchPhrases) > 1
+		    && count($searchFields))
+		{
+	    $searchFieldNames = array();
+	    
+		  foreach ($searchFields as $fieldName)
+		  {
+		    $fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$fieldName];
+		    $sqlFieldName = self::sqlFieldName($fieldName, $fieldConf['eval']['catalog']);
+		    
+		    switch ($fieldConf['eval']['catalog']['type'])
+		    {
+		      case 'date':
+					  // month only search
+            $sqlFieldName = 'CAST(MONTHNAME(FROM_UNIXTIME(' . $fieldName .')) AS CHAR';
+		        break;
+		    }
+		    
+		    $searchFieldNames[] = $sqlFieldName;
+		  }
+		  
+	    $searchFieldName = 'CONCAT(' . implode($searchFieldNames, ',') . ') LIKE ? AND ';
+	    $procedure['search'][$searchFields[0]] = str_repeat($searchFieldName, count($searchPhrases))
+	                           . '1'; // terminate the last AND 
+	    $values['search'][$searchFields[0]] = self::searchFor($searchPhrases);
+		}
+    
 		foreach ($fields as $field=>$data)
 		{
 			$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 			$sqlFieldName = self::sqlFieldName($field, $fieldConf['eval']['catalog']);
 
 			// GET search value
-			if ($this->Input->get($this->strSearch) && strlen($fieldConf['eval']['catalog']['type']))
+			if (count($searchPhrases) == 1
+			    && strlen($fieldConf['eval']['catalog']['type'])
+			    && in_array($field, $searchFields))
 			{
-				if (is_array($searchFields) && !in_array($field, $searchFields))
-				{
-					continue;
-				}
+				// remember: only one search phrase here
+        $searchPhrase = $searchPhrases[0];
 
-				switch ($fieldConf['eval']['catalog']['type'])
+        switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'text':
 					case 'longtext':
-							// explode the search by spaces and add the result to the query.
-							// this allows us to search for multiple words which do not have to be in the same order as searched by.
-							// Drawback is, we now can not search for exact phrases anymore (which is less required than searching for
-							// multiple words IMO).
-							// TODO: make this configable so users can decide which search algorithm to use.
-							$words=explode(' ', $this->Input->get($this->strSearch));
-							$proc=array();
-							$vals=array();
-							if(count($words))
-							{
-								$values['search'][$field]=array();
-								foreach($words as $word)
-								{
-									$proc[] = '('.$field.' LIKE ?)';
-									$values['search'][$field][] =  '%'.$word.'%';
-								}
-								$procedure['search'][$field] = '('.implode(' AND ', $proc).')';
-							}
-							break;
 					case 'number':
 					case 'decimal':
-							$procedure['search'][$field] = '('.$field.' LIKE ?)';
-							$values['search'][$field] = '%'.$this->Input->get($this->strSearch).'%';
-							break;
-
 					case 'file':
 					case 'url':
-							$procedure['search'][$field] = '('.$field.' LIKE ?)';
-//							$values['search'][$field] = '%'.urldecode($this->Input->get($this->strSearch)).'%';
-							$values['search'][$field] = '%'.($this->Input->get($this->strSearch)).'%';
-							break;
+  					$procedure['search'][$field] = '('.$field.' LIKE ?)';
+  					$values['search'][$field] = '%' . $searchPhrase . '%';
+  					break;  
 
 					case 'date':
-							// add month only search
-							if (!is_numeric($this->Input->get($this->strSearch)))
+					  // add numeric day, month, year search
+            if (is_numeric($searchPhrase))
+            {
+							foreach (array('YEAR','MONTH','DAY') as $function) 
 							{
-								$procedure['search'][$field] = "CAST(MONTHNAME(FROM_UNIXTIME(".$field.")) AS CHAR) LIKE ?";
-								$values['search'][$field] = '%'.$this->Input->get($this->strSearch).'%';
-							}
-							// add numeric day, month, year search
-							else
-							{
-								foreach (array('YEAR','MONTH','DAY') as $function) 
-								{
-									$tmpDate[] = "CAST(".$function."(FROM_UNIXTIME(".$field.")) AS CHAR) LIKE ?";
-									$values['search'][$field][] = '%'.$this->Input->get($this->strSearch).'%';
-								}
-								$procedure['search'][$field] = '('.implode(' OR ',$tmpDate).')';
+								$tmpDate[] = "CAST(" . $function . "(FROM_UNIXTIME(" . $field . ")) AS CHAR) LIKE ?";
+								$values['search'][$field][] = '%' . $searchPhrase . '%';
 							}
 							
-							break;
+							$procedure['search'][$field] = '('.implode(' OR ',$tmpDate).')';
+				    }
+            
+				    // add month only search
+            else
+            {
+              $procedure['search'][$field] = "CAST(MONTHNAME(FROM_UNIXTIME(" . $field . ")) AS CHAR) LIKE ?";
+              $values['search'][$field] = '%'.$searchPhrase.'%';
+            }
+						
+					  break;
 
 					case 'checkbox' :
 							// search only if true
-							if (substr_count(strtolower($fieldConf['label']['0']),strtolower($this->Input->get($this->strSearch))))
+							if (substr_count(strtolower($fieldConf['label']['0']),
+							                 strtolower($searchPhrase)))
 							{
 								$procedure['search'][$field] = '('.$field.'=?)';
 								$values['search'][$field] = '1';
@@ -441,20 +451,23 @@ abstract class ModuleCatalog extends Module
 					case 'select' :
 							list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
 							$procedure['search'][$field] = '('.$field.' IN (SELECT id FROM '.$itemTable.' WHERE '.$valueCol.' LIKE ?'.($fieldConf['options']? ' AND id IN ('.implode(',',array_keys($fieldConf['options'])).')':'').'))';
-							$values['search'][$field] = '%'.$this->Input->get($this->strSearch).'%';
+							$values['search'][$field] = '%' . $searchPhrase . '%';
 							break;
 								
 					case 'tags' :
-
 							list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
 							// perform search by using a subselect over the tables.
-							$tagQuery = $this->Database->prepare(sprintf('SELECT DISTINCT(itemid) as id FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid IN (SELECT id FROM %s WHERE %s LIKE ? %s)',
+							$tagQuery = $this->Database->prepare(sprintf('SELECT DISTINCT(itemid) as id
+																														FROM tl_catalog_tag_rel
+																														WHERE fieldid=%s
+																														  AND valueid IN (SELECT id FROM %s WHERE %s LIKE ? %s)',
 																	$fieldConf['eval']['catalog']['fieldId'],
 																	$itemTable,
 																	$valueCol,
 																	($fieldConf['options']? ' AND id IN ('.implode(',',array_keys($fieldConf['options'])).')':'')
 																	))
-									->execute('%'.$this->Input->get($this->strSearch).'%');
+									->execute('%' . $searchPhrase . '%');
+							
 							if ($tagQuery->numRows)
 							{
 								$procedure['search'][$field] = 'id IN('.implode(',', $tagQuery->fetchEach('id')).')';
@@ -469,7 +482,7 @@ abstract class ModuleCatalog extends Module
 							foreach ($fieldType['generateFilter'] as $callback)
 							{
 								$this->import($callback[0]);
-								$tmp=$this->$callback[0]->$callback[1]($field, $fieldConf, $this->Input->get($this->strSearch));
+								$tmp=$this->$callback[0]->$callback[1]($field, $fieldConf, $searchPhrase);
 								$procedure['search'][$field] = $tmp['procedure'];
 								if(is_array($tmp['search']))
 								{
@@ -482,8 +495,8 @@ abstract class ModuleCatalog extends Module
 									$values['search'][$field]=$tmp['search'];
 							}
 						}
-				}
-			} // of search
+				} // /switch
+			} // /search
 
 			// GET range values
 			if (substr_count($this->Input->get($field),'__'))
@@ -696,7 +709,54 @@ abstract class ModuleCatalog extends Module
 		}
 		return $settings;
 	}
-
+	
+  /**
+   * Splits the keywords used for the search query
+   * One can use "word1 word2" for a phrase
+   * @see Search::searchFor()
+   * @param string $strKeywords
+   * @return array with the single string phrases to search for
+   */
+  protected static function splitSearchKeywords($strKeywords)
+  {
+    $result = array();
+    $arrChunks = array();
+  
+    preg_match_all('/"[^"]+"|[^ ]+/', $strKeywords, $arrChunks);
+  
+    foreach ($arrChunks[0] as $phrase)
+    {
+      switch (substr($phrase, 0, 1))
+      {
+        case '"':
+          $result[] = trim(substr($phrase, 1, -1));
+          break;
+          
+        default:
+          $result[] = $phrase;
+      }
+    }
+    
+    return $result;
+  }
+  
+  /**
+   * Prepares several search phrases for usage in the LIKE statement
+   * @param array $arrPhrases
+   * @return array string $searchValue with wildcards added
+   */
+  protected static function searchFor(array $arrPhrases)
+  {
+    $result = array();
+    
+    foreach ($arrPhrases as $phrase)
+    {
+      $result[] = '%' . $phrase . '%';
+    }
+    
+    return $result;
+  }
+	
 	/**
 	 * Retrieve Alias field from table, checks if catalog
 	 * @param string
