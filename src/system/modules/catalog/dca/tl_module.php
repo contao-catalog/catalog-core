@@ -819,17 +819,32 @@ class tl_module_catalog extends Backend
 	}
 
 	/**
-	 * Get all catalog fields and return them as array
-	 * @return array
+	 * Get all catalog fields of a certain type and return them as array.
+	 * calc fields are always included
+	 * @param DataContainer $dc
+	 * @param array $arrTypes
+	 * @param boolean 
+	 * @return array string $colName => string $fieldName
 	 */
 	public function getCatalogFields(DataContainer $dc, $arrTypes=false, $blnImage=false)
 	{
-		if(!$arrTypes)
-			$arrTypes=$GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
+		if(! $arrTypes)
+		{
+			$arrTypes = $GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
+		}
+		
+		// the real type of calc fields is unknown, so include them for flexibility
+    $arrTypes[] = 'calc';
+		
 		$fields = array();
 		$chkImage = $blnImage ? " AND c.showImage=1" : "";
 		
-		$objFields = $this->Database->prepare("SELECT c.* FROM tl_catalog_fields c, tl_module m WHERE c.pid=m.catalog AND m.id=? AND c.type IN ('" . implode("','", $arrTypes) . "')".$chkImage." ORDER BY c.sorting ASC")
+		$objFields = $this->Database->prepare("SELECT c.*
+																					 FROM tl_catalog_fields c, tl_module m
+																					 WHERE c.pid=m.catalog
+																					   AND m.id=?
+																					   AND c.type IN ('" . implode("','", $arrTypes) . "')".$chkImage."
+																					 ORDER BY c.sorting ASC")
 							->execute($this->Input->get('id'));
 
 		while ($objFields->next())
@@ -840,7 +855,6 @@ class tl_module_catalog extends Backend
 		}
 
 		return $fields;
-
 	}
 
 

@@ -226,14 +226,18 @@ abstract class ModuleCatalog extends Module
 		return $tree;
 	}
 
-
-	protected function parseFilterUrl($searchFields=NULL)
+   /**
+    * Sets the values of all filters according to either POST or GET values
+    * @param string $strSearchFields
+    * @return array 
+    */
+	protected function parseFilterUrl($strSearchFields=null)
 	{
 		$arrTree = $this->getTree();
 		$blnTree = (count($arrTree)>0);
 
 		$current = $this->convertAliasInput();
-		$searchFields = $searchFields?deserialize($searchFields):array();
+		$searchFields = deserialize($strSearchFields, true);
 
 		// Setup Fields
 		$fields = $this->getCatalogFields();
@@ -270,6 +274,7 @@ abstract class ModuleCatalog extends Module
 				{
 					$doPost = true;
 					$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
+					
 					// check if array posted (range and dates)
 					if (is_array($this->Input->post($field)))
 					{
@@ -341,6 +346,8 @@ abstract class ModuleCatalog extends Module
 				$this->redirect($this->generateFilterUrl($current, false, false));
 			}
 		}
+		
+		// GET from here on
 
 		// return if no filter parameters in URL
 		if (!is_array($current) && !count($current))
@@ -350,19 +357,13 @@ abstract class ModuleCatalog extends Module
 
 		// Setup Variables
 		$baseurl = $this->generateFilterUrl();
-		$procedure = array();
-		$values = array();
-
-
-		$procedure['search'] = null;
-		$values['search'] = null;
+		$procedure = array('search' => null);
+		$values = array('search' => null);
 
 		foreach ($fields as $field=>$data)
 		{
-			if (!in_array($field, $searchFields)) {
-				continue;
-			}
 			$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
+			$sqlFieldName = self::sqlFieldName($field, $fieldConf['eval']['catalog']);
 
 			// GET search value
 			if ($this->Input->get($this->strSearch) && strlen($fieldConf['eval']['catalog']['type']))
@@ -493,8 +494,7 @@ abstract class ModuleCatalog extends Module
 				$rangeOptions[$field]['max'] = $rangeValues[1];
 				$minValue =	$rangeValues[0];
 				$maxValue = $rangeValues[1];
-				//$procedure['where'][] = '('.$field.' BETWEEN ? AND ?)';
-				$strSqlWhereClause = '('.$field.' BETWEEN ? AND ?)';
+        
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'number':
@@ -509,20 +509,35 @@ abstract class ModuleCatalog extends Module
 						$rangeValues[0] = strtotime($rangeValues[0]);
 						$rangeValues[1] = strtotime($rangeValues[1]);
 						break;
+					case 'calc':
+					  if ($fieldConf['eval']['catalog']['formatFunction'] == 'date')
+					  {
+					    $rangeValues[0] = strtotime($rangeValues[0]);
+					    $rangeValues[1] = strtotime($rangeValues[1]) + 60*60*24-1; // end of day
+					  }
+					  break;
 					default:
 				}
-				if ($minValue!='')
-					$values['where'][] = $rangeValues[0];
+				
+				// one or two limits?
+
+				$strSqlWhereClause = '(' . $sqlFieldName . ' BETWEEN ? AND ?)';
+
+				if (strlen($minValue))
+          $values['where'][] = $rangeValues[0];
 				else
-					$strSqlWhereClause = '('.$field.' < ?)';
-				if ($maxValue!='')
+					$strSqlWhereClause = '(' . $sqlFieldName . ' < ?)';
+				
+				if (strlen($maxValue))
 					$values['where'][] = $rangeValues[1];
 				else
-					$strSqlWhereClause = '('.$field.' > ?)';
-				$procedure['where'][$field] = $strSqlWhereClause;
+					$strSqlWhereClause = '(' . $sqlFieldName . ' > ?)';
+				
+				$procedure['where'][] = $strSqlWhereClause;
 				$current[$field] = $this->Input->get($field);
 			}
-			//GET filter values
+			
+			// GET filter values
 			elseif (strlen($this->Input->get($field)))
 			{
 				switch ($fieldConf['eval']['catalog']['type'])
@@ -569,12 +584,12 @@ abstract class ModuleCatalog extends Module
 						}
 						break;
 					case 'checkbox':
-						$procedure['where'][$field] = $field."=?";
+						$procedure['where'][$field] = $field . "=?";
 						$values['where'][$field] = ($this->Input->get($field) == 'true' ? 1 : 0);
-						//$current[$field] = $this->Input->get($field);
+						
 						if ($blnTree && in_array($field, $arrTree)) 
 						{
-							$procedure['tree'][$field] = $field."=?";
+							$procedure['tree'][$field] = $field . "=?";
 							$values['tree'][$field] = ($this->Input->get($field) == 'true' ? 1 : 0);
 						}
 						break;
@@ -584,40 +599,64 @@ abstract class ModuleCatalog extends Module
 					case 'decimal':
 					case 'select':
 						$value = $current[$field];
+						
 						if($value!==NULL)
 						{
-							$procedure['where'][$field] = $field."=?";
+							$procedure['where'][$field] = $field . "=?";
 							$values['where'][$field] = $value;
+							
 							if ($blnTree && in_array($field, $arrTree)) 
 							{
-								$procedure['tree'][$field] = $field."=?";
+								$procedure['tree'][$field] = $field . "=?";
 								$values['tree'][$field] = $value;
 							}
 						}
 						break;
 					case 'date':
-						$procedure['where'][$field] = $field."=?";
+						$procedure['where'][$field] = $field . "=?";
 						$values['where'][$field] = strtotime($this->Input->get($field));
-						//$current[$field] = $this->Input->get($field);
-
+            
 						if ($blnTree && in_array($field, $arrTree)) 
 						{
-							$procedure['tree'][$field] = $field."=?";
+							$procedure['tree'][$field] = $field . "=?";
 							$values['tree'][$field] = strtotime($this->Input->get($field));
 						}
 						break;
 					case 'file':
 					case 'url':
-						$procedure['where'][$field] = $field."=?";
+						$procedure['where'][$field] = $field . "=?";
 						$values['where'][$field] = urldecode($this->Input->get($field));
 						$current[$field] = $this->Input->get($field);
 
 						if ($blnTree && in_array($field, $arrTree)) 
 						{
-							$procedure['tree'][$field] = $field."=?";
+							$procedure['tree'][$field] = $field . "=?";
 							$values['tree'][$field] = urldecode($this->Input->get($field));
 						}
 						break;
+						
+					default: // f.e. calc
+				  if ($fieldConf['eval']['catalog']['formatFunction'] == 'date')
+  					{
+  					  $dayBegin = strtotime($this->Input->get($field));
+  					  $dayEnd = $dayBegin + 24*60*60 -1;
+  					  
+  					  $procedure['where'][] = $sqlFieldName . ' BETWEEN ' . $dayBegin . ' AND ' . $dayEnd; 
+  					}
+  					
+  					else
+  					{
+  					  $procedure['where'][] = $sqlFieldName ."=?";
+  					  $values['where'][] = $this->Input->get($field);
+  					}
+
+						$current[$field] = $this->Input->get($field);
+
+						if ($blnTree && in_array($field, $arrTree)) 
+						{
+							$procedure['tree'][$field] = $sqlFieldName ."=?";
+							$values['tree'][$field] = $this->Input->get($field);
+						}
 				}
 			} // filter
 
@@ -2024,15 +2063,14 @@ abstract class ModuleCatalog extends Module
 				}
 			}
 		}
-		return ($blnRoot ? $this->Environment->base : '') . $this->generateFrontEndUrl($arrPage, $strParams);		
+		return ($blnRoot ? $this->Environment->base : '') . $this->generateFrontEndUrl($arrPage, $strParams);
 	}
 
 	/**
 	 * Translate SQL if needed (needed for calculated fields)
-	 * @param array
+	 * @param array $arrVisible
 	 * @return array
 	 */
-
 	protected function processFieldSQL($arrVisible)
 	{
 		$arrConverted = array();
@@ -2054,18 +2092,7 @@ abstract class ModuleCatalog extends Module
 			{
 				if (array_key_exists($field, $arrFields))
 				{
-					switch ($arrFields[$field]['type'])
-					{
-						case 'calc':
-							// set query value to forumla
-							$value = '('.$arrFields[$field]['calcValue'].') AS '.$field; //.'_calc';
-							$arrConverted[$id] = $value;
-							break;
-
-						default:
-							$arrConverted[$id] = $field;
-					}
-
+					$arrConverted[$id] = self::sqlFieldAlias($field, $arrFields[$field]);
 				}
 
 				// HOOK: allow third party extension developers to prepare the SQL data
@@ -2081,6 +2108,47 @@ abstract class ModuleCatalog extends Module
 		}
 
 		return $arrConverted;
+	}
+	
+	/**
+	 * Replaces the field name by the calc formula and alias for a calc field,
+	 * keeps the field name for every other field
+	 * @param string $strFieldName
+	 * @param array $arrFieldConfigCatalog catalog part
+	 * @return string field name to use f.e. in field list
+	 */
+	protected static function sqlFieldAlias($strFieldName,
+	                                        array $arrFieldConfigCatalog)
+	{
+	  $result = $strFieldName;
+	  
+	  if ($arrFieldConfigCatalog['type'] == 'calc')
+	  {
+	    // set query value to formula
+	    $result = '(' . $arrFieldConfigCatalog['calcValue'] . ') AS ' . $strFieldName;
+    }
+    
+    return $result;
+	}
+	
+	/**
+	 * Replaces the field name by the calculation formula, if applicable
+	 * @param string $strFieldName
+	 * @param array $arrFieldConfigCatalog
+	 * @return string field name to use f.e. in WHERE statement
+	 */
+	protected static function sqlFieldName($strFieldName,
+                                         array $arrFieldConfigCatalog)
+	{
+	  $result = $strFieldName;
+	  
+	  if ($arrFieldConfigCatalog['type'] == 'calc')
+	  {
+	    // set query value to forumla
+	    $result = '(' . $arrFieldConfigCatalog['calcValue'] . ')';
+    }
+    
+    return $result;
 	}
 
 	/**
