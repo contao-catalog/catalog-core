@@ -153,7 +153,7 @@ class ModuleCatalogList extends ModuleCatalog
 				$strWhere.=' AND '.$this->publishField.'=1';
 			}
 
-			$strOrder = (strlen($filterurl['procedure']['orderby']) ? $filterurl['procedure']['orderby'] : trim($this->catalog_order));
+			$strOrder = (strlen($filterurl['procedure']['orderby']) ? $filterurl['procedure']['orderby'] : trim($this->replaceInsertTags($this->catalog_order)));
 
 			$this->perPage = strlen($this->Input->post('per_page')) ? $this->Input->post('per_page') : $this->perPage;
 
