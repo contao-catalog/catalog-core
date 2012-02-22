@@ -231,7 +231,7 @@ abstract class ModuleCatalog extends Module
     * @param string $strSearchFields
     * @return array 
     */
-	protected function parseFilterUrl($strSearchFields=null)
+	public function parseFilterUrl($strSearchFields=null)
 	{
 		$arrTree = $this->getTree();
 		$blnTree = (count($arrTree)>0);
