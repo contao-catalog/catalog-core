@@ -626,6 +626,9 @@ class ModuleCatalogEdit extends ModuleCatalog
 			}
 
 			$objWidget = new $strClass($this->prepareForWidget($arrData, $field));
+            
+            // add required
+            $objWidget->required = $objWidget->mandatory;
 
 			$objWidget->storeValues = true;
 			$objWidget->rowClass = 'row_' . $i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
