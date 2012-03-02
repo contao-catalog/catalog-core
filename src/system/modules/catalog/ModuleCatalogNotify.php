@@ -89,7 +89,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 		  return $this->compileInvalidCatalog();
 		}
 		
-		$objCatalog = $this->fetchCatalogItem();
+		$objCatalog = $this->fetchCatalogItemFromRequest();
 		
 		if(! $objCatalog)
 		{
@@ -381,10 +381,10 @@ class ModuleCatalogNotify extends ModuleCatalog
 	}
 		/**
 	 * (non-PHPdoc)
-	 * @see ModuleCatalog::fetchCatalogItem()
+	 * @see ModuleCatalog::fetchCatalogItemFromRequest()
 	 */
-	protected function fetchCatalogItem(array $arrFields =array()) {
-    $objResult = parent::fetchCatalogItem();
+	protected function fetchCatalogItemFromRequest(array $arrFields =array()) {
+    $objResult = parent::fetchCatalogItemFromRequest($arrFields);
 
     // restrict to published items
     if($objResult

@@ -75,7 +75,7 @@ class ModuleCatalogReader extends ModuleCatalog
       return $this->compileInvalidCatalog();
     }
 		
-    $objItem = $this->fetchCatalogItem();
+    $objItem = $this->fetchCatalogItemFromRequest();
 
     // give error if nothing found
     if(! $objItem)
@@ -283,10 +283,10 @@ class ModuleCatalogReader extends ModuleCatalog
 	}
 		/**
 	 * (non-PHPdoc)
-	 * @see ModuleCatalog::fetchCatalogItem()
+	 * @see ModuleCatalog::fetchCatalogItemFromRequest()
 	 */
-	protected function fetchCatalogItem(array $arrFields =array()) {
-    $objResult = parent::fetchCatalogItem($this->catalog_visible);
+	protected function fetchCatalogItemFromRequest(array $arrFields =array()) {
+    $objResult = parent::fetchCatalogItemFromRequest($this->catalog_visible);
 
     // restrict to published items
     if($objResult

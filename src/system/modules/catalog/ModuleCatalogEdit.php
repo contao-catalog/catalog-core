@@ -481,14 +481,14 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$this->refererUrl = $this->getReferer(ENCODE_AMPERSANDS);
 		$this->basicVarsToTemplate();
 
-		if(! $this->objCatalogType)
+		if (!$this->objCatalogType)
 		{
 			return $this->compileInvalidCatalog();
 		}
 		$blnModeAdd = false;
 
 		// get catalog item as an array
-		$objItem = $this->fetchCatalogItem();
+		$objItem = $this->fetchCatalogItemFromRequest();
 
 		if($objItem)
 			$arrValues = $objItem->fetchAssoc();
