@@ -1,56 +1,38 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
- * visit the project website http://www.typolight.org.
- * 
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
 
-
 /**
- * Class ModuleCatalogReader
+ * Frontend module to present one single catalog item
  *
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Controller
  *
  */
 class ModuleCatalogReader extends ModuleCatalog
-{
-
-	/**
+{	/**
 	 * Template
 	 * @var string
 	 */
 	protected $strTemplate = 'mod_catalogreader';
 
-
-	/**
-	 * Display a wildcard in the back end
-	 * @return string
-	 */
+  /**
+   * (non-PHPdoc)
+   * @see ModuleCatalog::generate()
+   */
 	public function generate()
 	{
 		if (TL_MODE == 'BE')
@@ -61,6 +43,8 @@ class ModuleCatalogReader extends ModuleCatalog
 			$objTemplate->title = $this->headline;
 			$objTemplate->id = $this->id;
 			$objTemplate->link = $this->name;
+			
+			// URL scheme changed since 2.9.0
 			if (version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))
 				$objTemplate->href = 'contao/main.php?do=themes&amp;table=tl_module&amp;act=edit&amp;id=' . $this->id;
 			else
@@ -79,202 +63,185 @@ class ModuleCatalogReader extends ModuleCatalog
 
 		return parent::generate();
 	}
-
-
-	/**
-	 * Generate module
-	 */
+   /**
+   * (non-PHPdoc)
+   * @see Module::compile()
+   */
 	protected function compile()
 	{
-		global $objPage;
+	  $this->basicVarsToTemplate();
+	
+    if(! $this->objCatalogType) {
+      return $this->compileInvalidCatalog();
+    }
+		
+    $objItem = $this->fetchCatalogItem();
 
-		$this->Template->catalog = '';
-		$this->Template->referer = $this->getReferer(ENCODE_AMPERSANDS);
-		$this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
-		$this->Template->gobackDisable = $this->catalog_goback_disable;
-
-		$objCatalogType = $this->Database->prepare("SELECT * FROM tl_catalog_types WHERE id=?")
-										->execute($this->catalog);
-
-		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';
-
-		$arrConverted = $this->processFieldSQL($this->catalog_visible);
-
-		// Overwrite page title
-		if (strlen($objCatalogType->titleField)) 
+    // give error if nothing found
+    if(! $objItem)
 		{
-			$titleField = $objCatalogType->titleField;
-			$this->systemColumns = array_merge($this->systemColumns, array($titleField));
-		}
-
-		// Overwrite page description
-		if (strlen($objCatalogType->descriptionField)) 
-		{
-			$descriptionField = $objCatalogType->descriptionField;
-			$this->systemColumns = array_merge($this->systemColumns, array($descriptionField));
-		}
-
-		// Overwrite page keywords
-		if (strlen($objCatalogType->keywordsField)) 
-		{
-			$keywordsField = $objCatalogType->keywordsField;
-			$this->systemColumns = array_merge($this->systemColumns, array($keywordsField));
-		}
-
-		/*
-			$objCatalog = $this->Database->prepare("SELECT *, (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE (CAST(id AS CHAR)=?".$strAlias.")")
-											->limit(1)
-											->execute($this->Input->get('items'), $this->Input->get('items'));
-		*/
-		// We have to handle numeric input data differently from string input, as otherwise
-		// we have the problem that within MySQL the following is really true:
-		// Given: id INT(10), alias VARCHAR(...) and a string to match in a query 'somestring'.
-		// id=15
-		// alias='15-some-alias-beginning-with-digits'
-		// somestring='15'
-		// in MySQL this all(!) matches in the original Query here, therefore we have to change it 
-		// (and in all other modules aswell).
-		// So, if the input is numeric, do id lookup, otherwise do the alias lookup.
-		// Note we are enforcing a "no numeric aliases policy here but we 
-		// can live with that as we would get random results anyway.
-		$value=$this->Input->get('items');
-		$strAlias = $objCatalogType->aliasField ? $objCatalogType->aliasField : (is_numeric($value) ? "id" : '');
-		if(strlen($strAlias))
-		{
-			$objCatalog = $this->Database->prepare('SELECT '.implode(',',$this->systemColumns).','.implode(',',$arrConverted).', (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : ''). $strAlias . '=?')
-										->limit(1)
-										->execute($value);
-		}
-
-		// if no item, then check if add allowed and then show add form
-		if (!$objCatalog || $objCatalog->numRows < 1)
-		{
-			$this->Template->catalog = '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['catalogItemInvalid'].'</p>';
-
-			// Do not index the page
-			$objPage->noSearch = 1;
-			$objPage->cache = 0;
-
-			// Send 404 header
-			header('HTTP/1.0 404 Not Found');
-			return;
+		  return $this->compileInvalidItem();
 		}
 		
 		$this->Template->visible = $this->catalog_visible;
 
-
+		// The reader is on its own page, so we can extend page
+		// information with item information
+		global $objPage;
+		
 		// Extend page title
-		if (strlen($objCatalogType->titleField)) 
+		if (strlen($this->objCatalogType->titleField))
 		{
-			$objPage->pageTitle .= $objCatalog->$titleField;
+		  $objPage->pageTitle .= ' ' . $objItem->{$this->objCatalogType->titleField};
 		}
 
 		// Extend page description
-		if (strlen($objCatalogType->descriptionField)) 
+		if (strlen($objCatalogType->descriptionField))
 		{
-			$objPage->description .= strip_tags($objCatalog->$descriptionField);
+			$objPage->description .= ' ' . strip_tags($objItem->{$this->objCatalogType->descriptionField});
 		}
 
 		// Extend page keywords
-		if (strlen($objCatalogType->keywordsField)) 
+		if (strlen($objCatalogType->keywordsField))
 		{
-			$GLOBALS['TL_KEYWORDS'] .= $this->gererateKeywords($objCatalog->$keywordsField);
+			$GLOBALS['TL_KEYWORDS'] .= ' ' . $this->generateKeywords($objItem->{$this->objCatalogType->keywordsField});
 		}
 
 		// Process Comments if not disabled
 		if (!$this->catalog_comments_disable)
 		{
-			$this->processComments($objCatalog);	
+			$this->processComments($objItem);	
 		}
 		
 		// add a reporting form if activated
 		if ($objCatalogType->activateReporting)
 		{
-			$this->Template->activateReporting = true;
-			
-			// prepare the form
-			$arrWidgets = $this->prepareReportingForm();
-			
-			// check if the form has been submitted already
-			if ($this->Input->post('FORM_SUBMIT') == 'catalog_reporting')
-			{
-				$arrIds = deserialize($objCatalogType->notifyUsers, true);
-				
-				foreach ($arrWidgets as $name => $objWidget)
-				{
-					$objWidget->validate();
-
-					if ($objWidget->hasErrors())
-					{
-						$doNotSubmit = true;
-					}
-				}
-				
-				if (!$doNotSubmit)
-				{
-					// get all the mail adresses of all users
-					if (empty($arrIds))
-					{
-						return;
-					}
-					
-					$arrRecipients = $this->Database->query('SELECT email FROM tl_user WHERE id IN(' . implode(',', $arrIds) . ')')->fetchEach('email');
-					
-					$objEMail = new Email();
-
-					// Set the admin e-mail as "from" address
-					$objEMail->from = $GLOBALS['TL_ADMIN_EMAIL'];
-					$objEMail->fromName = $GLOBALS['TL_ADMIN_NAME'];
-
-					$objEMail->subject = 'New abuse report on a catalog item';
-
-					// Send e-mail
-					$strText = 'Hi, somebody reported an abuse. The id of the suspicious catalog entry is: ' . $objCatalog->id . "\n";
-					$strText .= 'The message of the user was the following:' . "\n\n";
-					$strText .= $this->Input->post('catalog_reporting_msg');
-					
-					$objEMail->text = $strText;
-					$objEMail->sendTo($arrRecipients);
-				}
-			}
-			
-			$objForm = new FrontendTemplate('form');
-			$objForm->formSubmit = 'catalog_reporting';
-			$objForm->tableless = true;
-			$objForm->method = 'post';	
-			$objForm->hasError = $doNotSubmit;
-			$objForm->enctype = 'application/x-www-form-urlencoded';
-			$objForm->formId = 'catalog_reporting';
-			$objForm->action = $this->Environment->request;
-			
-			$strFields = '';
-			
-			foreach ($arrWidgets as $name => $objWidget)
-			{
-				$strFields .= $objWidget->parse();
-			}
-		
-			$objForm->fields = $strFields;
-			
-			$this->Template->reportingFormRaw = new stdClass();
-			$this->Template->reportingFormRaw->arrWidgets = $arrWidgets;
-			$this->Template->reportingFormRaw->objForm = $objForm;
-			$this->Template->reportingForm = $objForm->parse();
+		  $this->processReporting($objItem);
 		}
 		
-		
 		// Keep this at the end to allow the reader template to manipulate $objPage
-		$this->Template->catalog = $this->parseCatalog($objCatalog, false, $this->catalog_template, $this->catalog_visible);
+		$this->Template->catalog = $this->parseCatalog($objItem, false,
+		                                               $this->catalog_template,
+		                                               $this->catalog_visible);
 	}
+		/**
+	 * Offers a form to report the catalog item to some configured users
+	 * @return void
+	 * @post $this->Template contains all information to present the report form
+	 */
+	protected function processReporting(Database_Result $objCatalog)
+	{
+	  $this->Template->activateReporting = true;
 	
+	  // prepare the form
+	  $arrWidgets = $this->prepareReportingForm();
+	
+	  // check if the form has been submitted already
+	  if ($this->Input->post('FORM_SUBMIT') == 'catalog_reporting')
+	  {
+	    $arrIds = deserialize($objCatalogType->notifyUsers, true);
+	
+	    foreach ($arrWidgets as $name => $objWidget)
+	    {
+	      $objWidget->validate();
+	
+	      if ($objWidget->hasErrors())
+	      {
+	        $doNotSubmit = true;
+	      }
+	    }
+	
+	    if (!$doNotSubmit)
+	    {
+	      // get all the mail adresses of all users
+	      if (empty($arrIds))
+	      {
+	        return;
+	      }
+	
+	      $arrRecipients = $this->Database->query('SELECT email
+	                                               FROM tl_user
+	                                               WHERE id IN(' . implode(',', $arrIds) . ')')->fetchEach('email');
+	
+	      $objEMail = new Email();
+	
+	      // Set the admin e-mail as "from" address
+	      $objEMail->from = $GLOBALS['TL_ADMIN_EMAIL'];
+	      $objEMail->fromName = $GLOBALS['TL_ADMIN_NAME'];
+	
+	      $objEMail->subject = 'New abuse report on a catalog item';
+	
+	      // Send e-mail
+	      $strText = 'Hi, somebody reported an abuse. The id of the suspicious catalog entry is: ' . $objCatalog->id . "\n";
+	      $strText .= 'The message of the user was the following:' . "\n\n";
+	      $strText .= $this->Input->post('catalog_reporting_msg');
+	
+	      $objEMail->text = $strText;
+	      $objEMail->sendTo($arrRecipients);
+	    }
+	  }
+	
+	  $objForm = new FrontendTemplate('form');
+	  $objForm->formSubmit = 'catalog_reporting';
+	  $objForm->tableless = true;
+	  $objForm->method = 'post';
+	  $objForm->hasError = $doNotSubmit;
+	  $objForm->enctype = 'application/x-www-form-urlencoded';
+	  $objForm->formId = 'catalog_reporting';
+	  $objForm->action = $this->Environment->request;
+	
+	  $strFields = '';
+	
+	  foreach ($arrWidgets as $name => $objWidget)
+	  {
+	    $strFields .= $objWidget->parse();
+	  }
+	
+	  $objForm->fields = $strFields;
+	
+	  $this->Template->reportingFormRaw = new stdClass();
+	  $this->Template->reportingFormRaw->arrWidgets = $arrWidgets;
+	  $this->Template->reportingFormRaw->objForm = $objForm;
+	  $this->Template->reportingForm = $objForm->parse();
+  }
+		/**
+	 * Prepare a reporting form
+	 * @return array
+	 */
+	protected function prepareReportingForm()
+	{
+	  $arrReturn = array();
+		  // text area
+	  $arrData = array();
+	  $arrData['mandatory']		= true;
+	  $arrData['required']		= true;
+	  $arrData['id']				= 'catalog_reporting_msg';
+	  $arrData['name']			= 'catalog_reporting_msg';
+		  $objTextArea = new FormTextArea($arrData);
+		  $arrReturn['textarea'] = $objTextArea;
+		  // captcha
+	  $arrCaptcha = array();
+	  $arrCaptcha['id']			= 'catalog_reporting_captcha';
+	  $arrCaptcha['label']		= $GLOBALS['TL_LANG']['MSC']['securityQuestion'];
+	  $arrCaptcha['mandatory']	= true;
+	  $arrCaptcha['required']		= true;
+		  $objCaptcha = new FormCaptcha($arrCaptcha);
+		  $arrReturn['captcha'] = $objCaptcha;
+		  // submit button
+	  $arrSubmit = array();
+	  $arrSubmit['slabel'] = $GLOBALS['TL_LANG']['MSC']['reportAbuse'];
+		  $objSubmit = new FormSubmit($arrSubmit);
+		  $arrReturn['submit'] = $objSubmit;
+		  return $arrReturn;
+	}
+
 	/**
 	 * Generate keywords from a raw string
-	 * @param string
+	 * @param string $strInput
 	 * @return string
 	 */
-	protected function gererateKeywords($strInput)
+	protected function generateKeywords($strInput)
 	{
-
 		$strKeywords = '';
 
 		// remove html
@@ -303,51 +270,33 @@ class ModuleCatalogReader extends ModuleCatalog
 		if (count($arrKeywords)>$GLOBALS['TL_CONFIG']['catalog']['keywordCount'])
 			$arrKeywords = array_slice($arrKeywords, 0, $GLOBALS['TL_CONFIG']['catalog']['keywordCount']);
 
-
 		return($strKeywords);
 	}
-	
-	
-	/**
-	 * Prepare a reporting form
-	 * @return array
+		/**
+	 * (non-PHPdoc)
+	 * @see ModuleCatalog::basicVarsToTemplate()
 	 */
-	protected function prepareReportingForm()
-	{
-		$arrReturn = array();
-		
-		// text area	
-		$arrData = array();
-		$arrData['mandatory']		= true;
-		$arrData['required']		= true;
-		$arrData['id']				= 'catalog_reporting_msg';
-		$arrData['name']			= 'catalog_reporting_msg';
-
-		$objTextArea = new FormTextArea($arrData);
-		
-		$arrReturn['textarea'] = $objTextArea;
-		
-		// captcha
-		$arrCaptcha = array();
-		$arrCaptcha['id']			= 'catalog_reporting_captcha';
-		$arrCaptcha['label']		= $GLOBALS['TL_LANG']['MSC']['securityQuestion'];
-		$arrCaptcha['mandatory']	= true;
-		$arrCaptcha['required']		= true;
-
-		$objCaptcha = new FormCaptcha($arrCaptcha);		
-		
-		$arrReturn['captcha'] = $objCaptcha;
-		
-		// submit button
-		$arrSubmit = array();
-		$arrSubmit['slabel'] = $GLOBALS['TL_LANG']['MSC']['reportAbuse'];
-
-		$objSubmit = new FormSubmit($arrSubmit);
-		
-		$arrReturn['submit'] = $objSubmit;
-		
-		return $arrReturn;
+	protected function basicVarsToTemplate() {
+	  parent::basicVarsToTemplate();
+	
+	  $this->Template->gobackDisable = $this->catalog_goback_disable;
 	}
-}
+		/**
+	 * (non-PHPdoc)
+	 * @see ModuleCatalog::fetchCatalogItem()
+	 */
+	protected function fetchCatalogItem(array $arrFields =array()) {
+    $objResult = parent::fetchCatalogItem($this->catalog_visible);
 
-?>
+    // restrict to published items
+    if($objResult
+       && (!BE_USER_LOGGED_IN)
+       && $this->publishField
+       && (! $objResult->{$this->publishField}))
+    {
+      $objResult = null;
+    }
+
+    return $objResult;
+	}
+}?>

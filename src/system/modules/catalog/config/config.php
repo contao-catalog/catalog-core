@@ -1,31 +1,18 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
- * visit the project website http://www.typolight.org.
- * 
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
-
 
 /**
  * Back-end module
@@ -38,7 +25,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 		'import'			=> array('Catalog', 'importCSV'),
 		'export'			=> array('Catalog', 'exportItems'),
 		'upgrade'			=> array('CatalogUpgrade', 'upgrade'),
-		'maintenance'       => array('CatalogMaintenance', 'compile'),
+		'maintenance'		=> array('CatalogMaintenance', 'compile'),
 
 		// Added by c.schiffler to allow custom editors to register themselves.
 		'fieldTypes' => array
@@ -95,7 +82,6 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 						(
 							'inputType' => 'text',
 						),
-//					'sqlDefColumn' => "varchar(10) NOT NULL default ''",
 					'sqlDefColumn' => 'int(10) unsigned NULL default NULL',
 				),
 			'select' => array
@@ -233,10 +219,10 @@ $GLOBALS['TL_PERMISSIONS'][] = 'catalogs';
 $GLOBALS['TL_CONFIG']['catalog']['csvDelimiter']	= ',';
 $GLOBALS['TL_CONFIG']['catalog']['safeCheck']		= array('/', '\'');
 $GLOBALS['TL_CONFIG']['catalog']['safeReplace']	= array('-slash-', '-apos-');
-$GLOBALS['TL_CONFIG']['catalog']['keywordsInvalid'] = array( ' ','.','?','!',';',':','-','/','&','"','\'','Õ');
+$GLOBALS['TL_CONFIG']['catalog']['keywordsInvalid'] = array( ' ','.','?','!',';',':','-','/','&','"','\'','ï¿½');
 $GLOBALS['TL_CONFIG']['catalog']['keywordCount'] = 15;
 
-
+$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Catalog', 'catalogRgxp');
 
 array_insert($GLOBALS['BE_FFL'], 15, array
 (

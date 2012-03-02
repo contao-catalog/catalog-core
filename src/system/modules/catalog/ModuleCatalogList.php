@@ -1,46 +1,30 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
- * visit the project website http://www.typolight.org.
- * 
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
-
 
 /**
  * Class ModuleCatalogList
  *
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Controller
  *
  */
 
 class ModuleCatalogList extends ModuleCatalog
-{
-	/**
+{	/**
 	 * Template
 	 * @var string
 	 */
@@ -75,109 +59,66 @@ class ModuleCatalogList extends ModuleCatalog
 		$this->strTemplate = $this->catalog_layout;
 
 		$this->catalog_visible = deserialize($this->catalog_visible);
-
+		
 		return parent::generate();
 	}
-	
-	
-	
+		/**
+	 * (non-PHPdoc)
+	 * @see Module::compile()
+	 */
 	protected function compile()
 	{
 		$filterurl = $this->parseFilterUrl($this->catalog_search);
 
 		$arrCondition = deserialize($this->catalog_condition, true);
 		$blnCondition = false;
+
 		if ($this->catalog_condition_enable && is_array($arrCondition))
 		{
-			$blnCondition = count($arrCondition) && count(array_intersect_key($filterurl['current'], array_flip($arrCondition)))>= count($arrCondition);
+			$blnCondition = count($arrCondition)
+							&& count(array_intersect_key($filterurl['current'], array_flip($arrCondition))) >= count($arrCondition);
 		}
-		if (!$this->catalog_condition_enable || ($this->catalog_condition_enable && $blnCondition) || is_array($filterurl['procedure']['search']))
+
+		if (!$this->catalog_condition_enable
+			|| ($this->catalog_condition_enable && $blnCondition)
+			|| is_array($filterurl['procedure']['search']))
 		{
+			$this->catalog_search = deserialize($this->catalog_search, true);
+
 			// Query Catalog
-	
-			// add search as single query using OR, after foreach
-			$this->catalog_search = deserialize($this->catalog_search, true); 
+			$filterurl = $this->addSearchFilter($filterurl);
+			$arrParams = $this->generateStmtParams($filterurl);
+			$strWhere = $this->generateStmtWhere($filterurl);
+			$strOrder = $this->generateStmtOrderBy($filterurl);
 
-			if (is_array($this->catalog_search) && strlen($this->catalog_search[0]) && is_array($filterurl['procedure']['search']))
+			if (strlen($this->Input->post('per_page')))
 			{
-				// reset arrays
-				$searchProcedure = array();
-				$searchValues = array();
-
-				foreach($this->catalog_search as $field)
-				{
-					if (array_key_exists($field, $filterurl['procedure']['search']))
-					{
-						$searchProcedure[] = $filterurl['procedure']['search'][$field];
-						if (is_array($filterurl['values']['search'][$field]))
-						{
-							foreach($filterurl['values']['search'][$field] as $item)
-							{
-								$searchValues[] = $item;
-							}
-						}
-						else
-						{
-							$searchValues[] = $filterurl['values']['search'][$field];
-						}
-					}
-				}
-
-				$filterurl['procedure']['where'][] = ' ('.implode(" OR ", $searchProcedure).')';
-				$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
-
+				$this->perPage = $this->Input->post('per_page');
 			}
-	
-			$params[0] = $this->catalog;
-			if (is_array($filterurl['values']['where'])) {
-				$params = array_merge($params, $filterurl['values']['where']);
-			}
-	
-// add tags combination here...
-
-			if (is_array($filterurl['values']['tags'])) {
-				$params = array_merge($params, $filterurl['values']['tags']);
-			}
-	
-	
-			$strCondition = $this->replaceInsertTags($this->catalog_where);
-			$strWhere = (strlen($strCondition) ? " AND ".$strCondition : "")
-				.($filterurl['procedure']['where'] ? " AND ".implode(" ".$this->catalog_query_mode." ", $filterurl['procedure']['where']) : "")
-				// TODO: changing the catalog_tags_mode to catalog_query_mode here will allow us to filter multiple tags.
-				// 		 but this beares side kicks in ModuleCatalog aswell. Therefore we might rather want to add another combination method
-				//		 here?
-				.($filterurl['procedure']['tags'] ? " AND ".implode(" ".$this->catalog_tags_mode." ", $filterurl['procedure']['tags']) : "");
-
-			if(!BE_USER_LOGGED_IN && $this->publishField)
-			{
-				$strWhere.=' AND '.$this->publishField.'=1';
-			}
-
-			$strOrder = (strlen($filterurl['procedure']['orderby']) ? $filterurl['procedure']['orderby'] : trim($this->replaceInsertTags($this->catalog_order)));
-
-			$this->perPage = strlen($this->Input->post('per_page')) ? $this->Input->post('per_page') : $this->perPage;
 
 			$limit = NULL;
 			$offset = 0;
+
 			// issue #81
 			if($this->catalog_list_use_limit && ($this->catalog_limit || $this->catalog_list_offset))
 			{
-				$limit = (is_numeric($this->catalog_limit)/* && $limit*/)? $this->catalog_limit : NULL;
+				$limit = (is_numeric($this->catalog_limit))? $this->catalog_limit : NULL;
+				
 				if($this->catalog_list_offset)
 					$offset = $this->catalog_list_offset;
 			}
+
 			// Split pages
 			if ($this->perPage > 0)
 			{
 				// Get total number of items
-				$objTotalStmt = $this->Database->prepare("SELECT COUNT(id) AS count FROM ".$this->strTable." WHERE pid=?".$strWhere);
-	
-				$objTotal = $objTotalStmt->execute($params);
-				$total = $objTotal->count;
+				$total = $this->fetchItemCount($strWhere, $arrParams);
+				
 				if (!is_null($limit))
 				{
 					$total -= $limit;
 				}
+				
 				$total -= $offset;
 
 				// Get the current page
@@ -189,7 +130,7 @@ class ModuleCatalogList extends ModuleCatalog
 				}
 
 				// Set limit and offset
-				$pageOffset = (max($page, 1) - 1) * $this->perPage; 
+				$pageOffset = (max($page, 1) - 1) * $this->perPage;
 				$offset += $pageOffset;
 				$limit = is_null($limit)?$this->perPage:min($limit - $offset, $this->perPage);
 
@@ -197,71 +138,36 @@ class ModuleCatalogList extends ModuleCatalog
 				$objPagination = new Pagination($total, $this->perPage);
 				$this->Template->pagination = $objPagination->generate("\n  ");
 			}
-
-			$arrQuery = $this->processFieldSQL($this->catalog_visible);
-			if($this->strAliasField)
-				$arrQuery[] = $this->strAliasField;
-			// Run Query
-			$objCatalogStmt = $this->Database->prepare("SELECT ".implode(',',$this->systemColumns).",".implode(',',$arrQuery).", (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=".$this->strTable.".pid) AS parentJumpTo FROM ".$this->strTable." WHERE pid=?".$strWhere.(strlen($strOrder) ? " ORDER BY ".$strOrder : "")); 
-
-
-			// add filter and order later
-
-			// Limit result
-			if ($limit)
-			{
-				$objCatalogStmt->limit($limit, $offset);
-			}
 			
-			$objCatalog = $objCatalogStmt->execute($params);
+			$objCatalog = $this->fetchItems($limit, $offset, $strWhere, $strOrder, $arrParams);
 
 			if (!$limit)
 				$total = $objCatalog->numRows;
 			
-			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);
-		  $this->Template->total = $total;
-		  
-		  if ($total > 0)
-		  {
-		    if ($limit)
-		      $pageLimit = min($pageOffset + $limit, $total);
-		    else
-		      $pageLimit = $total;
-		    
-		    // stats in the header
-  		  $this->Template->header = sprintf($GLOBALS['TL_LANG']['MSC']['catalogSearchResults'],
-  		                                    $pageOffset +1, $pageLimit, $total);
-  		                                    
-        // page stats
-        if ($this->perPage > 0)
-        {
-  		    $this->Template->header .= ' ' . sprintf($GLOBALS['TL_LANG']['MSC']['catalogSearchPages'],
-  		                                             $page, ceil($total/$this->perPage));
-        }
-		  }
-      else
-        $this->Template->header = $GLOBALS['TL_LANG']['MSC']['catalogSearchEmpty'];
-      
-			
-		} // condition check
-		else 
-		{
-			$labels = array();
-			foreach ($arrCondition as $condition)
-			{
-				if (array_key_exists($condition, $filterurl['current']))
-				{
-					continue;
-				}
-				$labels[] = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$condition]['label']['0'];
-			}
-			// create template with no entries, but passing the condition instead
-			$objTemplate = new FrontendTemplate($this->catalog_template);
-			$objTemplate->entries = array();
-			$objTemplate->catalog_condition = $labels;
-			$objTemplate->condition = sprintf($GLOBALS['TL_LANG']['MSC']['catalogCondition'], implode(', ',$labels));
-			$this->Template->catalog = $objTemplate->parse();
+			// for orientation in the pages
+			$this->Template->total = $total;
 
+			if ($total > 0)
+			{
+				if ($limit)
+					$pageLimit = min($pageOffset + $limit, $total);
+				else
+					$pageLimit = $total;
+				$this->Template->header = sprintf($GLOBALS['TL_LANG']['MSC']['catalogSearchResults'], $pageOffset +1, $pageLimit, $total);
+				// page stats
+				if ($this->perPage > 0)
+				{
+					$this->Template->header .= ' ' . sprintf($GLOBALS['TL_LANG']['MSC']['catalogSearchPages'],
+															$page, ceil($total/$this->perPage));
+				}
+			}
+			else
+				$this->Template->header = $GLOBALS['TL_LANG']['MSC']['catalogSearchEmpty'];
+			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);
+		} // condition check
+		else
+		{
+			$this->parseConditionsNotMet($arrCondition, $filterurl);
 		}
 
 		// Editing variables
@@ -272,12 +178,205 @@ class ModuleCatalogList extends ModuleCatalog
 			$objPage = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
 										->limit(1)
 										->execute($this->catalog_editJumpTo);
-	
-			$this->Template->addUrl = $objPage->numRows ? ampersand($this->generateFrontendUrl($objPage->fetchAssoc())): ampersand($this->Environment->request, ENCODE_AMPERSANDS);
+				$this->Template->addUrl = $objPage->numRows ? ampersand($this->generateFrontendUrl($objPage->fetchAssoc())): ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 		}
 
 		// Template variables
 		$this->Template->visible = $this->catalog_visible;
+	}
+		/**
+	 * Replaces the catalog var in the template with a message that the
+	 * conditions where not met.
+	 * @param array $arrCondition
+	 * @param array $filterurl
+	 * @return void
+	 */
+	protected function parseConditionsNotMet(array $arrCondition, array $filterurl)
+	{
+		$labels = array();
+		foreach ($arrCondition as $condition)
+		{
+			if (array_key_exists($condition, $filterurl['current']))
+			{
+				continue;
+			}
+
+			$labels[] = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$condition]['label']['0'];
+		}
+
+		// create template with no entries, but passing the condition instead
+		$objTemplate = new FrontendTemplate($this->catalog_template);
+		$objTemplate->entries = array();
+		$objTemplate->catalog_condition = $labels;
+		$objTemplate->condition = sprintf($GLOBALS['TL_LANG']['MSC']['catalogCondition'], implode(', ',$labels));
+		$this->Template->catalog = $objTemplate->parse();
+	}
+
+	/**
+	 * @param array $filterurl
+	 * @return array of parameters for use in WHERE
+	 */
+	protected function generateStmtParams(array $arrFilterUrl)
+	{
+		$params = array($this->catalog);
+
+		if (is_array($arrFilterUrl['values']['where']))
+		{
+			$params = array_merge($params, $arrFilterUrl['values']['where']);
+		}
+
+		// add tags combination here...
+
+		if (is_array($arrFilterUrl['values']['tags'])) {
+			$params = array_merge($params, $arrFilterUrl['values']['tags']);
+		}
+
+		return $params;
+	}
+
+	/**
+	 * @param array $filterurl
+	 * @return string for the ORDER BY part
+	 */
+	protected function generateStmtOrderBy(array $arrFilterUrl)
+	{
+		$result = '';
+
+		if (strlen($arrFilterUrl['procedure']['orderby']))
+		{
+			$result = 'ORDER BY ' . $arrFilterUrl['procedure']['orderby'];
+		} else {
+			$result = trim($this->replaceInsertTags($this->catalog_order));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @pre isset($this->strTable)
+	 * @param string $strWhere
+	 * @param array $arrParams
+	 * @return int total count of items
+	 */
+	protected function fetchItemCount($strWhere, array $arrParams)
+	{
+		$objTotalStmt = $this->Database->prepare(sprintf("SELECT COUNT(id) AS count FROM %s WHERE pid=? %s", 
+													$this->strTable,
+													$strWhere?" AND " . $strWhere:''
+												));
+
+		$objTotal = $objTotalStmt->execute($arrParams);
+		return $objTotal->count;
+	}
+
+	/**
+	 * Fetches all items which should be displayed from the database
+	 *
+	 * @pre isset($this->objCatalogType)
+	 * @param int $intLimit to how many items?
+	 * @param int $offset start from which item?
+	 * @param string $strWhere part for the WHERE clause
+	 * @param string $strOrder part for the ORDER BY clause
+	 * @param array $arrParams to pass to the statement
+	 * @return Database_Result
+	 */
+	protected function fetchItems($intLimit, $offset, $strWhere, $strOrder, array $arrParams)
+	{
+		$arrFields = array_merge($this->processFieldSQL($this->catalog_visible), $this->systemColumns);
+
+		if($this->strAliasField)
+		{
+			$arrFields[] = $this->strAliasField;
+		}
+
+		$strOrder = strlen($strOrder) ? " ORDER BY " . $strOrder : "";
+
+		$strWhereOrder = ($strWhere?" AND " . $strWhere:'').$strOrder;
+		// Run Query
+		$objCatalogStmt = $this->Database->prepare('SELECT '.implode(',', $arrFields).',
+													(SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS catalog_name,
+													(SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo
+													FROM '.$this->strTable.' WHERE pid=?'.$strWhereOrder);
+		// Limit result
+		if ($intLimit > 0)
+		{
+			$objCatalogStmt->limit($intLimit, $offset);
+		}
+
+		return $objCatalogStmt->execute($arrParams);
+	}
+
+	/**
+	 * Creates the WHERE part for the statement to fetch items
+	 * @param array $arrFilterUrl
+	 * @return string for use after WHERE
+	 */
+	protected function generateStmtWhere(array $arrFilterUrl)
+	{
+		$where = array();
+
+		if($this->catalog_where)
+			$where[] = $this->replaceInsertTags($this->catalog_where);
+
+		if ($arrFilterUrl['procedure']['where'])
+		{
+			$where[] = implode(" " . $this->catalog_query_mode . " ", $arrFilterUrl['procedure']['where']);
+		}
+
+		// TODO: changing the catalog_tags_mode to catalog_query_mode here will allow us to filter multiple tags.
+		// 		 but this beares side kicks in ModuleCatalog aswell. Therefore we might rather want to add another combination method
+		//		 here?
+		if ($arrFilterUrl['procedure']['tags'])
+		{
+			$where[] = implode(" " . $this->catalog_tags_mode . " ", $arrFilterUrl['procedure']['tags']);
+		}
+
+		// restrict to published items
+		if(!BE_USER_LOGGED_IN && $this->publishField)
+		{
+			$where[] = $this->publishField . '=1';
+		}
+
+		return implode(' AND ', $where);
+	}
+
+	/**
+	 * Adds the search configuration to the where
+	 * @param array $arrFilters
+	 * @return array $arrFilters with additional where fields for search
+	 */
+	protected function addSearchFilter(array $filterurl)
+	{
+		if (is_array($this->catalog_search)
+			&& strlen($this->catalog_search[0])
+			&& is_array($filterurl['procedure']['search']))
+		{
+			$searchProcedure = array();
+			$searchValues = array();
+			
+			foreach($this->catalog_search as $field)
+			{
+				if (array_key_exists($field, $filterurl['procedure']['search']))
+				{
+					$searchProcedure[] = $filterurl['procedure']['search'][$field];
+					if (is_array($filterurl['values']['search'][$field]))
+					{
+						foreach($filterurl['values']['search'][$field] as $item)
+						{
+							$searchValues[] = $item;
+						}
+					}
+					else
+					{
+						$searchValues[] = $filterurl['values']['search'][$field];
+					}
+				}
+			}
+
+			$filterurl['procedure']['where'][] = ' ('.implode(" OR ", $searchProcedure).')';
+			$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
+		}
+		return $filterurl;
 	}
 
 }

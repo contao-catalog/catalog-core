@@ -60,7 +60,7 @@ $GLOBALS['TL_LANG']['tl_catalog_items']['toggle']['1'] = 'Unpublished';
 /**
  * Errors
  */
-$GLOBALS['TL_LANG']['tl_catalog_items']['wrongUrl'] = 'The host of the URL you entered is not allowed!';
+$GLOBALS['TL_LANG']['tl_catalog_items']['wrongUrl'] = 'The host %s of the URL you entered is not allowed!';
 
 
 ?>

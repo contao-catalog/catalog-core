@@ -11,10 +11,11 @@
 <?php echo $objWidget->generateLabel(); ?>
 <?php echo $objWidget->generateWithError(); ?><?php if($objWidget->datepicker) echo $objWidget->datepicker; ?>
 <?php elseif($objWidget instanceof FormExplanation): ?>
-<?php echo $objWidget->parse(); ?>hier hin bitte.
+<?php echo $objWidget->parse(); ?>
 <?php else: ?>
 <?php echo $objWidget->generateWithError(); ?><?php if($objWidget->datepicker) echo $objWidget->datepicker; ?>
 <?php endif; ?>
+<span class="tip"><?php echo $objWidget->tip; ?></span>
 </div>
 <?php endforeach; ?>
 

@@ -5,9 +5,8 @@
 <<?php echo $this->hl; ?>><?php echo $this->headline; ?></<?php echo $this->hl; ?>>
 <?php endif; ?>
 
-
-<?php if ($this->errormsg): ?>
-<?php echo $this->errormsg; ?>
+<?php if ($this->error): ?>
+<p class="error"><?php echo $this->error; ?></p>
 
 <?php else: ?>
 <form action="<?php echo $this->action; ?>" method="post">

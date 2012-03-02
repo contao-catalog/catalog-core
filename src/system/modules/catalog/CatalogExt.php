@@ -1,44 +1,28 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
- * visit the project website http://www.typolight.org.
- * 
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
 
-
 /**
- * Class CatalogExt 
+ * Class CatalogExt
  *
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Controller
  */
 class CatalogExt extends Frontend
 {
-
 	/**
 	 * Add news items to the indexer
 	 * @param array
@@ -54,8 +38,7 @@ class CatalogExt extends Frontend
 			$arrRoot = $this->getChildRecords($intRoot, 'tl_page', true);
 		}
 
-		$objArchive = $this->Database->prepare("SELECT id,tableName,jumpTo,aliasField,publishField,searchable,searchCondition,titleField FROM tl_catalog_types")
-									 ->execute();
+		$objArchive = $this->fetchCatalogType();
 
 		// Walk through each archive
 		while ($objArchive->next())
@@ -66,10 +49,10 @@ class CatalogExt extends Frontend
 			}
 
 			if (is_array($arrRoot) && count($arrRoot) > 0 && !in_array($objArchive->jumpTo, $arrRoot))
-			{ 
+			{
 				continue;
 			}
-						
+
 			// Get default URL
 			$objParent = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=? AND (start=? OR start<?) AND (stop=? OR stop>?) AND published=?")
 										->limit(1)
@@ -97,38 +80,64 @@ class CatalogExt extends Frontend
 			{
 				$where.=(strlen($where)? ' AND ':'').$objArchive->publishField.'=1';
 			}
-			$objCatalog = $this->Database->prepare("SELECT * FROM ".$objArchive->tableName." WHERE pid=? ".(strlen($where)? " AND ".$where : "")." ORDER BY tstamp DESC")
-										 ->execute($objArchive->id);
+			$objCatalog = $this->fetchCatalogItems($objArchive, $where);
 
 			// Add items to the indexer
 			while ($objCatalog->next())
 			{
-				$arrPages[] = $this->getLink($objArchive->jumpTo, $objCatalog, $strUrl, $objArchive->aliasField);
+				$arrPages[] = $this->getLink($objCatalog, $strUrl, $objArchive->aliasField);
 			}
 		}
 
 		return $arrPages;
 	}
 
-
 	/**
-	 * Return the link of a news article
-	 * @param object
-	 * @param string
-	 * @return string
+	 * Fetch information about the catalog if an id is provided or all catalogs if no id was supplied
+	 * @param int $intId (optional) the id of the catalogtype to be fetched.
+	 * @return Database_Result
 	 */
-	private function getLink($jumpTo, Database_Result $objCatalog, $strUrl, $alias)
+	protected function fetchCatalogType($intId=0)
 	{
-		// TODO: Why is this here queried? does not get used at all. Removed for now. (c.schiffler)
-		//$objParent = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
-		//							->limit(1)
-		//							->execute($jumpTo);
-
-		$item = ($alias && strlen($objCatalog->$alias) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $objCatalog->$alias : $objCatalog->id;
-
-		return sprintf($strUrl, $item);
+		return $this->Database->prepare('SELECT * FROM tl_catalog_types'.($intId?' WHERE id=?':''))
+									 ->execute($intId);
 	}
 
+	/**
+	 * Gets all Catalog items from a catalog
+	 * @param Database_Result $objCatalogType which owns the items
+	 * @param string $strWhere
+	 * @param string $strOrderBy optional
+	 * @param int $intLimit optional
+	 * @return Database_Result with all published items
+	 */
+	protected function fetchCatalogItems(Database_Result $objCatalogType, $strWhere, $strOrderBy='tstamp DESC', $intLimit=0)
+	{
+		$stmt = $this->Database->prepare('SELECT *
+										FROM ' . $objCatalogType->tableName .
+										'WHERE pid=? ' . (strlen($strWhere) ? " AND " . $strWhere : "") .
+										(strlen($strOrderBy) ? " ORDER BY " . $strOrderBy : ""));
+		if ($intLimit > 0)
+			$stmt->limit($intLimit);
+		return $stmt->execute($objCatalogType->id);
+	}
+
+	/**
+	 * Return the link of an item
+	 * @param Database_Result $objCatalog
+	 * @param string $strUrl with %s for the item alias or id
+	 * @param string $strAliasField name of the alias field
+	 * @return string
+	 */
+	private function getLink(Database_Result $objCatalog, $strUrl, $strAliasField)
+	{
+		if ($strAliasField && strlen($objCatalog->$strAliasField)
+		&& !$GLOBALS['TL_CONFIG']['disableAlias'])
+			$item = $objCatalog->$strAliasField;
+		else
+			$item = $objCatalog->id;
+		return sprintf($strUrl, $item);
+	}
 
 	/**
 	 * Generate a XML file and save it to the root directory
@@ -141,7 +150,7 @@ class CatalogExt extends Frontend
 		// when activating RSS before saving the catalog.
 		if(!strlen($arrCatalog->tableName))
 			return;
-			
+
 		$time = time();
 		$strType = ($arrCatalog->feedFormat == 'atom') ? 'generateAtom' : 'generateRss';
 		$strLink = strlen($arrCatalog->feedBase) ? $arrCatalog->feedBase : $this->Environment->base;
@@ -169,16 +178,8 @@ class CatalogExt extends Frontend
 		{
 			$where.=(strlen($where)? ' AND ':'').$arrCatalog->publishField.'=1';
 		}
-		$datefield=(strlen($arrCatalog->datesource) ? $arrCatalog->datesource : 'tstamp');
-		$objArticleStmt = $this->Database->prepare("SELECT * FROM " . $arrCatalog->tableName . " WHERE pid=? ".(strlen($where)? " AND ".$where : "")." ORDER BY " . $datefield . " DESC");
-
-		if ($arrCatalog->maxItems > 0)
-		{
-			$objArticleStmt->limit($arrCatalog->maxItems);
-		}
-
-		$objArticle = $objArticleStmt->execute($arrCatalog->id);
-
+		$datefield = (strlen($arrCatalog->datesource) ? $arrCatalog->datesource : 'tstamp');
+		$objArticle = $this->fetchCatalogItems($arrCatalog, $where, $datefield . ' DESC', $arrCatalog->maxItems);
 		// Parse items
 		while ($objArticle->next())
 		{
@@ -189,13 +190,13 @@ class CatalogExt extends Frontend
 			$objItem->published = $objArticle->$datefield;
 			$objFeed->addItem($objItem);
 		}
-		
+
 		// Create file
 		$objRss = new File($strFile . '.xml');
 		$objRss->write($this->replaceInsertTags($objFeed->$strType()));
 		$objRss->close();
 	}
- 
+
 	/**
 	 * Update a particular RSS feed
 	 * @param integer
@@ -226,6 +227,7 @@ class CatalogExt extends Frontend
 			$this->log('Generated catalog feed "' . $objCatalog->feedName . '.xml"', 'Catalog generateFeed()', TL_CRON);
 		}
 	}
+
 	/**
 	 * Update all RSS feeds
 	 */
@@ -257,8 +259,7 @@ class CatalogExt extends Frontend
 		{
 			return array();
 		}
-	
-		$tmp=array();
+			$tmp=array();
 		while ($objCatalog->next())
 		{
 			$tmp[]=strlen($objCatalog->alias) ? $objCatalog->alias : 'catalog' . $objCatalog->id;
@@ -266,7 +267,6 @@ class CatalogExt extends Frontend
 		$this->log('Protected catalog feeds ' . implode(', ', $tmp) . ' from deletion"', 'Catalog removeOldFeeds()', TL_CRON);
 		return $tmp;
 	}
-
 
 	/**
 	 * Get a page layout and return it as database result object.
@@ -290,7 +290,6 @@ class CatalogExt extends Frontend
 			}
 		}
 		else // pre Contao phase, no themes available.
-			
 		{
 			$objLayout = $this->Database->prepare('SELECT * FROM tl_layout WHERE id=?')
 										->limit(1)
@@ -309,7 +308,7 @@ class CatalogExt extends Frontend
 			return NULL;
 		}
 		return $objLayout;
-	} 
+	}
 
 	/**
 	 * get called by hook to inject all RSS feeds for the current layout into the template
@@ -337,7 +336,7 @@ class CatalogExt extends Frontend
 			// if the layout has not been found, we skip generating the RSS feeds, see issue #2549
 			if ($objLayout)
 			{
-				$catalogfeeds = deserialize($objLayout->catalogfeeds); 
+				$catalogfeeds = deserialize($objLayout->catalogfeeds);
 				// Add catalogfeeds
 				if (is_array($catalogfeeds) && count($catalogfeeds) > 0)
 				{
@@ -409,7 +408,6 @@ class CatalogExt extends Frontend
 		}
 		return false;
 	}
-
 }
 
 ?>

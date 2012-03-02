@@ -1,5 +1,5 @@
 <?php echo $this->rteConfig; ?>
- 
+
 <form action="<?php echo $this->action; ?>" id="<?php echo $this->formId; ?>" method="post" enctype="<?php echo $this->enctype; ?>">
 <div class="formbody">
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>">
@@ -11,10 +11,11 @@
 <?php echo $objWidget->generateLabel(); ?>
 <?php echo $objWidget->generateWithError(); ?><?php if($objWidget->datepicker) echo $objWidget->datepicker; ?>
 <?php elseif($objWidget instanceof FormExplanation): ?>
-<?php echo $objWidget->parse(); ?>hier hin bitte.
+<?php echo $objWidget->parse(); ?>
 <?php else: ?>
 <?php echo $objWidget->generateWithError(); ?><?php if($objWidget->datepicker) echo $objWidget->datepicker; ?>
 <?php endif; ?>
+<span class="tip"><?php echo $objWidget->tip; ?></span>
 </div>
 <?php endforeach; ?>
 

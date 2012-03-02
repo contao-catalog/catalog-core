@@ -1,49 +1,33 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
- * visit the project website http://www.typolight.org.
- * 
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
 
-
 /**
- * Class Catalog 
+ * Class Catalog
  *
  * the core class of the catalog.
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Controller
  */
 class Catalog extends Backend
 {
 
-/*
- * Helper functions
- */
-
+	/*
+	 * Helper functions
+	 */
 	public static function array_replace_recursive_recurse($array, $array1)
 	{
 		foreach ($array1 as $key => $value)
@@ -52,7 +36,7 @@ class Catalog extends Backend
 			if (!isset($array[$key]) || (isset($array[$key]) && !is_array($array[$key])))
 			{
 				$array[$key] = array();
-			}	
+			}
 			// overwrite the value in the base array
 			if (is_array($value))
 			{
@@ -62,6 +46,7 @@ class Catalog extends Backend
 		}
 		return $array;
 	}
+
 	/**
 	 * array_replace_recursive — Replaces elements from passed arrays into the first array recursively
 	 * work around for the method as it is only available in PHP >5.3
@@ -93,9 +78,9 @@ class Catalog extends Backend
 		return $array;
 	}
 
-/**
- * Callbacks: tl_catalog_items 
- */
+	/**
+	 * Callbacks: tl_catalog_items
+	 */
 
 	public function initializeCatalogItems($strTable)
 	{
@@ -124,7 +109,7 @@ class Catalog extends Backend
 			// load language files and DC. langconfig.php and dcaconfig.php is loaded here but not the data in system/modules
 			$this->loadLanguageFile($objType->tableName);
 			$this->loadDataContainer($objType->tableName);
-				
+
 			// load default language
 			$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
 													 ? self::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
@@ -138,12 +123,6 @@ class Catalog extends Backend
 
 		return $objType->tableName;
 	}
-
-
-
-/**
- * Callbacks: tl_catalog_types 
- */
 
 	protected $createTableStatement = "
 			CREATE TABLE `%s` (
@@ -182,7 +161,7 @@ class Catalog extends Backend
 		$needToCheckIfExists = (!strlen($oldTableName) || $oldTableName != $varValue);
 		if ($needToCheckIfExists && $this->Database->tableExists($varValue))
 		{
-			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['tableExists'], $varValue)); 
+			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['tableExists'], $varValue));
 		}
 		$this->Database->execute($statement);
 		$this->checkCatalogFields($dc->id, $varValue);
@@ -194,10 +173,9 @@ class Catalog extends Backend
 		$this->Database->execute(sprintf($this->dropTableStatement, $tableName));
 	}
 
-
-/**
- * Callbacks: tl_catalog_fields 
- */
+	/**
+	 * Callbacks: tl_catalog_fields
+	 */
 
 	protected $systemColumns = array('id', 'pid', 'sorting', 'tstamp');
 
@@ -213,22 +191,20 @@ class Catalog extends Backend
 	{
 		$objFields = $this->Database->prepare("SELECT t.tableName, t.id, f.type, f.colName FROM tl_catalog_fields f INNER JOIN tl_catalog_types t ON f.pid=t.id WHERE t.id=? ORDER BY sorting")
 			->execute($pid);
-			
 		while ($objFields->next())
-		{	
+		{
 			$tableName = strlen($newTableName) ? $newTableName : $objFields->tableName;
 			$colName = $objFields->colName;
 			$fieldType = $objFields->type ? $objFields->type : 'text';
-			
+
 			if (!preg_match('/^[a-z_][a-z\d_]*$/i', $colName))
 			{
-					throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['invalidColumnName'], $colName));
+				throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['invalidColumnName'], $colName));
 			}
 			if (in_array($colName, $this->systemColumns))
 			{
 				throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['systemColumn'], $colName));
 			}
-	
 			if ($this->Database->fieldExists($colName, $tableName))
 			{
 				$statement = sprintf($this->renameColumnStatement, $tableName, $colName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType]['sqlDefColumn']);
@@ -237,10 +213,9 @@ class Catalog extends Backend
 			{
 				$statement = sprintf($this->createColumnStatement, $tableName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType]['sqlDefColumn']);
 			}
-			
+
 			$this->Database->execute($statement);
 		}
-		
 	}
 
 	public function renameColumn($varValue, DataContainer $dc)
@@ -253,7 +228,7 @@ class Catalog extends Backend
 		{
 			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['systemColumn'], $varValue));
 		}
-		
+
 		$objField = $this->Database->prepare("SELECT t.id, t.tableName, f.type, f.colName FROM tl_catalog_fields f INNER JOIN tl_catalog_types t ON f.pid=t.id WHERE f.id=?")
 				->limit(1)
 				->execute($dc->id);
@@ -262,20 +237,20 @@ class Catalog extends Backend
 		{
 			return $varValue;
 		}
-							
+
 		$tableName = $objField->tableName;
 		$oldColName = $objField->colName;
 		$fieldType = $objField->type ? $objField->type : 'text';
-		
+
 		$objItems = $this->Database->prepare("SELECT COUNT(*) as itemCount FROM tl_catalog_fields WHERE pid=? AND id<>? AND colName=?")
 				->limit(1)
 				->execute($objField->id, $dc->id, $varValue);
-		
+
 		if ($objItems->itemCount > 0)
 		{
-			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['columnExists'], $varValue)); 
+			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['columnExists'], $varValue));
 		}
-		
+
 		$objOld = $this->Database->prepare("SELECT COUNT(*) as itemCount FROM tl_catalog_fields WHERE pid=? AND id<>? AND colName=?")
 				->limit(1)
 				->execute($objField->id, $dc->id, $oldColName);
@@ -288,52 +263,51 @@ class Catalog extends Backend
 		{
 			$statement = sprintf($this->createColumnStatement, $tableName, $varValue, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType]['sqlDefColumn']);
 		}
-		
+
 		$this->Database->execute($statement);
-		
+
 		return $varValue;
 	}
-	
 
 	public function changeColumn($varValue, DataContainer $dc)
 	{
 		$objField = $this->Database->prepare("SELECT f.colName, f.type, t.tableName FROM tl_catalog_fields f INNER JOIN tl_catalog_types t ON f.pid = t.id WHERE f.id=?")
 				->limit(1)
 				->execute($dc->id);
-				
+
 		if ($objField->numRows == 0)
 		{
 			return $varValue;
 		}
-		
+
 		$tableName = $objField->tableName;
 		$colName = $objField->colName;
 		$fieldType = $objField->type;
-		
+
 		if ($varValue != $fieldType)
 		{
 			$this->Database->execute(sprintf($this->renameColumnStatement, $tableName, $colName, $colName, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$varValue]['sqlDefColumn']));
 		}
 		return $varValue;
 	}
-	
+
 	public function deleteColumn($ids)
 	{
 		$objType = $this->Database->prepare("SELECT f.colName, t.tableName FROM tl_catalog_fields f INNER JOIN tl_catalog_types t ON f.pid = t.id WHERE f.id IN (?)")
 				->execute(implode(',', $ids));
-						
+
 		while ($objType->next())
 		{
 			$colName = $objType->colName;
 			$tableName = $objType->tableName;
-			
+
 			if ($this->Database->fieldExists($colName, $tableName))
 			{
 					$this->dropColumn($tableName, $colName);
 			}
 		}
 	}
-	
+
 	public function dropColumn($tableName, $colName)
 	{
 		$this->Database->execute(sprintf($this->dropColumnStatement, $tableName, $colName));
@@ -342,8 +316,8 @@ class Catalog extends Backend
 	/**
 	 * Regenerate sitemaps on save.
 	 */
-	 public function generateSitemaps()
-	 {
+	public function generateSitemaps()
+	{
 		// if we have the GoogleSitemap extension, we have to trigger that one, trigger the core sitemap otherwise.
 		if(in_array('googlesitemap', $this->Config->getActiveModules()))
 		{
@@ -353,18 +327,15 @@ class Catalog extends Backend
 			$this->import('Automator');
 			$this->Automator->generateSitemap();
 		}
-	 }
+	}
 
 /**
- * DCA Update functions 
+ * DCA Update functions
  */
-
 
 	private $tableNames	= array();
 	private $strFormat	= array();
-	
-
-	public function getDefaultDca()
+		public function getDefaultDca()
 	{
 		$this->loadLanguageFile('tl_catalog_items');
 		$arrDCA = array
@@ -373,9 +344,9 @@ class Catalog extends Backend
 			(
 				'dataContainer'               => 'Table',
 				'ptable'                      => 'tl_catalog_types',
-				'switchToEdit'                => true, 
+				'switchToEdit'                => true,
 				'enableVersioning'            => false,
-				'onload_callback'							=> array 
+				'onload_callback'							=> array
 					(
 						array('Catalog', 'checkPermission')
 					),
@@ -385,14 +356,13 @@ class Catalog extends Backend
 					array('tl_catalog_items', 'generateFeed'),
 				),
 			),
-			
+
 			'list' => array
 			(
 				'sorting' => array
 				(
 					'mode'                    => 1, // 1 default sorting value, 2 switchable sorting value
 					// panelLayout is now built dynamically in getCatalogDca() to solve issue #199
-//					'panelLayout'             => 'filter,limit;search,sort',
 					'headerFields'            => array('name', 'tstamp'),
 					'fields'                  => array(),
 					'child_record_callback'   => array('Catalog', 'renderField')
@@ -414,7 +384,7 @@ class Catalog extends Backend
 						'attributes'          => 'onclick="Backend.getScrollOffset();"'
 					)
 				),
-				
+
 				'operations' => array
 				(
 					'edit' => array
@@ -435,7 +405,7 @@ class Catalog extends Backend
 						'href'                => 'act=paste&amp;mode=cut',
 						'icon'                => 'cut.gif',
 						'attributes'          => 'onclick="Backend.getScrollOffset();"'
-					), 
+					),
 					'delete' => array
 					(
 						'label'               => &$GLOBALS['TL_LANG']['tl_catalog_items']['delete'],
@@ -461,22 +431,22 @@ class Catalog extends Backend
 			(
 			)
 		);
-		
+
 		// add a direct link to the fields but for admins only
 		$this->import('BackendUser', 'User');
 		if(!$this->User->isAdmin)
 		{
 			return $arrDCA;
 		}
-		
+
 		$arrDCA['list']['global_operations']['fields'] = array
 		(
 			'label'               => &$GLOBALS['TL_LANG']['tl_catalog_items']['fields'],
 			'href'                => 'table=tl_catalog_fields&id=' . $this->Input->get('id'),
 			'class'               => 'header_css_fields',
-			'attributes'          => 'onclick="Backend.getScrollOffset();"'		
+			'attributes'          => 'onclick="Backend.getScrollOffset();"'
 		);
-		
+
 		return $arrDCA;
 	}
 
@@ -526,7 +496,6 @@ class Catalog extends Backend
 					$checkid = $this->Input->get('pid');
 				}
 
-
 				if (!strlen($checkid) || !in_array($checkid, $root))
 				{
 					$this->log('Not enough permissions to create catalog items in catalog type ID "'.$checkid.'"', 'Catalog checkPermission', 5);
@@ -545,7 +514,7 @@ class Catalog extends Backend
 				$objTable = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE id=?")
 						->limit(1)
 						->execute(CURRENT_ID);
-				if ($objTable->numRows) 
+				if ($objTable->numRows)
 				{
 					$tableName = $objTable->tableName;
 					$objType = $this->Database->prepare("SELECT pid FROM ".$tableName." WHERE id=?")
@@ -579,7 +548,7 @@ class Catalog extends Backend
 				$objTable = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE id=?")
 						->limit(1)
 						->execute(CURRENT_ID);
-				if ($objTable->numRows) 
+				if ($objTable->numRows)
 				{
 					$tableName = $objTable->tableName;
 					$objType = $this->Database->prepare("SELECT id FROM ".$tableName." WHERE pid=?")
@@ -613,7 +582,6 @@ class Catalog extends Backend
 		}
 	}
 
- 
 	/**
 	 * Autogenerate a catalog alias if it has not been set yet
 	 * @param mixed
@@ -625,11 +593,11 @@ class Catalog extends Backend
 		$objField = $this->Database->prepare("SELECT pid FROM ".$dc->table." WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
-				
+
 		if (!$objField->numRows)
 		{
 			throw new Exception($GLOBALS['TL_LANG']['ERR']['aliasTitleMissing']);
-		}		
+		}
 		$pid = $objField->pid;
 
 		$objAliasTitle = $this->Database->prepare("SELECT colName, aliasTitle FROM tl_catalog_fields WHERE pid=? AND type=?")
@@ -685,9 +653,18 @@ class Catalog extends Backend
 		return ($varValue);
 	}
 
-	public static function setTags($intCatalogId, $intFieldId, $intItemId, $arrValues)
+	/**
+	 * Updates the relations to tags for one field for one catalog item
+	 * @param int $intCatalogId
+	 * @param int $intFieldId
+	 * @param int $intItemId
+	 * @param array $arrValues
+	 * @return void
+	 */
+	public static function setTags($intCatalogId, $intFieldId, $intItemId, array $arrValues)
 	{
 		$db = Database::getInstance();
+
 		$objTags=$db->prepare('SELECT * FROM tl_catalog_tag_rel WHERE catid=? AND itemid=? AND fieldid=?')
 							->execute($intCatalogId, $intItemId, $intFieldId);
 		$arrTags=$objTags->fetchEach('valueid');
@@ -702,12 +679,14 @@ class Catalog extends Backend
 						'fieldid' => $intFieldId,
 						'valueid' => 0
 					);
+
 		// add missing tags to db.
 		foreach($arrNew as $id)
 		{
 			$arrData['valueid'] = $id;
 			$db->prepare('INSERT INTO tl_catalog_tag_rel %s')->set($arrData)->execute();
 		}
+
 		// delete tags that shall not be attached anymore from db.
 		foreach($arrOld as $id)
 		{
@@ -716,24 +695,39 @@ class Catalog extends Backend
 		}
 	}
 
+	/**
+	 * HOOK which updates tag relations for a catalog item field
+	 * @param mixed $varValue
+	 * @param DataContainer $dc
+	 * @return string comma separated tag ids
+	 */
 	public function saveTags($varValue, DataContainer $dc)
 	{
 		$options = deserialize($varValue, true);
 		$objField = $this->Database->prepare('SELECT * FROM tl_catalog_fields WHERE pid=? AND colName=?')->execute($dc->activeRecord->pid, $dc->field);
-		$this->setTags($dc->activeRecord->pid, $objField->id, $dc->activeRecord->id, $options);
+		self::setTags($dc->activeRecord->pid, $objField->id, $dc->activeRecord->id, $options);
+
 		if (!is_array($options))
 		{
 			return '';
 		}
+
 		return implode(',', $options);
 	}
-	
+
 	public function loadTags($varValue, DataContainer $dc)
 	{
-		$objTags=$this->Database->prepare('SELECT * FROM tl_catalog_tag_rel WHERE catid=? AND itemid=? AND fieldid=?')
-							->execute($dc->activeRecord->pid, $dc->activeRecord->id, $dc->field);
+		$objTags=$this->Database->prepare('SELECT *
+										FROM tl_catalog_tag_rel
+										WHERE catid=?
+										AND itemid=?
+										AND fieldid=?')
+							->execute($dc->activeRecord->pid,
+							          $dc->activeRecord->id,
+							          $dc->field);
 		// TODO: either move this to update routine or remove after some grace period in the future.
-		$values = array_filter(array_merge(explode(',', trim($varValue)), $objTags->fetchEach('valueid')));
+		$values = array_filter(array_merge(explode(',', trim($varValue)),
+		                       $objTags->fetchEach('valueid')));
 		//$values = explode(',', trim($varValue));
 		$valueList = array();
 		foreach($values as $value)
@@ -761,7 +755,7 @@ class Catalog extends Backend
 	protected function expandTree($values, &$session, DataContainer $dc)
 	{
 		$values = array_filter(array_map('intval', $values));
-		
+
 		if (count($values)) {
 			$node = 'tree_' . $dc->table . '_' . $dc->field;
 			foreach ($values as $value)
@@ -791,7 +785,6 @@ class Catalog extends Backend
 			$objValue = $this->Database->prepare("SELECT ".$objCalc->calcValue." as calcValue FROM ".$dc->table." WHERE id=?")
 								   ->limit(1)
 								   ->execute($dc->id);
-	
 			if ($objValue->numRows)
 			{
 				$value = $objValue->calcValue;
@@ -808,7 +801,6 @@ class Catalog extends Backend
 
 		return (($blnReturn) ? $value : '');
 	}
-
 
 	public function loadCalc($varValue, DataContainer $dc)
 	{
@@ -833,7 +825,7 @@ class Catalog extends Backend
 		if (strlen($catConfig['maxValue']) && $varValue > $catConfig['maxValue'])
 		{
 			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['limitMax'], $catConfig['maxValue']));
-		} 
+		}
 		elseif (strlen($catConfig['minValue']) && $varValue < $catConfig['minValue'])
 		{
 			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['limitMin'], $catConfig['minValue']));
@@ -842,30 +834,11 @@ class Catalog extends Backend
 		return $varValue;
 	}
 
-
-
-/*
-
-	public function dcaLoadOptions(DataContainer $dc)
-	{
-		$catConfig = $GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['eval']['catalog'];
-		
-		// check if we need to load items
-		$needToUpdate = !$catConfig['limitItems'] || $catConfig['childrenSelMode'];
-		return $needToUpdate ?
-				$this->loadOptions($catConfig['foreignKey'], $catConfig['limitItems'], $catConfig['childrenSelMode'], $catConfig['selectedIds']) :
-				$GLOBALS['TL_DCA'][$dc->table]['fields'][$dc->field]['options'];
-	}
-*/
-
-
-/**
- * Row Label
- */	
-    
+	/**
+	 * Row Label
+	 */
 	public function renderField($row)
 	{
-	
 		if (!$row['pid'])
 		{
 			return 'ID:'.$row['id'];
@@ -881,13 +854,13 @@ class Catalog extends Backend
 			$objType = $this->Database->prepare("SELECT tableName, format FROM tl_catalog_types WHERE id=?")
 					->limit(1)
 					->execute($row['pid']);
-			
+
 			$tableName = $objType->tableName;
 			$strFormat = $objType->format;
 			$this->tableNames[$row['pid']] = $tableName;
 			$this->strFormat[$row['pid']] = $strFormat;
 		}
-		
+
 		$fields = $GLOBALS['TL_DCA'][$tableName]['list']['label']['fields'];
 
 		$values = array();
@@ -906,7 +879,6 @@ class Catalog extends Backend
 		}
 	}
 
-
 	private function generateTitle($strFormat, $values, $tableName)
 	{
 		$fields = $GLOBALS['TL_DCA'][$tableName]['list']['label']['fields'];
@@ -917,7 +889,7 @@ class Catalog extends Backend
 			$params = explode('::', $match);
 			$fieldConf = $GLOBALS['TL_DCA'][$tableName]['fields'][$params[0]];
 			if ($fieldConf)
-			{	
+			{
 				$replace = $values[$params[0]];
 				if ($params[1])
 				{
@@ -925,7 +897,7 @@ class Catalog extends Backend
 					{
 						case 'file':
 							if ($fieldConf['eval']['catalog']['showImage'])
-							{ 
+							{
 								$replace = $this->generateThumbnail($replace, $params[1], $fieldConf['label'][0]);
 							}
 							break;
@@ -945,37 +917,29 @@ class Catalog extends Backend
 							{
 								$replace = $replace.stripslashes(stripslashes($formats['post']));
 							}
-
 					}
-					
 				}
 				$strFormat = str_replace('{{'.$match.'}}', $replace, $strFormat);
 			}
 		}
-
 		// now we have a final string but we would also like to let the users use if-else conditions like for the newsletter
 		$strFormat = $this->parseSimpleTokens($strFormat, $values);
-
 		return $strFormat;
 	}
-
 
 	private function generateThumbnail($value, $query, $label)
 	{
 		// parse query parameters if set
 		parse_str($query, $params);
 		$src = $params['src'] ? $params['src'] :  $value;
-
 		if (strpos($src, '/') === false)
 		{
 			$src = sprintf('system/themes/%s/images/%s', $this->getTheme(), $src);
 		}
-
 		if ($value == '' || !file_exists(TL_ROOT.'/'.$src))
 		{
 			return '';
 		}
-
 		try
 		{
 			$file = $this->getImage($src, $params['w'], $params['h'], $params['mode']);
@@ -991,7 +955,6 @@ class Catalog extends Backend
 	private function formatTitle($value, &$fieldConf, $tableName, $id)
 	{
 		$blnCalc = ($fieldConf['eval']['catalog']['type'] == 'calc' && strlen($fieldConf['eval']['catalog']['calcValue']));
-	
 		if (strlen($value) || $blnCalc)
 		{
 
@@ -1023,15 +986,15 @@ class Catalog extends Backend
 						try
 						{
 							$objValue = $this->Database->prepare("SELECT ".$fieldConf['eval']['catalog']['calcValue']." as calcValue FROM ".$tableName." WHERE id=?")
-												   ->limit(1)
-												   ->execute($id);
-					
+														->limit(1)
+														->execute($id);
+
 							if ($objValue->numRows)
 							{
 								$value = $objValue->calcValue;
 							}
 						}
-				
+
 						catch (Exception $e)
 						{
 							$value = '';
@@ -1048,25 +1011,25 @@ class Catalog extends Backend
 						break;
 
 				case 'number':
-						$decimalPlaces = is_numeric($fieldConf['eval']['catalog']['formatStr']) ? 
-								intval($fieldConf['eval']['catalog']['formatStr']) : 
-								0;
-						$value = number_format($value, $decimalPlaces, 
-								$GLOBALS['TL_LANG']['MSC']['decimalSeparator'],
-								$GLOBALS['TL_LANG']['MSC']['thousandsSeparator']);
+						$decimalPlaces = is_numeric($fieldConf['eval']['catalog']['formatStr']) ?
+							intval($fieldConf['eval']['catalog']['formatStr']) :
+							0;
+						$value = number_format($value, $decimalPlaces,
+							$GLOBALS['TL_LANG']['MSC']['decimalSeparator'],
+							$GLOBALS['TL_LANG']['MSC']['thousandsSeparator']);
 						break;
 
 				case 'date':
 						$value = date($fieldConf['eval']['catalog']['formatStr'], $value);
 						break;
-						
+
 				default:
 						if ($fieldConf['eval']['rgxp'] == 'date' || $fieldConf['eval']['rgxp'] == 'datim')
 						{
-								$value = date($GLOBALS['TL_CONFIG'][$fieldConf['eval']['rgxp'].'Format'], $value);
+							$value = date($GLOBALS['TL_CONFIG'][$fieldConf['eval']['rgxp'].'Format'], $value);
 						}
 			}
-			
+
 			// add prefix and suffix format strings
 			if (is_array($fieldConf['eval']['catalog']['formatPrePost']) && count($fieldConf['eval']['catalog']['formatPrePost'])>0)
 			{
@@ -1076,17 +1039,14 @@ class Catalog extends Backend
 			}
 
 		}
-				
+
 		return $value;
 	}
-
-
 
 	public function pagePicker(DataContainer $dc)
 	{
 		return ' ' . $this->generateImage('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top; cursor:pointer;" onclick="Backend.pickPage(\'ctrl_'.$dc->field.'\')"');
 	}
-
 
 	public function getCatalogDca($catalogId)
 	{
@@ -1122,14 +1082,16 @@ class Catalog extends Backend
 			$this->import('BackendUser', 'User');
 			if (!$objCatalog->importAdmin || $objCatalog->importAdmin && $this->User->isAdmin)
 			{
-				array_insert($dca['list']['global_operations'], 0, array('import' => array
+				array_insert($dca['list']['global_operations'], 0, array(
+					'import' => array
 						(
 							'label'               => &$GLOBALS['TL_LANG']['tl_catalog_items']['import'],
 							'href'                => 'key=import',
 							'class'               => 'header_css_import',
 							'attributes'          => 'onclick="Backend.getScrollOffset();"'
-						))
-					);
+						)
+					)
+				);
 			}
 		}
 		if($objCatalog->publishField && version_compare(VERSION.'.'.BUILD, '2.8.0', '>='))
@@ -1181,7 +1143,7 @@ class Catalog extends Backend
 		{
 			$colName = $objFields->colName;
 			$colType = $objFields->type;
-			
+
 			$visibleOptions = trimsplit('[,;]', $GLOBALS['TL_DCA']['tl_catalog_fields']['palettes'][$colType]);
 
 			$field = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$colType]['fieldDef'];
@@ -1202,7 +1164,7 @@ class Catalog extends Backend
 
 			$field['eval']['mandatory'] = $field['eval']['mandatory'] || ($objFields->mandatory && in_array('mandatory', $visibleOptions) ? true : false);
 			if ($objFields->includeBlankOption && $colType == 'select')
-			{	
+			{
 				$field['eval']['includeBlankOption'] = true;
 			}
 			$field['eval']['unique'] = $field['eval']['unique'] || ($objFields->uniqueItem && in_array('uniqueItem', $visibleOptions) ? true : false);
@@ -1221,6 +1183,7 @@ class Catalog extends Backend
 
 			$dca['fields'][$colName] = $field;
 
+			// dynamically call the config function for the field type
 			$configFunction = $colType . "Config";
 			if (method_exists($this, $configFunction))
 			{
@@ -1318,19 +1281,18 @@ class Catalog extends Backend
 		// legends
 		$strPalette = '';
 		$palettes = array_diff($fields, $fieldsInSubpalette);
-		foreach ($palettes as $id=>$field) 
+		foreach ($palettes as $id=>$field)
 		{
-//			$strPalette .= (($id > 0) ? $separators[$id] : '').$field;	
 			$strPalette .= $separators[$id] . $field;
 		}
 		$dca['palettes']['default'] = $strPalette;
-					
+
 		// set title fields
 		$titleFields = count($titleFields) ? $titleFields : array('id');
 		$titleFormat = implode(', ', array_fill(0, count($titleFields), '%s'));
 		$dca['list']['label'] = array
 		(
-			'fields' => $titleFields, 
+			'fields' => $titleFields,
 			'format' => $titleFormat,
 			'label_callback' => array('Catalog', 'renderField'),
 		);
@@ -1350,10 +1312,10 @@ class Catalog extends Backend
 			$dca['list']['sorting']['fields'] = $sortingFields;
 			unset($dca['list']['operations']['cut']);
 		}
-		else 
+		else
 		{
 			$dca['list']['sorting']['mode'] = 4;
-			$dca['list']['sorting']['fields'] = array('sorting'); 
+			$dca['list']['sorting']['fields'] = array('sorting');
 		}
 
 		// return dynamic catalog DCA
@@ -1361,54 +1323,53 @@ class Catalog extends Backend
 
 	}
 
-
 	private function numberConfig(&$field, $objRow)
 	{
 		$field['eval']['catalog']['minValue'] = $objRow->minValue;
 		$field['eval']['catalog']['maxValue'] = $objRow->maxValue;
 
 		$field['save_callback'][] =	array('Catalog', 'checkLimits');
-		
+
 		$this->formatConfig($field, $objRow);
 	}
-	
-	private function decimalConfig(&$field, $objRow)
+		private function decimalConfig(&$field, $objRow)
 	{
 		$this->numberConfig($field, $objRow);
 	}
-	
-	private function textConfig(&$field, $objRow)
+		private function textConfig(&$field, $objRow)
 	{
 		$this->formatConfig($field, $objRow);
 	}
-	
-	private function longtextConfig(&$field, $objRow)
+		private function longtextConfig(&$field, $objRow)
 	{
 		$field['eval']['rte'] = $objRow->rte ? ($objRow->rte_editor ? $objRow->rte_editor : 'tinyMCE') : '';
 		$field['eval']['allowHtml'] = !!$objRow->allowHtml;
-		if ($objRow->textHeight) 
+		if ($objRow->textHeight)
 		{
 			$field['eval']['style'] .= 'height:'.$objRow->textHeight.'px;';
 		}
 	}
-	
-	private function selectConfig(&$field, $objRow)
+		private function selectConfig(&$field, $objRow)
 	{
 		$this->configOptions($field, $objRow, false);
 
 		$field['load_callback'][] = array('Catalog', 'loadSelect');
 	}
-	
-	private function tagsConfig(&$field, $objRow)
+		/**
+	 * adds configuration like hooks to a field's config
+	 * @param array $field
+	 * @param object $objRow
+	 * @post $arrField is properly configured
+	 */
+	private function tagsConfig(array &$arrField, $objRow)
 	{
-		$this->configOptions($field, $objRow, true);
-		$field['eval']['catalog']['fieldId'] = $objRow->id;
-		$field['eval']['alwaysSave'] = true;
-		$field['save_callback'][] = array('Catalog', 'saveTags');
-		$field['load_callback'][] = array('Catalog', 'loadTags');
+		$this->configOptions($arrField, $objRow, true);
+		$arrField['eval']['catalog']['fieldId'] = $objRow->id;
+		$arrField['eval']['alwaysSave'] = true;
+		$arrField['save_callback'][] = array('Catalog', 'saveTags');
+		$arrField['load_callback'][] = array('Catalog', 'loadTags');
 	}
 
-	//added by thyon
 	private function aliasConfig(&$field, $objRow)
 	{
 		$field['save_callback'][] = array('Catalog', 'generateAlias');
@@ -1421,8 +1382,11 @@ class Catalog extends Backend
 
 		$ids = deserialize($objRow->items);
 		$sortCol = $objRow->itemSortCol;
-		
-		if (!$limitItems || ($limitItems && ($objRow->childrenSelMode == 'items' || $objRow->childrenSelMode == 'children'))) 
+
+		if (! $limitItems
+			|| ($limitItems
+				&& ($objRow->childrenSelMode == 'items'
+					|| $objRow->childrenSelMode == 'children')))
 		{
 			if (!$limitItems)
 			{
@@ -1430,7 +1394,7 @@ class Catalog extends Backend
 				$ids = array(0);
 			}
 
-			if ($blnTags) 
+			if ($blnTags)
 			{
 				$field['inputType'] = 'checkbox';
 				$field['eval']['multiple'] = true;
@@ -1438,7 +1402,7 @@ class Catalog extends Backend
 			else
 			{
 				$field['inputType'] = 'select';
-			}	
+			}
 		}
 
 		// we have to keep mandatory no matter if we are a select or tag field.
@@ -1459,7 +1423,6 @@ class Catalog extends Backend
 
 		$blnItems = (!$limitItems || ($limitItems && $objRow->childrenSelMode == 'items'));
 
-
 		$parentFilter = $limitItems ? $objRow->parentFilter : '';
 
 		// only filter items further if in editing mode in BE
@@ -1469,8 +1432,8 @@ class Catalog extends Backend
 			$objTable = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE id=?")
 					->limit(1)
 					->execute(CURRENT_ID);
-					
-			if ($objTable->numRows) 
+
+			if ($objTable->numRows)
 			{
 				$objParents = $this->Database->prepare("SELECT ".$parentFilter." FROM ". $objTable->tableName . " WHERE id=?")
 										->execute($this->Input->get('id'));
@@ -1479,7 +1442,6 @@ class Catalog extends Backend
 				$ids = is_array($ids) ? $ids : array($ids);
 			}
 		}
-	
 		$field['options'] = $this->loadAllOptions($foreignKey, $ids, 0, $sortCol, $blnItems, $objRow->itemFilter, $idsFilter);
 		$field['eval']['tableColumn'] = $foreignKey;
 		$field['eval']['sortColumn'] = $sortCol;
@@ -1494,7 +1456,7 @@ class Catalog extends Backend
 		}
 
 		if ($objRow->limitItems && ($objRow->childrenSelMode == 'treeAll' || $objRow->childrenSelMode == 'treeChildrenOnly'))
-		{		
+		{
 			// setup tabletree children selection
 			$field['eval']['children'] = ($objRow->childrenSelMode == 'treeAll' || $objRow->childrenSelMode == 'treeChildrenOnly');
 			$field['eval']['childrenOnly'] = $objRow->childrenSelMode == 'treeChildrenOnly';
@@ -1506,8 +1468,6 @@ class Catalog extends Backend
 			$field['eval']['maxLevel'] = $objRow->treeMaxLevel;
 		}
 	}
-
-
 
 	/**
 	 * Replace Catalog InsertTags including TL InsertTags
@@ -1539,7 +1499,7 @@ class Catalog extends Backend
 				}
 			}
 		}
-		
+
 /*
 		// Replace standard insert tags
 		if (strlen($strValue))
@@ -1549,15 +1509,21 @@ class Catalog extends Backend
 
 */
 		return $strValue;
-	} 
+	}
 
-
-
-
-
+	/**
+	 *
+	 * @param string $foreignKey
+	 * @param mixed $ids array or single id
+	 * @param int $level optional
+	 * @param string $sortColumn optional
+	 * @param boolean $blnItems optional
+	 * @param string $itemFilter optional
+	 * @param string $idsFilter optional
+	 * @return array
+	 */
 	private function loadAllOptions($foreignKey, $ids, $level=0, $sortColumn='sorting', $blnItems=false, $itemFilter='', $idsFilter='')
 	{
-
 		list($sourceTable, $sourceColumn) = explode('.', $foreignKey);
 		$ids = is_array($ids) ? $ids : array($ids);
 
@@ -1575,7 +1541,7 @@ class Catalog extends Backend
 			{
 				$arrWhere['filter'] = '('.$itemFilter.')';
 			}
-				
+
 			$objCatalog = $this->Database->prepare("SELECT tableName FROM tl_catalog_types WHERE tableName=?")
 					->limit(1)
 					->execute($sourceTable);
@@ -1591,7 +1557,7 @@ class Catalog extends Backend
 			{
 				if (strlen($idsFilter) && $level == 0 && strlen($this->Input->get('id')) && $this->Input->get('act') == 'edit')
 				{
-					$arrWhere['items'] = 'pid IN ('.$idsFilter.')';	
+					$arrWhere['items'] = 'pid IN ('.$idsFilter.')';
 					$idsFilter = '';
 				}
 				else
@@ -1599,13 +1565,13 @@ class Catalog extends Backend
 					// added check for $ids array to either contain more than one element or the single element is not zero to fix #2204 addendum
 					$arrWhere['items'] = ($blnItems && (count($ids)!=1 || $ids[0]!=0) ? 'id' : 'pid')." IN (" . implode(',', $ids) . ")";
 				}
-				
+
 				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? implode(' AND ', $arrWhere) : '';
 
 				$objNodes = $this->Database->prepare("SELECT id, (SELECT COUNT(*) FROM ". $sourceTable ." i WHERE i.pid=o.id) AS childCount, " . $sourceColumn . " FROM ". $sourceTable. " o WHERE ".$strWhere." ORDER BY ". $sort)
 										 ->execute();
 			}
-			
+
 			if (!$treeView || ($treeView && $objNodes->numRows == 0 && $level == 0))
 			{
 				$strWhere = (is_array($arrWhere) && count($arrWhere)) ? ' WHERE '. implode(' AND ', $arrWhere) : '';
@@ -1640,23 +1606,22 @@ class Catalog extends Backend
 		return $arrNodes;
 	}
 
-		
+
 	private function dateConfig(&$field, $objRow)
 	{
 		$field['eval']['rgxp'] = $objRow->includeTime ? 'datim' : 'date';
-		
+
 		$this->formatConfig($field, $objRow);
 	}
-	
+
 	private function fileConfig(&$field, $objRow)
 	{
 		$field['eval']['catalog']['showLink'] = $objRow->showLink ? true : false;
 		$field['eval']['catalog']['showImage'] = $objRow->showImage ? true : false;
-					 
+
 		$field['eval']['catalog']['imageSize'] = deserialize($objRow->imageSize, true);
 		$field['eval']['catalog']['multiple'] = $objRow->multiple;
 		$field['eval']['catalog']['sortBy'] = $objRow->sortBy;
-
 
 		$field['eval']['fieldType'] = $objRow->multiple ? 'checkbox' : 'radio';
 
@@ -1666,28 +1631,56 @@ class Catalog extends Backend
 			{
 				$field['eval']['path'] = $objRow->uploadFolder;
 			}
-			if (strlen($objRow->validFileTypes)) 
+			if (strlen($objRow->validFileTypes))
 			{
 				$field['eval']['extensions'] = $objRow->validFileTypes;
 			}
-			if (strlen($objRow->filesOnly)) 
+			if (strlen($objRow->filesOnly))
 			{
 				$field['eval']['filesOnly'] = true;
 			}
 		}
 	}
-	
+
 	private function urlConfig(&$field, $objRow)
 	{
-		$field['eval']['rgxp'] = 'url';
 		$field['wizard'] = array(array('Catalog', 'pagePicker'));
 		$field['eval']['catalog']['showLink'] = $objRow->showLink ? true : false;
-		$field['save_callback'] = array
-		(
-			array('Catalog', 'saveUrl')
-		);
+
+		$arrHosts = deserialize($objRow->allowedHosts, true);
+		if(count($arrHosts))
+		{
+			$field['eval']['rgxp'] = 'url_allowed_hosts_only';
+			$field['eval']['catalog']['allowedHosts'] = $arrHosts;
+		} else {
+			$field['eval']['rgxp'] = 'url';
+		}
 	}
 
+	public function catalogRgxp($strRegexp, $varValue, Widget $objWidget)
+	{
+		switch ($strRegexp)
+		{
+			case 'url_allowed_hosts_only':
+				if(!$objWidget->mandatory && strlen($varValue)==0)
+				{
+					return true;
+				}
+				$varValue = $this->idnaEncodeUrl($varValue);
+				if (!preg_match('/^[a-zA-Z0-9\.\+\/\?#%:,;\{\}\(\)\[\]@&=~_-]*$/', $varValue) || (!($strHost = parse_url($varValue, PHP_URL_HOST))))
+				{
+					$objWidget->addError(sprintf($GLOBALS['TL_LANG']['ERR']['url'], $objWidget->label));
+				} else {
+					if (!in_array($strHost, $objWidget->catalog['allowedHosts']))
+					{
+						$objWidget->addError(sprintf($GLOBALS['TL_LANG']['tl_catalog_items']['wrongUrl'], $strHost));
+					}
+				}
+				return true;
+				break;
+		}
+		return false;
+	}
 
 	private function calcConfig(&$field, $objRow)
 	{
@@ -1699,15 +1692,12 @@ class Catalog extends Backend
 		$this->formatConfig($field, $objRow);
 	}
 
-
-	
 	private function formatConfig(&$field, $objRow)
 	{
 		$field['eval']['catalog']['formatPrePost'] = deserialize($objRow->formatPrePost, true);
 		$field['eval']['catalog']['formatFunction'] = $objRow->format ? $objRow->formatFunction : '';
 		$field['eval']['catalog']['formatStr'] = $objRow->formatStr;
 	}
-	
 
 	/**
 	 * Return a form to choose a CSV file and import it
@@ -1720,7 +1710,7 @@ class Catalog extends Backend
 		{
 			return '';
 		}
-		
+
 		$objCatalog = $this->Database->prepare("SELECT id,tableName FROM tl_catalog_types WHERE id=?")
 					->limit(1)
 					->execute($dc->id);
@@ -1729,7 +1719,7 @@ class Catalog extends Backend
 		{
 			return '';
 		}
-		
+
 		// get fields
 		$objFields = $this->Database->prepare("SELECT colName, type, calcValue FROM tl_catalog_fields WHERE pid=? ORDER BY sorting")
 					->execute($objCatalog->id);
@@ -1747,12 +1737,12 @@ class Catalog extends Backend
 
 		if ($objRow->numRows)
 		{
-			$arrExport = $objRow->fetchAllAssoc();			
+			$arrExport = $objRow->fetchAllAssoc();
 		}
 
 		// start output
 		$exportFile =  'export_'.$objCatalog->tableName.'_' . date("Ymd-Hi");
-		
+
 		header('Content-Type: application/csv');
 		header('Content-Transfer-Encoding: binary');
 		header('Content-Disposition: attachment; filename="' . $exportFile .'.csv"');
@@ -1763,7 +1753,7 @@ class Catalog extends Backend
 		$output = '';
 		$output .= '"'.implode('","', array_keys($arrExport[0])).'"'. "\n" ;
 
-		foreach ($arrExport as $export) 
+		foreach ($arrExport as $export)
 		{
 			$output .= '"' . implode('"'.$GLOBALS['TL_CONFIG']['catalog']['csvDelimiter'].'"', str_replace("\"", "\"\"", $export)).'"' . "\n";
 		}
@@ -1773,8 +1763,7 @@ class Catalog extends Backend
 
 	}
 
-
- 	/**
+	/**
 	 * Return a form to choose a CSV file and import it
 	 * @param object
 	 * @return string
@@ -1808,7 +1797,6 @@ class Catalog extends Backend
 
 		$blnDelete = ($objCatalog->importDelete);
 
-
 		// Import CSV
 		if (strlen($this->Input->get('token')) && $this->Input->get('token') == $this->Session->get('tl_csv_import'))
 		{
@@ -1825,7 +1813,6 @@ class Catalog extends Backend
 
 				$this->redirect($referer);
 			}
-
 
 			$objFile = new File($this->Input->get('source'));
 			if ($objFile->extension != 'csv')
@@ -1853,18 +1840,17 @@ class Catalog extends Backend
 			}
 
 			// open file
-			if (!($csvFile = fopen(TL_ROOT .'/'. $this->Input->get('source'), 'r'))) 
+			if (!($csvFile = fopen(TL_ROOT .'/'. $this->Input->get('source'), 'r')))
 			{
 				$this->Session->set('tl_csv_import', null);
 				$_SESSION['TL_ERROR'][] = $GLOBALS['TL_LANG']['ERR']['noCSVData'];
 
 				$this->redirect($referer);
 			}
-			
+
 
 			$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=?")
 						->execute($this->Input->get('id'));
-	
 			if (!$objFields->numRows)
 			{
 				return '';
@@ -1879,16 +1865,15 @@ class Catalog extends Backend
 				if (in_array($field, $fieldlist))
 				{
 					$headercount++;
-				}	
+				}
 			}
-			
+
 			if ($headercount != count($fieldlist))
 			{
 				$this->Session->set('tl_csv_import', null);
 				$_SESSION['TL_ERROR'][] = $GLOBALS['TL_LANG']['ERR']['noHeaderFields'];
 				$this->redirect($referer);
 			}
-
 
 			if (!$objCatalog->numRows)
 			{
@@ -1900,22 +1885,20 @@ class Catalog extends Backend
 			if ($blnDelete && $this->Input->get('removeData'))
 			{
 				$this->Database->prepare("DELETE FROM ".$objCatalog->tableName." WHERE pid=?")
-														->execute($this->Input->get('id'));			
+														->execute($this->Input->get('id'));
 			}
 
-
 			echo '<div style="font-family:Verdana, sans-serif; font-size:11px; line-height:16px; margin-bottom:12px;">';
-	
 			$addcount = 0;
 
 			// keep fetching a line from the file until end of file
-			while ($row = fgetcsv($csvFile, 4096, $strSeparator)) 
+			while ($row = fgetcsv($csvFile, 4096, $strSeparator))
 			{
 				$objRow = $this->Database->prepare("REPLACE INTO ".$objCatalog->tableName." (pid, tstamp, ".implode(',',$headerRow).") VALUES (?,?".str_repeat(',?', $headercount).")")
 													->execute(array_merge(array($this->Input->get('id'), time()), $row));
 
 				$addcount ++;
-				echo ($addcount % 1000 == 0) ? 'Imported '.$addcount.' items.<br />' : '';	
+				echo ($addcount % 1000 == 0) ? 'Imported '.$addcount.' items.<br />' : '';
 			}
 			fclose($csvFile);
 
@@ -1929,7 +1912,6 @@ class Catalog extends Backend
 
 			echo '<script type="text/javascript">setTimeout(\'window.location="' . $this->Environment->base . $referer . '"\', 1000);</script>';
 			echo '<a href="' . $this->Environment->base . $referer . '">Please click here to proceed if you are not using JavaScript</a>';
-
 
 			echo '</div></div>';
 			exit;
@@ -1967,7 +1949,7 @@ class Catalog extends Backend
   <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['MSC']['separator'][1].'</p>' : '').'
   <h3><label for="source">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][0].'</label> <a href="'.((version_compare(VERSION.'.'.BUILD, '2.9.0', '>='))?'contao':'typolight').'/files.php" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['fileManager']) . '" onclick="Backend.getScrollOffset(); this.blur(); Backend.openWindow(this, 750, 500); return false;">' . $this->generateImage('filemanager.gif', $GLOBALS['TL_LANG']['MSC']['fileManager'], 'style="vertical-align:text-bottom;"') . '</a></h3>
 '.$objTree->generate().(strlen($GLOBALS['TL_LANG']['tl_catalog_items']['source'][1]) ? '
-  <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][1].'</p>' : ''). 
+  <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['tl_catalog_items']['source'][1].'</p>' : '').
 ($blnDelete ? '
   <div id="ctrl_removeData" class="tl_checkbox_single_container"><input type="checkbox" name="removeData" id="opt_removeData_0" value="1" class="tl_checkbox" onfocus="Backend.getScrollOffset();" onclick="if (this.checked && !confirm(\''.sprintf($GLOBALS['TL_LANG']['MSC']['removeDataConfirm'],$objCatalog->name).'\')) return false; Backend.getScrollOffset();" /> <label for="opt_removeData_0">' . $GLOBALS['TL_LANG']['tl_catalog_items']['removeData'][0] . '</label></div>
 ' . (($GLOBALS['TL_LANG']['tl_catalog_items']['removeData'][1] && $GLOBALS['TL_CONFIG']['showHelp']) ? '
@@ -1979,12 +1961,12 @@ class Catalog extends Backend
 <div class="tl_formbody_submit">
 
 <div class="tl_submit_container">
-<input type="submit" name="import" id="import" class="tl_submit" alt="CSV import" accesskey="s" value="'.specialchars($GLOBALS['TL_LANG']['tl_catalog_items']['import'][0]).'" /> 
+<input type="submit" name="import" id="import" class="tl_submit" alt="CSV import" accesskey="s" value="'.specialchars($GLOBALS['TL_LANG']['tl_catalog_items']['import'][0]).'" />
 </div>
 
 </div>
 </form>';
-	}   
+	}
 
 	/**
 	 * Return the "toggle visibility" button
@@ -2006,39 +1988,8 @@ class Catalog extends Backend
 		if (!$row[$this->publishField])
 		{
 			$icon = 'invisible.gif';
-		}		
+		}
 		return '<a href="'.$this->addToUrl($href).'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
-	}
-	
-	
-	/**
-	 * Save callback for url's to ensure the user has entered a valid url
-	 * @param string
-	 * @param DataContainer
-	 */
-	public function saveUrl($varValue, DataContainer $dc)
-	{
-		if ($varValue == '')
-		{
-			return $varValue;
-		}
-		
-		$objField = $this->Database->prepare('SELECT allowedHosts FROM tl_catalog_fields WHERE pid=? AND colName=?')->execute($dc->activeRecord->pid, $dc->field);
-		$arrHosts = deserialize($objField->allowedHosts, true);
-		
-		if (!count($arrHosts))
-		{
-			return;
-		}
-		
-		$arrUrl = parse_url($varValue);
-		
-		if (!in_array($arrUrl['host'], $arrHosts))
-		{
-			throw new Exception($GLOBALS['TL_LANG']['tl_catalog_items']['wrongUrl']);
-		}
-		
-		return $varValue;
 	}
 }
 

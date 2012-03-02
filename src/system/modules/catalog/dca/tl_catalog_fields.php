@@ -1,31 +1,18 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
- * visit the project website http://www.typolight.org.
- * 
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
-
 
 /**
  * Table tl_catalog_fields 
@@ -688,11 +675,12 @@ class tl_catalog_fields extends Backend
 	 */
 	public function getTableKeys(DataContainer $dc)
 	{
+		$result = array();
 		$objTable = $this->Database->prepare("SELECT itemTable FROM tl_catalog_fields WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
-		$result = array();
-		if($objTable->numRows > 0 && $this->Database->tableExists($objTable->itemTable))
+		if ($objTable->numRows > 0
+		    && $this->Database->tableExists($objTable->itemTable))
 		{
 			$fields = $this->Database->listFields($objTable->itemTable);
 			foreach($fields as $field)
@@ -712,13 +700,17 @@ class tl_catalog_fields extends Backend
 	 */
 	public function getTableFields(DataContainer $dc)
 	{
+		$result = array();
+
 		$objTable = $this->Database->prepare("SELECT itemTable FROM tl_catalog_fields WHERE id=?")
 				->limit(1)
 				->execute($dc->id);
-		$result = array();
-		if(($objTable->numRows>0) && $this->Database->tableExists($objTable->itemTable))
+
+		if($objTable->numRows > 0
+			&& $this->Database->tableExists($objTable->itemTable))
 		{
 			$fields = $this->Database->listFields($objTable->itemTable);
+			
 			foreach($fields as $field)
 			{
 				if($field['type'] != 'index')
@@ -847,8 +839,8 @@ class tl_catalog_fields extends Backend
 		try
 		{
 			$objValue = $this->Database->prepare("SELECT ".$varValue." as calcValue FROM ".$objTable->tableName)
-								   ->limit(1)
-								   ->execute();
+										->limit(1)
+										->execute();
 	
 			if ($objValue->numRows)
 			{
@@ -939,9 +931,5 @@ class tl_catalog_fields extends Backend
 
 		return $varValue;
 	}
-	
-	
 }
-
-
 ?>

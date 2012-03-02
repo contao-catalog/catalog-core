@@ -36,9 +36,9 @@
 <?php else: ?>
 
 <?php if ($this->condition): ?>
-<div class="condition"><?php echo $this->condition; ?></div>
+<p class="condition"><?php echo $this->condition; ?></p>
 <?php else: ?>
-<p class="info">There are no entries matching your search.</p>
+<p class="info"><?php echo $this->searchEmptyMsg; ?></p>
 <?php endif; ?>
 
 <?php endif; ?>

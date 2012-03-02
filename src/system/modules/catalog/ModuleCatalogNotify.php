@@ -1,51 +1,46 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
- * visit the project website http://www.typolight.org.
- * 
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
 
-
 /**
- * Class ModuleCatalogNotify
+ * Module for sending some notification to a person related
+ * to the catalog entry (maybe the creator)
  *
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Controller
  *
  */
 class ModuleCatalogNotify extends ModuleCatalog
-{
+{  /**
+   * id of the notification form
+   * @var string
+   */
+  const FORMID = 'tl_catalog_notify';
+
+  /**
+   * input type for all notification form values
+   * @var string
+   */
+  const FORM_INPUTTYPE = 'text';
 
 	/**
-	 * Template
+	 * Default Template
 	 * @var string
 	 */
 	protected $strTemplate = 'mod_catalognotify';
-
 
 	/**
 	 * Display a wildcard in the back end
@@ -81,44 +76,30 @@ class ModuleCatalogNotify extends ModuleCatalog
 		return parent::generate();
 	}
 
-
 	/**
-	 * Generate module
+	 * (non-PHPdoc)
+	 * @see Module::compile()
 	 */
 	protected function compile()
 	{
-
 		global $objPage;
 
-		$this->Template->errormsg = '';
-		$this->Template->sent = false;
-		
-		$objCatalogType = $this->Database->prepare("SELECT name,aliasField FROM tl_catalog_types WHERE id=?")
-										->execute($this->catalog);
-
-		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';		
-		
-		$objCatalog = $this->Database->prepare('SELECT * FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '').'(id=?'.$strAlias.')')
-										->limit(1)
-										->execute($this->Input->get('items'), $this->Input->get('items'));
-
-		if ($objCatalog->numRows < 1)
+		if(! $this->objCatalogType)
 		{
-			$this->Template->errormsg = '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['catalogItemInvalid'].'</p>';
+		  return $this->compileInvalidCatalog();
+		}
 		
-			// Do not index the page
-			$objPage->noSearch = 1;
-			$objPage->cache = 0;
-
-			// Send 404 header
-			header('HTTP/1.0 404 Not Found');
-			return;
+		$objCatalog = $this->fetchCatalogItem();
+		
+		if(! $objCatalog)
+		{
+		  return $this->compileInvalidItem();
 		}
 
 		$this->Template->fields = '';
+		$this->Template->sent = false;
+		
 		$doNotSubmit = false;
-		$formId = 'tl_catalog_notify';
-
 
 		// Captcha
 		if (!$this->disableCaptcha)
@@ -133,7 +114,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 
 			$objCaptcha = new FormCaptcha($arrCaptcha);
 
-			if ($this->Input->post('FORM_SUBMIT') == $formId)
+			if ($this->Input->post('FORM_SUBMIT') == self::FORMID)
 			{
 				$objCaptcha->validate();
 
@@ -144,7 +125,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 			}
 		}
 
-		$inputType = 'text';
+		$inputType = self::FORM_INPUTTYPE;
 		$arrFields = array();
 		$arrWidgets = array();
 		$i = 0;
@@ -177,7 +158,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 			$objWidget->rowClass = 'row_' . $i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
 
 			// Validate input
-			if ($this->Input->post('FORM_SUBMIT') == $formId)
+			if ($this->Input->post('FORM_SUBMIT') == self::FORMID)
 			{
 				$objWidget->validate();
 				$varValue = $objWidget->value;
@@ -203,41 +184,48 @@ class ModuleCatalogNotify extends ModuleCatalog
 			++$i;
 		}
 
+		// add long message to form
 		$field = 'message';
 		$inputType = 'textarea';
+
 		$strClass = $GLOBALS['TL_FFL'][$inputType];
 		// Continue if the class is not defined
 		if ($this->classFileExists($strClass))
 		{
-			// Long text message
+		  // Long text message
 			$arrMessage = array
 			(
-				'id'=> $field,
-				'label'=> $GLOBALS['TL_LANG']['MSC'][$field],
-				'mandatory'	=>true,
-				'required'	=>true,
-				'inputType'	=> $inputType,
-				'eval'		=> array('mandatory'=>true)
+				'id'         => $field,
+				'label'      => $GLOBALS['TL_LANG']['MSC'][$field],
+				'mandatory'  => true,
+				'required'   => true,
+				'inputType'  => $inputType,
+				'eval'       => array('mandatory'=>true)
 			);
-			$objMessage = new $strClass($this->prepareForWidget($arrMessage, $field));
-			$objMessage->rowClass = 'row_'.$i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
-			if($this->Input->post('FORM_SUBMIT') == $formId)
-			{
-				$objMessage->validate();
-				if ($objMessage->hasErrors())
-				{
-					$doNotSubmit = true;
-				} elseif ($objWidget->submitInput())
-				{
-					$arrStore[$field]['label'] = $arrMessage['label'];
-					$arrStore[$field]['value'] = $objWidget->value;
-				}
-			}
-			$strMessage = $objMessage->parse();
-			$this->Template->fields .= $strMessage;
-			$arrFields[$field] = $strMessage;
-			$arrWidgets[$field] = $objMessage;
-			++$i;
+		
+  		$objMessage = new $strClass($this->prepareForWidget($arrMessage, $field));
+  		$objMessage->rowClass = 'row_'.$i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
+  		if($this->Input->post('FORM_SUBMIT') == self::FORMID)
+  		{
+  			$objMessage->validate();
+  			
+  			if ($objMessage->hasErrors())
+  			{
+  				$doNotSubmit = true;
+  			} elseif ($objWidget->submitInput())
+  			{
+  			  $arrStore[$field]['label'] = $arrMessage['label'];
+          $arrStore[$field]['value'] = $objWidget->value;
+  			}
+  		}
+  		$strMessage = $objMessage->parse();
+      $arrStore[$field]['label'] = $arrMessage['label'];
+      $arrStore[$field]['value'] = $objMessage->value;
+  		$arrFields[$field] = $strMessage;
+  		$arrWidgets[$field] = $objMessage;
+
+  		$this->Template->fields .= $strMessage;
+  		++$i;
 		}
 
 		// Captcha
@@ -253,62 +241,18 @@ class ModuleCatalogNotify extends ModuleCatalog
 
 		$this->Template->rowLast = 'row_' . ++$i . ((($i % 2) == 0) ? ' even' : ' odd');
 		$this->Template->enctype = 'application/x-www-form-urlencoded';
-
+		$this->Template->hasError = $doNotSubmit;
+		
 		// Send catalog notification e-mail, if there are no errors
-		if ($this->Input->post('FORM_SUBMIT') == $formId && !$doNotSubmit)
+		if ($this->Input->post('FORM_SUBMIT') == self::FORMID && !$doNotSubmit)
 		{
-			$arrCatalog = $objCatalog->fetchAllAssoc();
-			$arrCatalog = $arrCatalog[0];
-
-			$objEmail = new Email();
-	
-			$objEmail->from = $GLOBALS['TL_ADMIN_EMAIL'];
-			$objEmail->subject = $this->replaceCatalogTags($this->catalog_subject, $arrCatalog);
-				
-			// replace catalog and other inserttags
-			$text = $this->replaceCatalogTags($this->catalog_notify, $arrCatalog);
-
-			// replace catalog name
-			$text = str_replace('##catalog##', $objCatalogType->name, $text);
-			// replace catalog url
-			$url = $this->Environment->base . ampersand($this->Environment->request, ENCODE_AMPERSANDS);
-			$text = str_replace('##link##', $url, $text);
-
-			$notify = '';
-			foreach($arrStore as $k=>$v)
-			{
-				$notify .= $arrStore[$k]['label'] . ': ' . $arrStore[$k]['value'] . "\n";
-			}
-			// compile body text
-			$objEmail->text =  $text. "\n\n" . $notify;
-
-			$additionalRecipients = array();
-			$arrRecipientFields = deserialize($this->catalog_recipient_fields);
+			$arrCatalog = $objCatalog->fetchAssoc();
 			
-			if(is_array($arrRecipientFields) && count($arrRecipientFields))
-			{
-				foreach($arrRecipientFields as $field)
-				{
-					if($arrCatalog[$field])
-						$additionalRecipients[] = $arrCatalog[$field];
-				}
-				$this->catalog_recipients = array_unique(array_merge($this->catalog_recipients, $additionalRecipients));				
-			}
+			$this->sendNotification($arrCatalog, $arrStore);
 			
-			if(is_array($this->catalog_recipients) && count($this->catalog_recipients))
-			{
-				foreach($this->catalog_recipients as $recipient) 
-				{
-					// prevent uncool Swift_RfcComplianceExceptions when having checked recipient fields that aren't valid email addresses
-					if($this->isValidEmailAddress($recipient))
-						$objEmail->sendTo($recipient);
-				}				
-			}
-			
-			$this->log('A user has notified you of interest in the following catalog item: '.$url, 'ModuleCatalogNotify compile()', TL_GENERAL);
-			$_SESSION[$formId]['TL_CONFIRM'][0] = $GLOBALS['TL_LANG']['MSC']['notifyConfirm'];
-
 			$this->Template->sent = true;
+			
+			
 			if($this->catalog_useJumpTo)
 			{
 				$objJump = $this->Database->prepare("SELECT * FROM tl_page WHERE id=?")
@@ -321,20 +265,89 @@ class ModuleCatalogNotify extends ModuleCatalog
 		}
 
 		// initialize
-		$this->initializeSession($formId);
+		$this->initializeSession(self::FORMID);
 
 		$this->Template->captcha = $arrFields['captcha'];
 		$this->Template->arrFields = $arrFields;
 		$this->Template->arrWidgets = $arrWidgets;
-		$this->Template->formId = $formId;
+		$this->Template->formId = self::FORMID;
 		$this->Template->slabel = specialchars($GLOBALS['TL_LANG']['MSC']['notifySubmit']);
 		$this->Template->action = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 	}
+		/**
+	 * Actually sends the email
+	 * @param array $arrItem all values of the catalog item
+	 * @param array $arrNotification all values from the form
+	 * @return void
+	 * @post $this->catalog_recipients contains the one from the item
+	 */
+	protected function sendNotification(array $arrItem, array $arrNotification)
+	{
+		$objEmail = new Email();
 
+		$objEmail->from = $GLOBALS['TL_ADMIN_EMAIL'];
+		$objEmail->subject = $this->replaceCatalogTags($this->catalog_subject, $arrItem);
+			
+		// replace catalog and other inserttags
+		$text = $this->replaceCatalogTags($this->catalog_notify, $arrItem);
+
+		// replace catalog name
+		$text = str_replace('##catalog##', $objCatalogType->name, $text);
+		
+		// replace catalog url
+		$url = $this->Environment->base . ampersand($this->Environment->request,
+		                                            ENCODE_AMPERSANDS);
+		$text = str_replace('##link##', $url, $text);
+
+		$notify = '';
+		foreach($arrNotification as $k=>$v)
+		{
+			$notify .= $v['label'] . ': ' . $v['value'] . "\n";
+		}
+		
+		// compile body text
+		$objEmail->text =  $text. "\n\n" . $notify;
+
+		$additionalRecipients = array();
+    $arrRecipientFields = deserialize($this->catalog_recipient_fields);
+
+    if(is_array($arrRecipientFields) && count($arrRecipientFields))
+    {
+      foreach($arrRecipientFields as $field)
+      {
+        if($arrItem[$field])
+        	$additionalRecipients[] = $arrItem[$field];
+      }
+
+      $this->catalog_recipients =
+        array_unique(array_merge($this->catalog_recipients,
+                                 $additionalRecipients));
+    }
+
+    if (! is_array($this->catalog_recipients))
+    {
+      $this->catalog_recipients = array();
+    }
+
+  	foreach($this->catalog_recipients as $recipient)
+  	{
+  		// prevent uncool Swift_RfcComplianceExceptions when having checked
+  		// recipient fields that aren't valid email addresses
+  		if($this->isValidEmailAddress($recipient))
+  			$objEmail->sendTo($recipient);
+  	}
+		
+		// write log
+		$this->log('A user has notified you of interest in the following catalog item: ' . $url,
+							 'ModuleCatalogNotify compile()', TL_GENERAL);
+		
+		$_SESSION[self::FORMID]['TL_CONFIRM'][0] = $GLOBALS['TL_LANG']['MSC']['notifyConfirm'];
+	}
 
 	/**
 	 * Initialize the form in the current session
-	 * @param string
+	 * @param string $formId
+	 * @return void
 	 */
 	private function initializeSession($formId)
 	{
@@ -366,6 +379,22 @@ class ModuleCatalogNotify extends ModuleCatalog
 			}
 		}
 	}
-}
+		/**
+	 * (non-PHPdoc)
+	 * @see ModuleCatalog::fetchCatalogItem()
+	 */
+	protected function fetchCatalogItem(array $arrFields =array()) {
+    $objResult = parent::fetchCatalogItem();
 
-?>
+    // restrict to published items
+    if($objResult
+       && (!BE_USER_LOGGED_IN)
+       && $this->publishField
+       && (! $objResult->__get($this->publishField)))
+    {
+      $objResult = null;
+    }
+
+    return $objResult;
+	}
+}?>

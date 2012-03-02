@@ -1,125 +1,151 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- *
- * The TYPOlight webCMS is an accessible web content management system that 
- * specializes in accessibility and generates W3C-compliant HTML code. It 
- * provides a wide range of functionality to develop professional websites 
- * including a built-in search engine, form generator, file and user manager, 
- * CSS engine, multi-language support and many more. For more information and 
- * additional TYPOlight applications like the TYPOlight MVC Framework please 
- * visit the project website http://www.typolight.org.
- * 
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
 
-
 /**
- * Class ModuleCatalog
+ * Base class for the Catalog frontend Modules
  *
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Controller
- *
  */
 abstract class ModuleCatalog extends Module
-{
-
-
-	/**
-	 * Tablename String
+{	/**
+	 * Tablename
 	 * @var string
 	 */
 	protected	$strTable;
 
 	/**
-	 * Name of the alias field
+	 * Name of the alias field (if any), empty otherwise
 	 * @var string
 	 */
 	protected	$strAliasField;
 
 	/**
+	 * Name of the publish field (if any), empty otherwise
+	 * @var string
+	 */
+	protected	$publishField;
+
+	/**
 	 * Search String
 	 * @var string
 	 */
-	protected	$strSearch 	= 'search';
+	const PARAMSEARCH = 'search';
 
 	/**
 	 * Sort String
 	 * @var string
 	 */
-	protected	$strSort 		= 'sort';
+	const PARAMSORT = 'sort';
 
 	/**
 	 * OrderBy String
 	 * @var string
 	 */
-	protected	$strOrderBy	= 'orderby';
+	const PARAMORDERBY	= 'orderby';
 
-
+	/**
+	 * Columns which are needed for the catalog to work and have to be used
+	 * in addition to the configured fields
+	 * @var array
+	 */
 	protected $systemColumns = array('id', 'pid', 'sorting', 'tstamp');
 
+	/**
+	 * @var string
+	 */
+	protected	$cacheJumpTo;
 
-	protected	$arrTree;	
+	/**
+	 * The catalog which's items should be worked on
+	 * @var Database_Result
+	 */
+	protected $objCatalogType;
 
-	protected	$cacheJumpTo;	
-
+	/**
+	 * @post $this->objCatalogType isset
+	 * (non-PHPdoc)
+	 * @see Module::generate()
+	 */
 	public function generate()
 	{
-		if (!strlen($this->catalog))
+		if (! strlen($this->catalog))
 		{
 			return '';
 		}
 
-		// get DCA
-		$objCatalog = $this->Database->prepare('SELECT * FROM tl_catalog_types WHERE id=?')
-				->limit(1)
-				->execute($this->catalog);
-		
-		if ($objCatalog->numRows > 0 && $objCatalog->tableName)
+		// fallback tags mode
+		if (! strlen($this->catalog_tags_mode))
 		{
-			$this->strTable = $objCatalog->tableName;
-			$this->strAliasField=$objCatalog->aliasField;
-			$this->publishField=$objCatalog->publishField;
+			$this->catalog_tags_mode = 'AND';
+		}
+
+		$this->objCatalogType = $this->getValidCatalogType();
+
+		// get DCA
+		if ($this->objCatalogType)
+		{
+			$this->strTable=$this->objCatalogType->tableName;
+			$this->strAliasField=$this->objCatalogType->aliasField;
+			$this->publishField=$this->objCatalogType->publishField;
 
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');
-			if(!$GLOBALS['TL_DCA'][$objCatalog->tableName]['Cataloggenerated'])
+			if (!$GLOBALS['TL_DCA'][$this->strTable]['Cataloggenerated'])
 			{
 				// load language files and DC.
-				$this->loadLanguageFile($objCatalog->tableName);
-				$this->loadDataContainer($objCatalog->tableName);
-				
+				$this->loadLanguageFile($this->strTable);
+				$this->loadDataContainer($this->strTable);
+
 				// load default language
-				$GLOBALS['TL_LANG'][$objType->tableName] = is_array($GLOBALS['TL_LANG'][$objType->tableName])
-													 ? Catalog::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'], $GLOBALS['TL_LANG'][$objType->tableName])
-													 : $GLOBALS['TL_LANG']['tl_catalog_items'];
+				if (is_array($GLOBALS['TL_LANG'][$this->strTable]))
+				{
+					$GLOBALS['TL_LANG'][$this->strTable] =
+						Catalog::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'],
+														$GLOBALS['TL_LANG'][$this->strTable]);
+				}
+				else
+				{
+					$GLOBALS['TL_LANG'][$this->strTable] = $GLOBALS['TL_LANG']['tl_catalog_items'];
+				}
+
 				// load dca
-				$GLOBALS['TL_DCA'][$objCatalog->tableName] = 
-					is_array($GLOBALS['TL_DCA'][$objCatalog->tableName])
-						? Catalog::array_replace_recursive($this->Catalog->getCatalogDca($this->catalog), $GLOBALS['TL_DCA'][$objCatalog->tableName])
-						: $this->Catalog->getCatalogDca($this->catalog);
-				$GLOBALS['TL_DCA'][$objCatalog->tableName]['Cataloggenerated'] = true;
+				if (is_array($GLOBALS['TL_DCA'][$this->strTable]))
+				{
+					$GLOBALS['TL_DCA'][$this->strTable] =
+						Catalog::array_replace_recursive($this->Catalog->getCatalogDca($this->catalog),
+														$GLOBALS['TL_DCA'][$this->strTable]);
+				}
+				else
+				{
+					$GLOBALS['TL_DCA'][$this->strTable] = $this->Catalog->getCatalogDca($this->catalog);
+				}
+
+				$GLOBALS['TL_DCA'][$this->strTable]['Cataloggenerated'] = true;
 			}
 		}
 
-		// Send file to the browser
-		$blnDownload = ($this instanceof ModuleCatalogList || $this instanceof ModuleCatalogFeatured || $this instanceof ModuleCatalogRelated || $this instanceof ModuleCatalogReference || $this instanceof ModuleCatalogReader); 
+		// Send file to the browser (reading Modules only)
+		$blnDownload = ($this instanceof ModuleCatalogList
+						|| $this instanceof ModuleCatalogFeatured
+						|| $this instanceof ModuleCatalogRelated
+						|| $this instanceof ModuleCatalogReference
+						|| $this instanceof ModuleCatalogReader);
+
 		if ($blnDownload && strlen($this->Input->get('file')) && $this->catalog_visible)
 		{
 			foreach ($this->catalog_visible as $k)
@@ -128,10 +154,12 @@ abstract class ModuleCatalog extends Module
 				if ($fieldConf['eval']['catalog']['type'] == 'file' && !$fieldConf['eval']['catalog']['showImage'])
 				{
 					// check file in Catalog
-					$objDownload = $this->Database->prepare('SELECT id FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '').'(LOCATE(?,'.$k.')>0 OR LOCATE(?,'.$k.')>0)')
+					$objDownload = $this->Database->prepare('SELECT id FROM ' . $this->strTable .
+															' WHERE ' . (!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '') .
+															'(LOCATE(?,'.$k.')>0 OR LOCATE(?,'.$k.')>0)')
 							->limit(1)
 							->execute($this->Input->get('file'), dirname($this->Input->get('file')));
-					
+
 					if ($objDownload->numRows)
 					{
 						$this->sendFileToBrowser($this->Input->get('file'));
@@ -143,22 +171,18 @@ abstract class ModuleCatalog extends Module
 		return parent::generate();
 	}
 
+	/**
+	 * Gets all modules from the layout and from the articles for this page
+	 * @return array : enumerated int ids of the modules
+	 */
 	protected function getModulesForThisPage()
 	{
+		global $objPage;
 		if($this->cachePageModules)
 			return $this->cachePageModules;
-		global $objPage;
-		if($objPage->layout)
-			$objLayout = $this->Database->prepare('SELECT id,modules FROM tl_layout WHERE id=?')
-								->limit(1)
-								->execute($objPage->layout);
-		// Fallback layout
-		if (!$objPage->layout || $objLayout->numRows == 0)
-		{
-			$objLayout = $this->Database->prepare('SELECT id, modules FROM tl_layout WHERE fallback=?')
-										->limit(1)
-										->execute(1);
-		}
+
+		$objLayout = $this->fetchLayout();
+
 		// check if there is a layout and fetch modules if so.
 		if ($objLayout->numRows)
 		{
@@ -166,14 +190,16 @@ abstract class ModuleCatalog extends Module
 		} else {
 			$arrModules = array();
 		}
+
 		// fetch all content element modules from this page.
 		$objContent = $this->Database->prepare('SELECT module FROM tl_content WHERE pid IN (SELECT id FROM tl_article WHERE pid=?) AND type="module"')
 									->execute($objPage->id);
 		while($objContent->next())
 		{
 			$arrModules[] = array('mod' => $objContent->module);
-		
+
 		}
+
 		$ids=array();
 		foreach ($arrModules as $arrModule)
 		{
@@ -183,55 +209,97 @@ abstract class ModuleCatalog extends Module
 		return $this->cachePageModules;
 	}
 
-	protected function getCatalogFields($arrTypes=false)
+	/**
+	 * Get either the set or the fallback layout
+	 * @return Database_Result with id, modules
+	 */
+	protected function fetchLayout() {
+		global $objPage;
+
+		if($objPage->layout)
+			$objLayout = $this->Database->prepare('SELECT id,modules FROM tl_layout WHERE id=?')
+								->limit(1)
+								->execute($objPage->layout);
+
+		// Fallback layout
+		if (!$objPage->layout || $objLayout->numRows == 0)
+		{
+			$objLayout = $this->Database->prepare('SELECT id, modules FROM tl_layout WHERE fallback=?')
+										->limit(1)
+										->execute(1);
+		}
+
+		return $objLayout;
+	}
+
+	/**
+	 * Gets the catalog's fields' labels and types from db
+	 * @param array $arrTypes optional
+	 * @return array with 'label' and 'type'
+	 */
+	protected function getCatalogFields(array $arrTypes =array())
 	{
-		if(!$arrTypes)
-			$arrTypes=$GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
+		// fall back to all types
+		if (count($arrTypes) == 0)
+			$types = $GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
+		else
+			$types = $arrTypes;
+
 		$fields = array();
-		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields WHERE pid=? ORDER BY sorting")
-							->execute($this->catalog);
+
+		$objFields = $this->Database->prepare('SELECT * FROM tl_catalog_fields WHERE pid=? ORDER BY sorting')
+									->execute($this->catalog);
 
 		while ($objFields->next())
 		{
-			if(!in_array($objFields->type, $arrTypes))
+			if (!in_array($objFields->type, $types))
 				continue;
-			$fields[$objFields->colName] = array 
-			(
+
+			$fields[$objFields->colName] = array (
 				'label' => $objFields->name,
 				'type' => $objFields->type,
 			);
 
 		}
+
 		return $fields;
 	}
 
+	/**
+	 * Builds the tree of catalog filters
+	 * (children are offered when a parent got a value)
+	 * @return array
+	 */
 	protected function getTree()
 	{
-		if ($this->type != 'catalogfilter' || !$this->catalog_filter_enable)
+		$result = array();
+
+		if ($this->type == 'catalogfilter'
+			&& $this->catalog_filter_enable
+			&& $this->catalog_filters)
 		{
-			return array();
-		}
-		$tree = array();
-		if($this->catalog_filters) {
 			$arrFilters = deserialize($this->catalog_filters, true);
-			foreach ($arrFilters as $key=>$fieldconfig)
+
+			foreach ($arrFilters as $fieldconfig)
 			{
 				list($field, $config) = each($fieldconfig);
+
 				if ($config['checkbox'] == 'tree')
 				{
-					$tree[] = $field;
+					$result[] = $field;
 				}
 			}
 		}
-		return $tree;
+
+		return $result;
 	}
 
-   /**
-    * Sets the values of all filters according to either POST or GET values
-    * @param string $strSearchFields
-    * @return array 
-    */
-	public function parseFilterUrl($strSearchFields=null)
+	/**
+	 * Sets the values of all filters according to either POST or GET values
+	 * @param string $strSearchFields optional
+	 * @return array
+	 */
+	public function parseFilterUrl($strSearchFields =null)
 	{
 		$arrTree = $this->getTree();
 		$blnTree = (count($arrTree)>0);
@@ -242,46 +310,42 @@ abstract class ModuleCatalog extends Module
 		// Setup Fields
 		$fields = $this->getCatalogFields();
 
-		if (!strlen($this->catalog_tags_mode))
-		{
-			$this->catalog_tags_mode = 'AND';
-		}
-
 		// Process POST redirect() settings
 		$doPost = false;
 		if ($this->Input->post('FORM_SUBMIT') == $this->strTable)
 		{
 			// search string POST
-			if (array_key_exists($this->strSearch, $_POST))
+			if (array_key_exists(self::PARAMSEARCH, $_POST))
 			{
 				$doPost = true;
 
-				if ($this->Input->post($this->strSearch))
+				if ($this->Input->post(self::PARAMSEARCH))
 				{
-					$current[$this->strSearch] = $this->Input->post($this->strSearch);
-				} 
+					$current[self::PARAMSEARCH] = $this->Input->post(self::PARAMSEARCH);
+				}
 				else
 				{
-					unset($current[$this->strSearch]);
-				} 
+					unset($current[self::PARAMSEARCH]);
+				}
 			}
 
 			// filters POST
 			foreach ($fields as $field=>$data)
 			{
 				// check if this is a filter
-				if (array_key_exists($field, $_POST) && in_array($field, $searchFields))
+				if (array_key_exists($field, $_POST)
+					&& in_array($field, $searchFields))
 				{
 					$doPost = true;
 					$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
-					
+
 					// check if array posted (range and dates)
 					if (is_array($this->Input->post($field)))
 					{
 						$range = $this->Input->post($field);
-						$min = strlen($fieldConf['eval']['catalog']['minValue']) ? 
+						$min = strlen($fieldConf['eval']['catalog']['minValue']) ?
 									max(min($range), $fieldConf['eval']['catalog']['minValue']) : min($range);
-						$max = strlen($fieldConf['eval']['catalog']['maxValue']) ? 
+						$max = strlen($fieldConf['eval']['catalog']['maxValue']) ?
 									min(max($range), $fieldConf['eval']['catalog']['maxValue']) : max($range);
 						if (strlen($max) && strlen($min))
 						{
@@ -298,7 +362,7 @@ abstract class ModuleCatalog extends Module
 								if($range[1] && !is_numeric($range[1]))
 									$range[1] = strtotime($range[1]);
 							}
-							if (strlen($range[0]))							
+							if (strlen($range[0]))
 								$min=$range[0];
 							if (strlen($range[1]))
 								$max=$range[1];
@@ -309,7 +373,7 @@ abstract class ModuleCatalog extends Module
 						}
 					}
 					// regular filter value
-					else 
+					else
 					{
 						// use TL safe function
 						$v = $this->Input->post($field);
@@ -328,16 +392,16 @@ abstract class ModuleCatalog extends Module
 									}
 									$v = implode(',', $newtags);
 									break;
-									
+
 								case 'select':
-									$v = $arrAlias[$v]; 
+									$v = $arrAlias[$v];
 									break;
-									
+
 								default:;
 							}
 						}
 						$current[$field] = $v;
-					}			
+					}
 				}
 			}
 			// Redirect POST variables to GET, for [search] and [ranges]
@@ -346,7 +410,7 @@ abstract class ModuleCatalog extends Module
 				$this->redirect($this->generateFilterUrl($current, false, false));
 			}
 		}
-		
+
 		// GET from here on
 
 		// return if no filter parameters in URL
@@ -359,38 +423,35 @@ abstract class ModuleCatalog extends Module
 		$baseurl = $this->generateFilterUrl();
 		$procedure = array('search' => null);
 		$values = array('search' => null);
-    $searchPhrases = self::splitSearchKeywords($this->Input->get($this->strSearch));
-    
+		$searchPhrases = self::splitSearchKeywords($this->Input->get(self::PARAMSEARCH));
+
 		// GET search value if several phrases are used
 		// all search fields need to be used to find search phrases which are
-		// contained in different fields 
+		// contained in different fields
 		if (count($searchPhrases) > 1
-		    && count($searchFields))
+			&& count($searchFields))
 		{
-	    $searchFieldNames = array();
-	    
-		  foreach ($searchFields as $fieldName)
-		  {
-		    $fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$fieldName];
-		    $sqlFieldName = self::sqlFieldName($fieldName, $fieldConf['eval']['catalog']);
-		    
-		    switch ($fieldConf['eval']['catalog']['type'])
-		    {
-		      case 'date':
-					  // month only search
-            $sqlFieldName = 'CAST(MONTHNAME(FROM_UNIXTIME(' . $fieldName .')) AS CHAR';
-		        break;
-		    }
-		    
-		    $searchFieldNames[] = $sqlFieldName;
-		  }
-		  
-	    $searchFieldName = 'CONCAT(' . implode($searchFieldNames, ',') . ') LIKE ? AND ';
-	    $procedure['search'][$searchFields[0]] = str_repeat($searchFieldName, count($searchPhrases))
-	                           . '1'; // terminate the last AND 
-	    $values['search'][$searchFields[0]] = self::searchFor($searchPhrases);
+			$searchFieldNames = array();
+
+			foreach ($searchFields as $fieldName)
+			{
+				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$fieldName];
+				$sqlFieldName = self::sqlFieldName($fieldName, $fieldConf['eval']['catalog']);
+				switch ($fieldConf['eval']['catalog']['type'])
+				{
+					case 'date':
+						// month only search
+						$sqlFieldName = 'CAST(MONTHNAME(FROM_UNIXTIME(' . $fieldName .')) AS CHAR';
+						break;
+				}
+				$searchFieldNames[] = $sqlFieldName;
+			}
+
+			$searchFieldName = 'CONCAT(' . implode($searchFieldNames, ',') . ') LIKE ? AND ';
+			$procedure['search'][$searchFields[0]] = str_repeat($searchFieldName, count($searchPhrases)) . '1'; // terminate the last AND
+			$values['search'][$searchFields[0]] = self::searchFor($searchPhrases);
 		}
-    
+
 		foreach ($fields as $field=>$data)
 		{
 			$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
@@ -398,13 +459,13 @@ abstract class ModuleCatalog extends Module
 
 			// GET search value
 			if (count($searchPhrases) == 1
-			    && strlen($fieldConf['eval']['catalog']['type'])
-			    && in_array($field, $searchFields))
+				&& strlen($fieldConf['eval']['catalog']['type'])
+				&& in_array($field, $searchFields))
 			{
 				// remember: only one search phrase here
-        $searchPhrase = $searchPhrases[0];
+				$searchPhrase = $searchPhrases[0];
 
-        switch ($fieldConf['eval']['catalog']['type'])
+				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'text':
 					case 'longtext':
@@ -412,90 +473,74 @@ abstract class ModuleCatalog extends Module
 					case 'decimal':
 					case 'file':
 					case 'url':
-  					$procedure['search'][$field] = '('.$field.' LIKE ?)';
-  					$values['search'][$field] = '%' . $searchPhrase . '%';
-  					break;  
+						$procedure['search'][$field] = '('.$field.' LIKE ?)';
+						$values['search'][$field] = '%' . $searchPhrase . '%';
+						break;
 
 					case 'date':
-					  // add numeric day, month, year search
-            if (is_numeric($searchPhrase))
-            {
-							foreach (array('YEAR','MONTH','DAY') as $function) 
+						// add numeric day, month, year search
+						if (is_numeric($searchPhrase))
+						{
+							foreach (array('YEAR','MONTH','DAY') as $function)
 							{
 								$tmpDate[] = "CAST(" . $function . "(FROM_UNIXTIME(" . $field . ")) AS CHAR) LIKE ?";
 								$values['search'][$field][] = '%' . $searchPhrase . '%';
 							}
-							
+
 							$procedure['search'][$field] = '('.implode(' OR ',$tmpDate).')';
-				    }
-            
-				    // add month only search
-            else
-            {
-              $procedure['search'][$field] = "CAST(MONTHNAME(FROM_UNIXTIME(" . $field . ")) AS CHAR) LIKE ?";
-              $values['search'][$field] = '%'.$searchPhrase.'%';
-            }
-						
-					  break;
+						}
+						// add month only search
+						else
+						{
+							$procedure['search'][$field] = "CAST(MONTHNAME(FROM_UNIXTIME(" . $field . ")) AS CHAR) LIKE ?";
+							$values['search'][$field] = '%'.$searchPhrase.'%';
+						}
+						break;
 
 					case 'checkbox' :
-							// search only if true
-							if (substr_count(strtolower($fieldConf['label']['0']),
-							                 strtolower($searchPhrase)))
-							{
-								$procedure['search'][$field] = '('.$field.'=?)';
-								$values['search'][$field] = '1';
-							}
-							break;
+						// search only if true
+						if (substr_count(strtolower($fieldConf['label']['0']),
+										strtolower($this->Input->get(self::PARAMSEARCH))))
+						{
+							$procedure['search'][$field] = '('.$field.'=?)';
+							$values['search'][$field] = '1';
+						}
+						break;
 
 					case 'select' :
-							list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-							$procedure['search'][$field] = '('.$field.' IN (SELECT id FROM '.$itemTable.' WHERE '.$valueCol.' LIKE ?'.($fieldConf['options']? ' AND id IN ('.implode(',',array_keys($fieldConf['options'])).')':'').'))';
-							$values['search'][$field] = '%' . $searchPhrase . '%';
-							break;
-								
+						list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
+						$procedure['search'][$field] = '('.$field.' IN (SELECT id FROM '.$itemTable.' WHERE '.$valueCol.' LIKE ?'.($fieldConf['options']? ' AND id IN ('.implode(',',array_keys($fieldConf['options'])).')':'').'))';
+						$values['search'][$field] = '%' . $searchPhrase . '%';
+						break;
+
 					case 'tags' :
-							list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-							// perform search by using a subselect over the tables.
-							$tagQuery = $this->Database->prepare(sprintf('SELECT DISTINCT(itemid) as id
-																														FROM tl_catalog_tag_rel
-																														WHERE fieldid=%s
-																														  AND valueid IN (SELECT id FROM %s WHERE %s LIKE ? %s)',
+						list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
+						// perform search by using a subselect over the tags table
+						$tagQuery = $this->Database->prepare(sprintf('SELECT DISTINCT(itemid) as id
+																		FROM tl_catalog_tag_rel
+																		WHERE fieldid=%u
+																		AND valueid IN (SELECT id
+																						FROM %s
+																						WHERE %s LIKE ?
+																						AND id IN (%s))',
 																	$fieldConf['eval']['catalog']['fieldId'],
 																	$itemTable,
 																	$valueCol,
-																	($fieldConf['options']? ' AND id IN ('.implode(',',array_keys($fieldConf['options'])).')':'')
-																	))
-									->execute('%' . $searchPhrase . '%');
-							
-							if ($tagQuery->numRows)
-							{
-								$procedure['search'][$field] = 'id IN('.implode(',', $tagQuery->fetchEach('id')).')';
-							}
-							break;
-
-					default:;
-						// HOOK: Might be a custom field type, check if that one has registered a hook.
-						$fieldType=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
-						if(array_key_exists('generateFilter', $fieldType) && is_array($fieldType['generateFilter']))
+																	implode(',',array_keys($fieldConf['options']))))
+													->execute('%' . $searchPhrase . '%');
+						if ($tagQuery->numRows)
 						{
-							foreach ($fieldType['generateFilter'] as $callback)
-							{
-								$this->import($callback[0]);
-								$tmp=$this->$callback[0]->$callback[1]($field, $fieldConf, $searchPhrase);
-								$procedure['search'][$field] = $tmp['procedure'];
-								if(is_array($tmp['search']))
-								{
-									if(isset($values['search'][$field]))
-										$values['search'][$field]=array_merge($values['search'][$field], $tmp['search']);
-									else
-										$values['search'][$field]=$tmp['search'];
-								}
-								else
-									$values['search'][$field]=$tmp['search'];
-							}
+							$procedure['search'][$field] = sprintf('id IN(%s)',
+																	implode(',', $tagQuery->fetchEach('id')));
 						}
-				} // /switch
+						break;
+
+					default:
+						// HOOK: Might be a custom field type, check if that one has registered a hook
+						$hookQuery = $this->generateFilterHook($field, $fieldConf, $searchPhrase);
+						$procedure['search'][$field] = $hookQuery['procedure'];
+						$values['search'][$field] = $hookQuery['values'];
+				}
 			} // /search
 
 			// GET range values
@@ -503,124 +548,108 @@ abstract class ModuleCatalog extends Module
 			{
 				$rangeValues = trimsplit('__', $this->Input->get($field), 2);
 				$rangeOptions[$field]['label'] = $fieldConf['label'][0];
-				$rangeOptions[$field]['min'] = 	$rangeValues[0];
+				$rangeOptions[$field]['min'] = $rangeValues[0];
 				$rangeOptions[$field]['max'] = $rangeValues[1];
-				$minValue =	$rangeValues[0];
+				$minValue = $rangeValues[0];
 				$maxValue = $rangeValues[1];
-        
+
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'number':
 						$rangeValues[0] = intval($rangeValues[0]);
 						$rangeValues[1] = intval($rangeValues[1]);
 						break;
+
 					case 'decimal':
 						$rangeValues[0] = floatval($rangeValues[0]);
 						$rangeValues[1] = floatval($rangeValues[1]);
 						break;
+
 					case 'date':
 						$rangeValues[0] = strtotime($rangeValues[0]);
 						$rangeValues[1] = strtotime($rangeValues[1]);
 						break;
+
 					case 'calc':
-					  if ($fieldConf['eval']['catalog']['formatFunction'] == 'date')
-					  {
-					    $rangeValues[0] = strtotime($rangeValues[0]);
-					    $rangeValues[1] = strtotime($rangeValues[1]) + 60*60*24-1; // end of day
-					  }
-					  break;
-					default:
+						if ($fieldConf['eval']['catalog']['formatFunction'] == 'date')
+						{
+							$rangeValues[0] = strtotime($rangeValues[0]);
+							$rangeValues[1] = strtotime($rangeValues[1]) + 60*60*24-1; // end of day
+						}
+						break;
 				}
-				
+
 				// one or two limits?
 
 				$strSqlWhereClause = '(' . $sqlFieldName . ' BETWEEN ? AND ?)';
 
 				if (strlen($minValue))
-          $values['where'][] = $rangeValues[0];
+					$values['where'][] = $rangeValues[0];
 				else
 					$strSqlWhereClause = '(' . $sqlFieldName . ' < ?)';
-				
+
 				if (strlen($maxValue))
 					$values['where'][] = $rangeValues[1];
 				else
 					$strSqlWhereClause = '(' . $sqlFieldName . ' > ?)';
-				
-				$procedure['where'][] = $strSqlWhereClause;
+
+				$procedure['where'][$field] = $strSqlWhereClause;
 				$current[$field] = $this->Input->get($field);
 			}
-			
+
 			// GET filter values
 			elseif (strlen($this->Input->get($field)))
 			{
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'tags':
-						$tags = array();
-						list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-						// TODO: add support for string values here and get rid of the convertAliasInput call on the beginning.
-						foreach(explode(',', $current[$field]) as $tag)
-							$tags[] = (int)$tag;
-						$tags = array_intersect($tags, ($fieldConf['options']?array_keys($fieldConf['options']):$tags));
-						if(!count($tags))
-						{
-							$tagQuery = 'id=0';
-						} else {
-							if($this->catalog_tags_mode == 'AND')
-							{
-								$fieldId=$fieldConf['eval']['catalog']['fieldId'];
-								$strAllTags=implode(',', $tags);
-								$subSql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid=%s',
-												$fieldId,
-												array_shift($tags));
-								foreach($tags as $tag)
-									$subSql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid=%s AND itemid IN(%s)', 
-													$fieldId,
-													$tag,
-													$subSql);
-								$sql = sprintf('id IN (SELECT DISTINCT(itemid) FROM tl_catalog_tag_rel WHERE fieldid=%s AND valueid IN (%s)) AND %s',
-												$fieldId,
-												$strAllTags,
-												sprintf('id IN (%s)', $subSql)
-												);
-								$tagQuery = $sql;
-							} else {
-								// perform search by using a subselect over the tables.
-								$tagQuery = 'id IN(SELECT DISTINCT(itemid) as id FROM tl_catalog_tag_rel WHERE fieldid='.$fieldConf['eval']['catalog']['fieldId'].' AND valueid IN ('.implode(',', array_intersect($tags, ($fieldConf['options']?array_keys($fieldConf['options']):array()))).'))';
-							}
-						}
-						$procedure['where'][$field] = $tagQuery;
-						$procedure['tags'][$field] = $tagQuery;
+						// tags are comma separated in the URL
+						$tags = explode(',', $current[$field]);
+
+						// some former valid values might have been deleted
+						if (count($fieldConf['options']))
+							$tags = array_intersect($tags, array_keys($fieldConf['options']));
+
+						$tagsInt = array();
+						//  make sure they are no arbitrary data.
+						foreach ($tags as $tag)
+							$tagsInt[] = (int)$tag;
+
+						$tagQuery = $this->buildTagsQuery($fieldConf, $tagsInt);
+
+						$procedure['where'][$field] = $procedure['tags'][$field] = $tagQuery;
+
 						if ($blnTree && in_array($field, $arrTree))
 						{
 							$procedure['tree'][$field] = $tagQuery;
 						}
 						break;
+
 					case 'checkbox':
-						$procedure['where'][$field] = $field . "=?";
+						$procedure['where'][$field] = $field."=?";
 						$values['where'][$field] = ($this->Input->get($field) == 'true' ? 1 : 0);
-						
-						if ($blnTree && in_array($field, $arrTree)) 
+
+						if ($blnTree && in_array($field, $arrTree))
 						{
 							$procedure['tree'][$field] = $field . "=?";
 							$values['tree'][$field] = ($this->Input->get($field) == 'true' ? 1 : 0);
 						}
 						break;
+
 					case 'text':
 					case 'longtext':
 					case 'number':
 					case 'decimal':
 					case 'select':
 						$value = $current[$field];
-						
-						if($value!==NULL)
+
+						if ($value !== null)
 						{
-							$procedure['where'][$field] = $field . "=?";
+							$procedure['where'][$field] = $field."=?";
 							$values['where'][$field] = $value;
-							
-							if ($blnTree && in_array($field, $arrTree)) 
+							if ($blnTree && in_array($field, $arrTree))
 							{
-								$procedure['tree'][$field] = $field . "=?";
+								$procedure['tree'][$field] = $field."=?";
 								$values['tree'][$field] = $value;
 							}
 						}
@@ -628,336 +657,197 @@ abstract class ModuleCatalog extends Module
 					case 'date':
 						$procedure['where'][$field] = $field . "=?";
 						$values['where'][$field] = strtotime($this->Input->get($field));
-            
-						if ($blnTree && in_array($field, $arrTree)) 
+
+						if ($blnTree && in_array($field, $arrTree))
 						{
 							$procedure['tree'][$field] = $field . "=?";
 							$values['tree'][$field] = strtotime($this->Input->get($field));
 						}
 						break;
+
 					case 'file':
 					case 'url':
 						$procedure['where'][$field] = $field . "=?";
 						$values['where'][$field] = urldecode($this->Input->get($field));
 						$current[$field] = $this->Input->get($field);
 
-						if ($blnTree && in_array($field, $arrTree)) 
+						if ($blnTree && in_array($field, $arrTree))
 						{
 							$procedure['tree'][$field] = $field . "=?";
 							$values['tree'][$field] = urldecode($this->Input->get($field));
 						}
 						break;
-						
+
 					default: // f.e. calc
-				  if ($fieldConf['eval']['catalog']['formatFunction'] == 'date')
-  					{
-  					  $dayBegin = strtotime($this->Input->get($field));
-  					  $dayEnd = $dayBegin + 24*60*60 -1;
-  					  
-  					  $procedure['where'][] = $sqlFieldName . ' BETWEEN ' . $dayBegin . ' AND ' . $dayEnd; 
-  					}
-  					
-  					else
-  					{
-  					  $procedure['where'][] = $sqlFieldName ."=?";
-  					  $values['where'][] = $this->Input->get($field);
-  					}
+						if ($fieldConf['eval']['catalog']['formatFunction'] == 'date')
+						{
+							$dayBegin = strtotime($this->Input->get($field));
+							$dayEnd = $dayBegin + 24*60*60 -1;
+							$procedure['where'][] = $sqlFieldName . ' BETWEEN ' . $dayBegin . ' AND ' . $dayEnd;
+						}
+						else
+						{
+							$procedure['where'][] = $sqlFieldName . "=?";
+							$values['where'][] = $this->Input->get($field);
+						}
 
 						$current[$field] = $this->Input->get($field);
 
-						if ($blnTree && in_array($field, $arrTree)) 
+						if ($blnTree && in_array($field, $arrTree))
 						{
-							$procedure['tree'][$field] = $sqlFieldName ."=?";
+							$procedure['tree'][$field] = $sqlFieldName . "=?";
 							$values['tree'][$field] = $this->Input->get($field);
 						}
+						break;
 				}
-			} // filter
+			} // /filter
 
 			// GET sort values
-			if ($this->Input->get($this->strOrderBy) == $field && in_array($this->Input->get($this->strSort), array('asc','desc')))
+			if ($this->Input->get(self::PARAMORDERBY) == $field && in_array($this->Input->get(self::PARAMSORT), array('asc','desc')))
 			{
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'select':
 						list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-						$procedure['orderby'] = '(SELECT '.$valueCol.' from '.$itemTable.' WHERE id='.$field.') '.$this->Input->get($this->strSort);
+						$procedure['orderby'] = '(SELECT '.$valueCol.' from '.$itemTable.' WHERE id='.$field.') '.$this->Input->get(self::PARAMSORT);
 						break;
 					default:
-						$procedure['orderby'] = $field.' '.$this->Input->get($this->strSort);
+						$procedure['orderby'] = $field.' '.$this->Input->get(self::PARAMSORT);
 				}
-				$current[$this->strOrderBy] = $this->Input->get($this->strOrderBy);
-				$current[$this->strSort] = $this->Input->get($this->strSort);
+				$current[self::PARAMORDERBY] = $this->Input->get(self::PARAMORDERBY);
+				$current[self::PARAMSORT] = $this->Input->get(self::PARAMSORT);
 			} //sort
 
 		} // foreach $filter
-		
 
-		$settings = array 
+		$arrQuery = array
 			(
 				'current' 	=> $current,
 				'procedure' => $procedure,
 				'values' 		=> $values,
 			);
+
 		// HOOK: allow other extensions to manipulate the filter settings before passing it to the template
-		if(is_array($GLOBALS['TL_HOOKS']['filterCatalog']))
+		$arrQuery = $this->filterCatalogHook($arrQuery);
+
+		return $arrQuery;
+	}
+
+	/**
+	 * generateFilter HOOK for searching custom fields
+	 * @param string $strFieldName
+	 * @param array $arrFieldConf
+	 * @param string $strSearchPhrase
+	 * @return array : 'procedure' => string, 'values' => array
+	 */
+	protected function generateFilterHook($strFieldName, array $arrFieldConf, $strSearchPhrase)
+	{
+		$searchProcedures = array();
+		$searchValues = array();
+
+		$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$arrFieldConf['eval']['catalog']['type']];
+
+		if(array_key_exists('generateFilter', $fieldType)
+			&& is_array($fieldType['generateFilter']))
 		{
-			foreach ($GLOBALS['TL_HOOKS']['filterCatalog'] as $callback)
+			foreach ($fieldType['generateFilter'] as $callback)
 			{
 				$this->import($callback[0]);
-				$settings = $this->$callback[0]->$callback[1]($settings);
-			}
-		}
-		return $settings;
-	}
-	
-  /**
-   * Splits the keywords used for the search query
-   * One can use "word1 word2" for a phrase
-   * @see Search::searchFor()
-   * @param string $strKeywords
-   * @return array with the single string phrases to search for
-   */
-  protected static function splitSearchKeywords($strKeywords)
-  {
-    $result = array();
-    $arrChunks = array();
-  
-    preg_match_all('/"[^"]+"|[^ ]+/', $strKeywords, $arrChunks);
-  
-    foreach ($arrChunks[0] as $phrase)
-    {
-      switch (substr($phrase, 0, 1))
-      {
-        case '"':
-          $result[] = trim(substr($phrase, 1, -1));
-          break;
-          
-        default:
-          $result[] = $phrase;
-      }
-    }
-    
-    return $result;
-  }
-  
-  /**
-   * Prepares several search phrases for usage in the LIKE statement
-   * @param array $arrPhrases
-   * @return array string $searchValue with wildcards added
-   */
-  protected static function searchFor(array $arrPhrases)
-  {
-    $result = array();
-    
-    foreach ($arrPhrases as $phrase)
-    {
-      $result[] = '%' . $phrase . '%';
-    }
-    
-    return $result;
-  }
-	
-	/**
-	 * Retrieve Alias field from table, checks if catalog
-	 * @param string
-	 * @return string
-	 */
-
-	public function getAliasField($sourceTable)
-	{
-		// check alias field
-		$objAlias = $this->Database->prepare("SELECT aliasField FROM tl_catalog_types WHERE tableName=?")
-										->execute($sourceTable);
-		$aliasField = ($objAlias->numRows && strlen($objAlias->aliasField)) ? $objAlias->aliasField : 'alias';
-
-		return ($this->Database->fieldExists($aliasField, $sourceTable) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $aliasField : 'id';
-	}
-
-	/**
-	 * Retrieve alias field for current catalog field configuration
-	 * @param array
-	 * @return string
-	 */
-
-	private function getAliasFieldConf($fieldConf)
-	{
-		if (!$fieldConf['eval']['catalog']['foreignKey'])
-		{
-			return 'id';
-		}
-		
-		// get alias column
-		list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-
-		return $this->getAliasField($itemTable);
-	}
-
-
-	/**
-	 * Retrieve alias values with id as index
-	 * @param array
-	 * @return array
-	 */
-
-	private function getAliasOptionList(&$fieldConf)
-	{
-		if($fieldConf['optionslist'])
-			return $fieldConf['optionslist'];
-
-		// get alias column
-		list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
-		$aliasField = $this->getAliasField($itemTable);
-
-		// determine item sorting.
-		$strSorting=($fieldConf['eval']['catalog']['sortCol']
-					?' ORDER BY '.$fieldConf['eval']['catalog']['sortCol']
-					:($this->Database->fieldExists('sorting', $itemTable)?' ORDER BY sorting':''));
-		// get existing alias values of options in DB
-		$objList = $this->Database->prepare('SELECT id,'.$aliasField.' FROM '.$itemTable . 
-						($fieldConf['options'] ? ' WHERE id IN ('.implode(',',array_keys($fieldConf['options'])).')':'') . $strSorting)
-				->execute();
-		
-		$return = array();
-		while ($objList->next())
-		{
-			// check if this is still ok to use id if alias is empty
-			$return[$objList->id] = strlen($objList->$aliasField) ? $objList->$aliasField : $objList->id;
-		}
-		$fieldConf['optionslist'] = $return;
-		return $return;
-	}
-
-	/**
-	 * Detect input $_GET variables and convert alias values to id's, if table supports it
-	 * @return array
-	 */
-
-	protected function convertAliasInput()
-	{
-
-		$return = array();
-
-		// convert $_GET filter parameters in Url
-		foreach ($_GET as $k=>$v)
-		{
-			// exclude page parameter
-			if (!in_array($k, array('page')))
-			{
-				$_GET[$k] = str_replace($GLOBALS['TL_CONFIG']['catalog']['safeReplace'], $GLOBALS['TL_CONFIG']['catalog']['safeCheck'], $v);
-				
-				// use TL safe function
-				$v = $this->Input->get($k);
-
-				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
-				if (strlen($v) && $this->getAliasFieldConf($fieldConf) != 'id')
+				$hookResult = $this->$callback[0]->$callback[1]($strFieldName, $arrFieldConf, $strSearchPhrase);
+				$searchProcedures = $hookResult['procedure'];
+				if(array_key_exists('search', $hookResult))
 				{
-					$arrAlias = array_flip($this->getAliasOptionList($fieldConf));
-					switch ($fieldConf['eval']['catalog']['type'])
-					{
-						case 'tags':
-							$tags = explode(',', $v);
-							$newtags = array();
-							foreach($tags as $tag)
-							{
-								$newtags[] = $arrAlias[$tag];
-							}
-							$v = implode(',', $newtags);
-							break;
-							
-						case 'select':
-							$v = $arrAlias[$v]; 
-							break;
-							
-						default:;
-					}
+					if (is_array($hookResult['search']))
+						$searchValues = array_merge($hookResult['search'], $searchValues);
+					else
+						$searchValues[] = $hookResult['search'];
 				}
-				
-				$return[$k] = $v; 
 			}
 		}
-		
-		return $return;
-	}
 
-
-	protected function lastInTree($field, $current, $tree)
-	{
-		return (!count($tree) || in_array($field, $tree) && array_search($field, $tree)==(count($tree)-1));
-	}
-
-
-	protected function hideTree($field, $current, $tree)
-	{
-		if ($this->catalog_filter_hide && in_array($field, $tree))
-		{
-			$pos = array_search($field, $tree);
-			for ($i=0,$total=0;$i<=$pos;$i++)
-			{
-				$total += array_key_exists($tree[$i], $current);
-			}
-			return ($total<$pos);
-		}
-		return false;
-	}
-
-	protected function buildTreeQuery($field, $filterurl, $tree)
-	{
-		if (count($tree) && is_array($filterurl['procedure']['tree']))
-		{
-			$pos = array_search($field, $tree);
-			for ($i=0;$i<$pos;$i++)
-			{
-				if (strlen($filterurl['procedure']['tree'][$tree[$i]]))
-					$query[] = $filterurl['procedure']['tree'][$tree[$i]];
-				if (strlen($filterurl['values']['tree'][$tree[$i]]))
-					$params[] = $filterurl['values']['tree'][$tree[$i]];
-			}
-		}
-		return array (
-			'query' => (is_array($query) ? implode(' AND ', $query) : ''),
-			'params' => (is_array($params) ? $params : array()),
+		return array
+		(
+			'procedure' => implode(' AND ', $searchProcedures),
+			'values' => $searchValues
 		);
 	}
-
-
-	protected function clearTree($field, &$newcurrent, $tree)
+		/**
+	 * Recursively build the query to filter alle items
+	 * to just those which match the tags
+	 * @param array $arrFieldConf
+	 * @param array $arrTags as int or string
+	 * @return string part for SELECT query on the items table
+	 */
+	protected function buildTagsQuery(array $arrFieldConf, array $arrTags)
 	{
-		if (in_array($field, $tree))
+		$result = '';
+		$fieldId = $arrFieldConf['eval']['catalog']['fieldId'];
+
+		// TODO: add support for string values here and get rid of the convertAliasInput call on the beginning.
+
+		$strAllTags = implode(',', $arrTags);
+
+		if (count($arrTags) == 0)
+			$result = 'false';
+
+		else
 		{
-			$pos = (array_search($field, $tree)+1);
-			for ($i=$pos;$i<=count($tree);$i++)
+			// recursivly builds subselects for each tag
+			if($this->catalog_tags_mode == 'AND')
 			{
-				unset($newcurrent[$tree[$i]]);
+				$subSql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%u AND valueid=%u',
+								$fieldId,
+								array_shift($arrTags));
+
+				foreach($arrTags as $tag)
+				{
+					// recursion
+					$subSql = sprintf('SELECT itemid FROM tl_catalog_tag_rel WHERE fieldid=%u AND valueid=%u AND itemid IN(%s)',
+									$fieldId,
+									$tag,
+									$subSql);
+				}
+				$result = sprintf('id IN (SELECT DISTINCT(itemid) FROM tl_catalog_tag_rel WHERE fieldid=%u AND valueid IN (%s)) AND id IN (%s)',
+								$fieldId,
+								$strAllTags,
+								$subSql);
+			} else {
+				// perform search by using a subselect over the tables.
+				$result = sprintf('id IN(SELECT DISTINCT(itemid) as id FROM tl_catalog_tag_rel WHERE fieldid=%u AND valueid IN (%s))',
+								$fieldId,
+								$strAllTags);
 			}
 		}
-	}
 
-	protected function makeAllLabel($input, $label, $multi=false)
-	{
-		if ($input=='select' && !$multi)
-		{
-			return sprintf($GLOBALS['TL_LANG']['MSC']['selectNone'], $label);
-		}
-		return sprintf($GLOBALS['TL_LANG']['MSC']['clearAll'], $label);
+		return $result;
 	}
-
+		/**
+	 * Return the filter configuration from the lister on this very page
+	 * for ModuleCatalogFilter and descendants only (checks via instanceof)!
+	 * @return array with keys 'query' and 'params'
+	 */
 	public function getFilterFromListerOnSamePage()
 	{
 		$query = array('query' => '', 'params' => array());
-		if(($this instanceof ModuleCatalogFilter) && $this->catalog_filter_cond_from_lister)
+
+		if($this instanceof ModuleCatalogFilter
+			&& $this->catalog_filter_cond_from_lister)
 		{
-			$ids=$this->getModulesForThisPage();
+			$ids = $this->getModulesForThisPage();
 			$objModules = $this->Database->prepare('SELECT * FROM tl_module WHERE id IN (' . implode(', ', $ids) . ') AND deny_catalog_filter_cond_from_lister=0 AND type=\'cataloglist\' AND catalog='.$this->catalog)
 					->execute();
+
 			while($objModules->next())
 			{
 				$objModules->catalog_search=deserialize($objModules->catalog_search);
 				$moduleFilterUrl = $this->parseFilterUrl($objModules->catalog_search);
+
 				if (is_array($objModules->catalog_search) && strlen($objModules->catalog_search[0]) && is_array($moduleFilterUrl['procedure']['search']))
 				{
 					// reset arrays
 					$searchProcedure = array();
 					$searchValues = array();
+
 					foreach($objModules->catalog_search as $searchfield)
 					{
 						if (($searchfield != $field)
@@ -965,6 +855,7 @@ abstract class ModuleCatalog extends Module
 							&& array_key_exists($searchfield, $moduleFilterUrl['procedure']['search']))
 						{
 							$searchProcedure[] = $moduleFilterUrl['procedure']['search'][$searchfield];
+
 							if (is_array($moduleFilterUrl['values']['search'][$searchfield]))
 							{
 								foreach($moduleFilterUrl['values']['search'][$searchfield] as $item)
@@ -978,12 +869,14 @@ abstract class ModuleCatalog extends Module
 							}
 						}
 					}
+
 					if(count($searchProcedure))
 					{
 						$moduleFilterUrl['procedure']['where'][] = ' ('.implode(' OR ', $searchProcedure).')';
 						$moduleFilterUrl['values']['where'] = is_array($moduleFilterUrl['values']['where']) ? (array_merge($moduleFilterUrl['values']['where'],$searchValues)) : $searchValues;
 					}
 				}
+
 				if(is_array($moduleFilterUrl['procedure']['where']))
 				{
 					foreach($moduleFilterUrl['procedure']['where'] as $key=>$value)
@@ -995,6 +888,7 @@ abstract class ModuleCatalog extends Module
 						}
 					}
 				}
+
 				if(is_array($moduleFilterUrl['procedure']['tags']))
 				{
 					foreach($moduleFilterUrl['procedure']['tags'] as $key=>$value)
@@ -1006,6 +900,7 @@ abstract class ModuleCatalog extends Module
 						}
 					}
 				}
+
 				if (is_array($moduleFilterUrl['values']['where'])) {
 					$query['params'] = array_merge($query['params'], $moduleFilterUrl['values']['where']);
 				}
@@ -1017,11 +912,14 @@ abstract class ModuleCatalog extends Module
 				if($objModules->catalog_where)
 				{
 					$strCondition = $this->replaceInsertTags($objModules->catalog_where);
+
 					if(strlen($strCondition))
 						$query['query'] .= (strlen($query['query'])?' AND ':'').$strCondition;
 				}
+
 				if(count($moduleFilterUrl['procedure']['where']))
 					$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_query_mode.' ', $moduleFilterUrl['procedure']['where']);
+
 				if(count($moduleFilterUrl['procedure']['tags']))
 					$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' '.$objModules->catalog_tags_mode.' ', $moduleFilterUrl['procedure']['tags']);
 			}
@@ -1029,27 +927,397 @@ abstract class ModuleCatalog extends Module
 		return $query;
 	}
 
+	/**
+	 * Splits the keywords used for the search query
+	 * One can use "word1 word2" for a phrase
+	 * @see Search::searchFor()
+	 * @param string $strKeywords
+	 * @return array with the single string phrases to search for
+	 */
+	protected static function splitSearchKeywords($strKeywords)
+	{
+		$result = array();
+		$arrChunks = array();
+
+		preg_match_all('/"[^"]+"|[^ ]+/', $strKeywords, $arrChunks);
+
+		foreach ($arrChunks[0] as $phrase)
+		{
+			switch (substr($phrase, 0, 1))
+			{
+				case '"':
+					$result[] = trim(substr($phrase, 1, -1));
+					break;
+
+				default:
+					$result[] = $phrase;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Prepares several search phrases for usage in the LIKE statement
+	 * @param array $arrPhrases
+	 * @return array string $searchValue with wildcards added
+	 */
+	protected static function searchFor(array $arrPhrases)
+	{
+		$result = array();
+
+		foreach ($arrPhrases as $phrase)
+		{
+			$result[] = '%' . $phrase . '%';
+		}
+
+		return $result;
+	}
+
+	/**
+	 * HOOK: allow other extensions to manipulate the filter settings before passing it to the template
+	 * @param array $arrQuery
+	 * @return array $arrQuery wicth changes from the hooks
+	 */
+	protected function filterCatalogHook(array $arrQuery)
+	{
+		$result = $arrQuery;
+		if(is_array($GLOBALS['TL_HOOKS']['filterCatalog']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['filterCatalog'] as $callback)
+			{
+				$this->import($callback[0]);
+				$result = $this->$callback[0]->$callback[1]($result);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Retrieve Alias field from table, checks if the desired table is a catalog
+	 * @param string
+	 * @return string
+	 */
+	public function getAliasField($sourceTable)
+	{
+		if($GLOBALS['TL_CONFIG']['disableAlias'])
+		{
+			return 'id';
+		}
+		// check alias field
+		$objAlias = $this->Database->prepare("SELECT aliasField FROM tl_catalog_types WHERE tableName=?")
+										->execute($sourceTable);
+		$aliasField = ($objAlias->numRows && strlen($objAlias->aliasField)) ? $objAlias->aliasField : 'alias';
+
+		return ($this->Database->fieldExists($aliasField, $sourceTable)) ? $aliasField : 'id';
+	}
+
+	/**
+	 * Retrieve alias field for current catalog field configuration
+	 * @param array $arrFieldConf
+	 * @return string name of the alias field
+	 */
+	private function getAliasFieldConf(array $arrFieldConf)
+	{
+		if ((!$arrFieldConf['eval']['catalog']['foreignKey']) || $GLOBALS['TL_CONFIG']['disableAlias'])
+		{
+			return 'id';
+		}
+
+		// get alias column
+		list($itemTable, $valueCol) = explode('.', $arrFieldConf['eval']['catalog']['foreignKey']);
+
+		return $this->getAliasField($itemTable);
+	}
+
+	/**
+	 * Retrieve alias values with id as index
+	 * @param array $fieldConf
+	 * @return array id => alias
+	 * @post $fieldConf['optionlist'] is populated with the return value
+	 */
+	private function getAliasOptionList(array &$fieldConf)
+	{
+		if($fieldConf['optionslist'])
+			return $fieldConf['optionslist'];
+
+		// get alias column
+		list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
+		$aliasField = $this->getAliasField($itemTable);
+
+		// determine item sorting.
+		$strSorting=($fieldConf['eval']['catalog']['sortCol']
+					?' ORDER BY '.$fieldConf['eval']['catalog']['sortCol']
+					:($this->Database->fieldExists('sorting', $itemTable)?' ORDER BY sorting':''));
+		// get existing alias values of options in DB
+		$objList = $this->Database->prepare('SELECT id,'.$aliasField.' FROM '.$itemTable .
+						($fieldConf['options'] ? ' WHERE id IN ('.implode(',',array_keys($fieldConf['options'])).')':'') . $strSorting)
+				->execute();
+
+		$return = array();
+		while ($objList->next())
+		{
+			// check if this is still ok to use id if alias is empty
+			$return[$objList->id] = strlen($objList->$aliasField) ? $objList->$aliasField : $objList->id;
+		}
+		$fieldConf['optionslist'] = $return;
+		return $return;
+	}
+
+	/**
+	 * Detect input $_GET variables and convert alias values to id's, if table supports it
+	 * @return array the currently active filters with their filter values
+	 * @post $_GET some alias values are replaced by their respective IDs
+	 */
+	protected function convertAliasInput()
+	{
+		$return = array();
+
+		// convert $_GET filter parameters in Url
+		foreach ($_GET as $k=>$v)
+		{
+			// exclude special parameters
+			if (! in_array($k, array('page')))
+			{
+				$_GET[$k] = str_replace($GLOBALS['TL_CONFIG']['catalog']['safeReplace'],
+										$GLOBALS['TL_CONFIG']['catalog']['safeCheck'],
+										$v);
+
+				// use TL safe function
+				$v = $this->Input->get($k);
+
+				if (! in_array($k, array(self::PARAMSEARCH, self::PARAMSORT, self::PARAMORDERBY)))
+				{
+					$fieldConf = $GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
+
+					if (strlen($v) && $fieldConf && $this->getAliasFieldConf($fieldConf) != 'id')
+					{
+						$arrAlias = array_flip($this->getAliasOptionList($fieldConf));
+						switch ($fieldConf['eval']['catalog']['type'])
+						{
+							case 'tags':
+								$tags = explode(',', $v);
+								$newtags = array();
+								foreach($tags as $tag)
+								{
+									$newtags[] = $arrAlias[$tag];
+								}
+								$v = implode(',', $newtags);
+								break;
+
+							case 'select':
+								$v = $arrAlias[$v];
+								break;
+						}
+					}
+				}
+
+				$return[$k] = $v;
+			}
+		}
+
+		return $return;
+	}
+
+	/**
+	 * @param string $field
+	 * @param array $current
+	 * @param array $tree
+	 * @return boolean is the ield the last one in the $tree?
+	 */
+	protected function lastInTree($field, array $current, array $tree)
+	{
+		return (!count($tree)
+				|| (in_array($field, $tree)
+					&& array_search($field, $tree) == (count($tree)-1)));
+	}
+
+	protected function hideTree($field, array $current, array $tree)
+	{
+		if ($this->catalog_filter_hide && in_array($field, $tree))
+		{
+			$pos = array_search($field, $tree);
+			for ($i=0,$total=0;$i<=$pos;$i++)
+			{
+				$total += array_key_exists($tree[$i], $current);
+			}
+			return ($total<$pos);
+		}
+		return false;
+	}
+
+	/**
+	 * @param string $strField
+	 * @param array $arrFilterUrl
+	 * @param array $arrTree
+	 * @return array : 'query' => string, 'params' => array
+	 */
+	protected static function buildTreeQuery($strField, array $arrFilterUrl, array $arrTree)
+	{
+		$params = array();
+		$query = array();
+		// tree
+		if (count($arrTree)
+				&& isset($arrFilterUrl['procedure']['tree'])
+				&& is_array($arrFilterUrl['procedure']['tree']))
+		{
+			$pos = array_search($strField, $arrTree);
+
+			for ($i=0; $i < $pos; $i++)
+			{
+				if (strlen($arrFilterUrl['procedure']['tree'][$arrTree[$i]]))
+					$query[] = $arrFilterUrl['procedure']['tree'][$arrTree[$i]];
+
+				if (strlen($arrFilterUrl['values']['tree'][$arrTree[$i]]))
+					$params[] = $arrFilterUrl['values']['tree'][$arrTree[$i]];
+			}
+		}
+
+		return array (
+			'query' => implode(' AND ', $query),
+			'params' => $params
+		);
+	}
+
+	/**
+	 * Combines all queries from $arrBasicQuery, $arrFilterUrl, filtered to $arrTree
+	 * @param string $strField
+	 * @param string $strFieldType
+	 * @param array $arrFilterUrl
+	 * @param array $arrTree
+	 * @param array $arrBasicQuery
+	 * @return array : 'query' => string, 'params' => array
+	 */
+	protected function buildQuery($strField, $strFieldType, array $arrFilterUrl, array $arrTree, array $arrBasicQuery)
+	{
+		$queries = array();
+		$params = array();
+		$treeQuery = self::buildTreeQuery($strField, $arrFilterUrl, $arrTree);
+		if (strlen($treeQuery['query']))
+		{
+			$queries[] = $treeQuery['query'];
+			$params = $treeQuery['params'];
+		}
+
+		if (strlen($arrBasicQuery['query']))
+		{
+			$queries[] = $arrBasicQuery['query'];
+			$params = array_merge($params, $arrBasicQuery['params']);
+		}
+		// combine together all query params we are using
+		// TODO: take the tree into account here
+		if (isset($arrFilterUrl['procedure']['where'])
+			&& is_array($arrFilterUrl['procedure']['where']))
+		{
+			foreach($arrFilterUrl['procedure']['where'] as $field => $where)
+			{
+				// would be nice to filter tags in OR mode, but this mode is selected
+				// in the lister module
+				if(strlen($where)
+					&& ($field != $strField
+					// TODO: this is an evil hack - we DEFINATELY have to rewrite this lookup mechanism.
+					// The real problem: fieldnames might contain eachother like: "title" and "subtitle" where latter one will get ignored by the first one.
+					&& strpos($where, $strField) === false))
+				{
+					$queries[] = $where;
+					if (count($arrFilterUrl['values']['where'][$field]))
+						$params = array_merge($params, $arrFilterUrl['values']['where'][$field]);
+				}
+			}
+		}
+
+		return array (
+			'query' => implode(' AND ', $queries),
+			'params' => $params
+		);
+	}
+
+	/**
+	 * Build query based on filters from the list module and publish field settings,
+	 * field independent
+	 * @return array : 'query' => string, 'params' => array
+	 */
+	protected function buildBasicQuery()
+	{
+		$params = array();
+		$query = array();
+
+		// take into account settings from the lister module
+		$queryFromLister = $this->getFilterFromListerOnSamePage();
+
+		if(strlen($queryFromLister['query']))
+			$query[] = $queryFromLister['query'];
+
+		if(count($queryFromLister['params']))
+			$params = $queryFromLister['params'];
+
+		// optionally restrict to published items
+		if ((! BE_USER_LOGGED_IN) && $this->publishField)
+		{
+			$query[] = $this->publishField . '=1';
+		}
+
+		return array (
+			'query' => implode(' AND ', $query),
+			'params' => $params
+		);
+	}
+
+	/**
+	 * Deletes all queries from $current which come after the current field
+	 * @param string $strField
+	 * @param array $arrCurrent
+	 * @param array $arrTree
+	 * @return array $arrCurrent without irrelevant fields
+	 */
+	protected static function clearTree($strField, array $arrCurrent, array $arrTree)
+	{
+		$result = $arrCurrent;
+
+		if (in_array($strField, $arrTree))
+		{
+			$pos = (array_search($strField, $arrTree)+1);
+
+			for ($i=$pos; $i<=count($arrTree); $i++)
+			{
+				unset($result[$arrTree[$i]]);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param string $inputType
+	 * @param string $label of the input (eg. select group)
+	 * @param boolean $multi
+	 * @return string label for the ALL input
+	 */
+	protected function makeAllLabel($inputType, $label, $multi=false)
+	{
+		if ($inputType=='select' && !$multi)
+		{
+			return sprintf($GLOBALS['TL_LANG']['MSC']['selectNone'], $label);
+		}
+
+		return sprintf($GLOBALS['TL_LANG']['MSC']['clearAll'], $label);
+	}
+
+	/**
+	 * @return array : 'url', 'action', 'widgets', 'filter', 'range', 'sort', 'search', 'date'
+	 */
 	protected function generateFilter()
 	{
-		$filterurl = $this->parseFilterUrl(deserialize($this->catalog_search));
-		$current	= $filterurl['current'];
-
+		$filterurl = $this->parseFilterUrl($this->catalog_search);
+		$current = $filterurl['current'];
 		$arrFilters = deserialize($this->catalog_filters, true);
+
 		if ($this->catalog_filter_enable && count($arrFilters))
 		{
 			// Get Tree View
 			$tree = $this->getTree();
-
-			$arrQueryFromLister = $this->getFilterFromListerOnSamePage();
-			if(!BE_USER_LOGGED_IN && $this->publishField)
-			{
-				if(strlen($arrQueryFromLister['query']))
-				{
-					$arrQueryFromLister['query'].=' AND '.$this->publishField.'=1 ';
-				} else {
-					$arrQueryFromLister['query']=$this->publishField.'=1 ';
-				}
-			}
+			$basicQuery = $this->buildBasicQuery();
 
 			// Setup filters and option values
 			$filterOptions = array();
@@ -1058,62 +1326,26 @@ abstract class ModuleCatalog extends Module
 				list($field, $config) = each($fieldconfig);
 				$input = $config['radio'];
 				$blnTree = ($config['checkbox'] == 'tree');
-				
+
 				if ($input == 'none' || $this->hideTree($field, $current, $tree))
 				{
 					continue;
 				}
-				$blnLast = $this->lastInTree($field, $current, $tree);
-
-				$query = $this->buildTreeQuery($field, $filterurl, $tree);
-
-				// combine together all other query params we are using.
-				// TODO: take the tree into account here.
-				if(is_array($filterurl['procedure']['where']))
-				{
-					$arrQuery=array();
-					$arrParam=array();
-					foreach($filterurl['procedure']['where'] as $key=>$value)
-					{
-						if(!(($key==$field) || (is_numeric($key) && strpos($value, $field) !== false)))
-						{
-							$arrQuery[] = $value;
-							if($filterurl['values']['where'][$key])
-								$arrParam[] = $filterurl['values']['where'][$key];
-						}
-					}
-					if($arrQuery)
-						$query['query'] .= ($query['query']?' AND ':'').implode(' AND ', $arrQuery);
-					if($arrParam)
-						$query['params'] = array_merge($query['params'], $arrParam);
-				}
-
-				if($arrQueryFromLister['query'])
-					$query['query'] .= ($query['query']?' AND ':'').$arrQueryFromLister['query'];
-				if($arrQueryFromLister['params'])
-					$query['params'] = array_merge($query['params'], $arrQueryFromLister['params']);
 
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
-
 				$fieldType = $fieldConf['eval']['catalog']['type'];
+
+				$blnLast = self::lastInTree($field, $current, $tree);
+				$query = self::buildQuery($field, $fieldType, $filterurl, $tree, $basicQuery);
+
 				// HOOK: let custom fields mimic another fieldtype to generate a filter
-				if(array_key_exists($fieldType, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
-				{
-					$fieldTypeArr=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType];
-					if(array_key_exists('generateFilterWidget', $fieldTypeArr) && is_array($fieldTypeArr['generateFilterWidget']))
-					{
-						foreach ($fieldTypeArr['generateFilterWidget'] as $callback)
-						{
-							$this->import($callback[0]);
-							$tmp=$this->$callback[0]->$callback[1]($fieldType, $field, $config, $fieldConf, $filterurl, $query, $tree);
-							if($tmp)
-							{
-								$fieldType = $tmp;
-							}
-						}
-					}
-				}
+				$fieldType = $this->generateFilterWidgetHook($field, $fieldType,
+															$fieldConf, $config,
+															$filterurl, $query,
+															$tree);
+
 				$options = array();
+
 				switch ($fieldType)
 				{
 					case 'checkbox':
@@ -1124,14 +1356,15 @@ abstract class ModuleCatalog extends Module
 							'true' 	=> $GLOBALS['TL_LANG']['MSC']['true'],
 							'false'	=> $GLOBALS['TL_LANG']['MSC']['false'],
 						);
+
 						foreach ($labels as $key=>$label)
 						{
 							$newcurrent = $current;
 							$newcurrent[$field] = ($key == 'none' ? '' : $key);
-							$selected = $current[$field] == $newcurrent[$field];
-							$this->clearTree($field, $newcurrent, $tree);
+							$selected = ($current[$field] == $newcurrent[$field]);
+							$newcurrent = self::clearTree($field, $newcurrent, $tree);
 							$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
-							
+
 							$addOption = array();
 							$addOption['value'] = $url;
 							$addOption['label'] = $label;
@@ -1140,312 +1373,190 @@ abstract class ModuleCatalog extends Module
 							{
 								$addOption['selected'] = true;
 							}
-							array_push($options, $addOption);
+							$options[] = $addOption;
 
 						}
+
 						$widget = array
 						(
-							'name'			=> $field,
-							'id'				=> 'filter_field_'.$field,
-							'label'			=> $fieldConf['label'][0],
-							'options'		=> serialize($options),
-							'value' 		=> htmlentities($this->generateFilterUrl($current, true, $blnLast)),
+							'name'		=> $field,
+							'id'		=> 'filter_field_'.$field,
+							'label'		=> $fieldConf['label'][0],
+							'options'	=> serialize($options),
+							'value' 	=> htmlentities($this->generateFilterUrl($current, true, $blnLast)),
 							'tableless'	=> true,
 							'inputType' => $input,
 						);
 
 						// parse Widget
-						$settings['filter'][] =  $this->parseWidget($widget, false);
+						$settings['filter'][] = $this->parseWidget($widget, false);
 						$widgets['filter'][] = $widget;
 
 						break;
 
 					case 'select':
 						// get existing options in DB
-						$objFilter = $this->Database->prepare('SELECT DISTINCT('.$field.') FROM '.$this->strTable . ($query['query'] ? ' WHERE '.$query['query'] : '') )
-								->execute($query['params']);
+						$rows = $this->fetchAvailableFilterOptions($field, $query['query'], $query['params']);
 
-						if ($objFilter->numRows) 
+						if (count($rows))
 						{
-							$selected = !strlen($current[$field]);
 							$newcurrent = $current;
 							unset($newcurrent[$field]);
-							$this->clearTree($field, $newcurrent, $tree);
+
+							$newcurrent = self::clearTree($field, $newcurrent, $tree);
 							$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
-							
+
 							$addOption = array();
 							$addOption['value'] = $url;
 							$addOption['label'] = $this->makeAllLabel($input, $fieldConf['label'][0]);
 							$addOption['id'] = '';
-							if ($selected)
+
+							if (! strlen($current[$field]))
 							{
 								$addOption['selected'] = true;
 							}
-							array_push($options, $addOption);
-							
-							// get all rows
-							$rows = $objFilter->fetchEach($field);
+
+							$options[] = $addOption;
 
 							if($fieldConf['options'])
 							{
-								$tmpTags = array();
-								foreach ($fieldConf['options'] as $id=>$option)
-								{
-									$tmpTags[] = 'SUM(FIND_IN_SET('.$id.','.$field.')) AS '.$field.$id;
-								}
-								$objResultCount = $this->Database->prepare('SELECT '.implode(', ',$tmpTags).' FROM '.$this->strTable. ($query['query'] ? ' WHERE '. $query['query'] : ''))
-																->execute($query['params']);
-								$arrResultCount = $objResultCount->row();
+								$arrResultCount = $this->fetchTagCounts($field, array_keys($fieldConf['options']), $query['query'], $query['params']);
 
-								foreach ($fieldConf['options'] as $id=>$option)
+								foreach ($fieldConf['options'] as $id => $option)
 								{
 									if (in_array($id, $rows))
 									{
-										$selected = ($current[$field] == $id);
 										$newcurrent = $current;
 										$newcurrent[$field] = $id;
-										$this->clearTree($field, $newcurrent, $tree);
-										$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
+										$newcurrent = self::clearTree($field, $newcurrent, $tree);
+
 										$addOption = array();
-										$addOption['value'] = $url;
+										$addOption['value'] = $this->generateFilterUrl($newcurrent, true, $blnLast);
 										$addOption['label'] = $option;
 										$addOption['id'] = $id;
 										$addOption['alias'] = $id;
-										$addOption['resultcount'] = $arrResultCount[$field.$id];
-										if ($selected)
+										$addOption['resultcount'] = $arrResultCount[$field . $id];
+
+										if ($current[$field] == $id)
 										{
 											$addOption['selected'] = true;
 										}
-										array_push($options, $addOption);
+
+										$options[] = $addOption;
 									}
 								}
 							}
 
 							$widget = array
 							(
-								'name'			=> $field,
-								'id'				=> 'filter_field_'.$field,
-								'label'			=> $fieldConf['label'][0],
-								'value' 		=> $this->generateFilterUrl($current, true, $blnLast),
-								'options'		=> serialize($options),
+								'name'		=> $field,
+								'id'		=> 'filter_field_'.$field,
+								'label'		=> $fieldConf['label'][0],
+								'value' 	=> $this->generateFilterUrl($current, true, $blnLast),
+								'options'	=> serialize($options),
 								'tableless'	=> true,
-								'inputType' => $input,
+								'inputType'	=> $input,
 							);
-	
-							// parse Widget
-							$settings['filter'][] =  $this->parseWidget($widget, false);
+								$settings['filter'][] =  $this->parseWidget($widget, false);
 							$widgets['filter'][] = $widget;
-
 						}
 						break;
-	
-					case 'tags' :
-						// clear option
-						$selected = !strlen($current[$field]);
-						$newcurrent = $current;
-						unset($newcurrent[$field]);
-						$this->clearTree($field, $newcurrent, $tree);
-						$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
+						case 'tags':
+						$widget = $this->generateWidgetConfigTags($field, $fieldConf, $input, $current, $tree, $query['query'], $query['params'], $blnLast);
 
-						$addOption = array();
-						$addOption['value'] = $url;
-						$addOption['label'] = $this->makeAllLabel($input, $fieldConf['label'][0], $this->catalog_tags_multi);
-						$addOption['id'] = $id;
-						if ($selected)
-						{
-							$addOption['selected'] = true;
-						}
-						array_push($options, $addOption);
-
-						$tmpTags = array();
-						$strWhere = '';
-						if(!BE_USER_LOGGED_IN && $this->publishField)
-						{
-							$strWhere = $this->publishField.'=1';
-						}
-						if($query['query'])
-							$strWhere .= ($strWhere?' AND ':'').$query['query'];
-
-						// get ids of matches according to all other filters.
-						$valueIds = array_keys($fieldConf['options']);
-						$objFilter = $this->Database->prepare(sprintf('SELECT COUNT(itemid) as itemcount, valueid FROM tl_catalog_tag_rel WHERE fieldid=%s AND itemid IN (SELECT id FROM %s%s) GROUP BY valueid',
-															$fieldConf['eval']['catalog']['fieldId'],
-															$this->strTable,
-															$strWhere?' WHERE '.$strWhere:''
-															))
-													->execute($query['params']);
-						$valueIds = array_intersect($valueIds, $objFilter->fetchEach('valueid'));
-						// no options reachable, skip this widget.
-						if(count($valueIds))
-						{
-							$objFilter->first();
-							if ($objFilter->numRows)
-							{
-								$row = $objFilter->row();
-
-								foreach ($valueIds as $id)
-								{
-									$option=$fieldConf['options'][$id];
-									if ($row['itemcount'])
-									{
-										$selected = in_array($id, explode(',',$current[$field]));
-										$newcurrent = $current;
-										$newids = strlen($current[$field]) ? explode(',', $current[$field]) : array();
-										$newids = array_unique(!$selected ? array_merge($newids, array($id)) : array_diff($newids, array($id)));
-										$newcurrent[$field] = ($this->catalog_tags_multi ? implode(',',$newids) : $id);
-										$this->clearTree($field, $newcurrent, $tree);
-										$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
-										$blnList = ($selected && $input=='list');
-										$addOption = array();
-										$addOption['value'] = $url;
-										$addOption['label'] = $blnList ? sprintf($GLOBALS['TL_LANG']['MSC']['optionselected'], $option) : $option;
-										$addOption['id'] = $id;
-										$addOption['resultcount'] = $row['itemcount'];
-										$addOption['selected'] = $selected;
-										array_push($options, $addOption);
-									}
-								}
-							}
-						}
-
-						$widget = array
-						(
-							'name'			=> $field,
-							'id'				=> 'filter_field_'.$field,
-							'label'			=> $fieldConf['label'][0],
-							'value' 		=> $this->generateFilterUrl($current, true, $blnLast),
-							'options'		=> serialize($options),
-							'tableless'	=> true,
-							'inputType' => ($this->catalog_tags_multi && $input=='radio' ? 'checkbox' : $input),
-						);
-
-
-						if ($this->catalog_tags_multi && $input=='select') 
-						{
-							$widget = array_merge($widget, array('multiple'=>true));
-						}
-						
 						$settings['filter'][] = $this->parseWidget($widget, false);
 						$widgets['filter'][] = $widget;
 
 						break;
-	
+
 					case 'text':
 					case 'file':
 					case 'url':
 					case 'number':
 					case 'decimal':
 					case 'date':
-						$query['query'] = '';
-						// TODO: this is an evil hack - we DEFINATELY have to rewrite this lookup mechanism.
-						if(count($filterurl['procedure']['where']))
-						foreach($filterurl['procedure']['where'] as $k=>$v)
-						{
-							if(strpos($v, $field) !== false)
-							{
-								unset($filterurl['procedure']['where'][$k]);
-								unset($filterurl['values']['where'][$k]);
-							}
-						}
-						
-						$query['params'] = is_array($filterurl['values']['where'])? $filterurl['values']['where'] : array();
-						if (is_array($filterurl['values']['tags']))
-							$query['params'] = array_merge($query['params'], $filterurl['values']['tags']);
-						if(count($filterurl['procedure']['where']))
-							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['where']);
-						if(count($filterurl['procedure']['tags']))
-							$query['query'] .=(strlen($query['query'])?' AND ':'').implode(' AND ', $filterurl['procedure']['tags']);
 						// get existing options in DB
-						$options = array();
-						$objFilter = $this->Database->prepare("SELECT DISTINCT ".$field." FROM ".$this->strTable . ($query['query'] ? " WHERE ".$query['query'] : '') . " ORDER BY ".$field)
-								->execute($query['params']);
-
-						if ($objFilter->numRows)
+						$rows = $this->fetchAvailableFilterOptions($field, $query['query'], $query['params'], true);
+						if (count($rows))
 						{
+							$options = array();
+
 							// setup ALL option
-							$selected = !strlen($current[$field]);
 							$newcurrent = $current;
-							unset($newcurrent[$field]);	
-							$this->clearTree($field, $newcurrent, $tree);
+							unset($newcurrent[$field]);
+							$newcurrent = self::clearTree($field, $newcurrent, $tree);
 							$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
 
 							$addOption = array();
 							$addOption['value'] = $url;
 							$addOption['label'] = $this->makeAllLabel($input, $fieldConf['label'][0]);
 							$addOption['id'] = '';
-							if ($selected)
+							if (!strlen($current[$field]))
 							{
 								$addOption['selected'] = true;
 							}
-							array_push($options, $addOption);
+							$options[] = $addOption;
 
-							while ($objFilter->next())
+							foreach ($rows as $fieldValue)
 							{
-								$row = $objFilter->row();
-								if (!strlen(trim($row[$field])))
-								{
+								if (!strlen(trim($fieldValue)))
 									continue;
-								}
-								$label = $this->formatValue(0, $field, $row[$field], false);
+
+								$label = $this->formatValue(0, $field, $fieldValue, false);
 								switch ($fieldConf['eval']['catalog']['type'])
 								{
 									case 'url':
-										$label = $row[$field];
-										$row[$field] = urlencode(urlencode($row[$field]));
+										$label = $fieldValue;
+										$fieldValue = urlencode(urlencode($fieldValue));
 										break;
 
 									case 'file':
-										$label = implode(',',deserialize($row[$field],true));
-										$row[$field] = urlencode(urlencode($row[$field]));
+										$label = implode(',',deserialize($fieldValue, true));
+										$fieldValue = urlencode(urlencode($fieldValue));
 										break;
 
 									case 'date':
-										$row[$field] = $label;
+										$fieldValue = $label;
 										break;
 
-									default:;
-
+									default:
 								}
 
 								$newcurrent = $current;
-								$newcurrent[$field] = htmlspecialchars($row[$field]);
-								$selected = $current[$field] == $newcurrent[$field];
-								$this->clearTree($field, $newcurrent, $tree);
+								$newcurrent[$field] = htmlspecialchars($fieldValue);
+								$newcurrent = self::clearTree($field, $newcurrent, $tree);
 								$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
 
 								$addOption = array();
 								$addOption['value'] = $url;
 								$addOption['label'] = $label;
-								$addOption['id'] = $row[$field];
-								if ($selected)
+								$addOption['id'] = $fieldValue;
+								if ($current[$field] == $newcurrent[$field])
 								{
 									$addOption['selected'] = true;
 								}
-								array_push($options, $addOption);
-
+								$options[] = $addOption;
 							}
-							
+
 							$widget = array
 							(
-								'name'			=> $field,
-								'id'				=> 'filter_field_'.$field,
-								'label'			=> $fieldConf['label'][0],
-								'options'		=> serialize($options),
-								'value' 		=> htmlentities($this->generateFilterUrl($current, true, $blnLast)),
+								'name'		=> $field,
+								'id'		=> 'filter_field_'.$field,
+								'label'		=> $fieldConf['label'][0],
+								'options'	=> serialize($options),
+								'value' 	=> htmlentities($this->generateFilterUrl($current, true, $blnLast)),
 								'tableless'	=> true,
 								'inputType'	=> $input,
 							);
-
 							// parse Widget
-							$settings['filter'][] =  $this->parseWidget($widget, false);
+							$settings['filter'][] = $this->parseWidget($widget, false);
 							$widgets['filter'][] = $widget;
-							
 						}
-						
 						break;
 
 					case 'longtext':
-						$options[] = array 
+						// No, we really have no clue how to present a longtext in a select box, so please do not file an issue.
+						$options[] = array
 						(
 							'label' => &$GLOBALS['TL_LANG']['MSC']['invalidFilter'],
 							'value' => '',
@@ -1453,46 +1564,228 @@ abstract class ModuleCatalog extends Module
 						$widget = array
 						(
 							'name'			=> $field,
-							'id'				=> 'filter_field_'.$field,
+							'id'			=> 'filter_field_'.$field,
 							'label'			=> $fieldConf['label'][0],
 							'options'		=> serialize($options),
 							'value' 		=> '',
-							'tableless'	=> true,
-							'inputType'	=> 'list',
+							'tableless'		=> true,
+							'inputType'		=> 'list',
 						);
 						// parse Widget
 						$settings['filter'][] =  $this->parseWidget($widget, true);
 						$widgets['filter'][] = $widget;
-
 						break;
-					
+
 					default:
 						// HOOK: let custom fields generate a filter widget
-						if($fieldType && array_key_exists($fieldType, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
+						if ($customField = $this->generateFilterForFieldHook($field, $fieldType, $fieldConf, $config, $filterurl, $query, $tree))
 						{
-							$fieldType=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType];
-							if(array_key_exists('generateFilterForField', $fieldType) && is_array($fieldType['generateFilterForField']))
-							{
-								$callback = $fieldType['generateFilterForField'];
-								$tmp=$this->$callback[0]->$callback[1]($fieldType, $field, $config, $fieldConf, $filterurl, $query, $tree);
-								if($tmp)
-								{
-									$settings['filter'][] = $tmp['settings'];
-									$widgets['filter'][] = $tmp['widget'];
-								}
-							}
+							$settings['filter'][] = $customField['settings'];
+							$widgets['filter'][] = $customField['widget'];
 						}
+						break;
+				} // / switch
+			} // foreach field
+		} // /filter enabled
+
+		if ($rangeWidget = $this->generateWidgetConfigRange($current))
+		{
+			$settings['range'][] = $this->parseWidget($rangeWidget, true);
+			$widgets['range'][] = $rangeWidget;
+		}
+
+		if ($dateWidget = $this->generateWidgetConfigDate($current))
+		{
+			$settings['date'][] = $this->parseWidget($dateWidget, false);
+			$widgets['date'][] = $dateWidget;
+		}
+
+		if ($sortWidget = $this->generateWidgetConfigSort($current))
+		{
+			$settings['sort'] = $this->parseWidget($sortWidget, false);
+			$widgets['sort'] = $sortWidget;
+		}
+
+		if ($searchWidget = $this->generateWidgetConfigSearch())
+		{
+			$settings['search'] = $this->parseWidget($searchWidget);
+			$widgets['search'] = $searchWidget;
+		}
+
+		$settings['url'] 		= $this->generateFilterUrl();
+		$settings['action']		= $this->generateFilterUrl($current);
+		$settings['widgets']	= $widgets;
+
+		$settings = $this->generateFilterCatalogHook($settings);
+
+		return $settings;
+	}
+
+	/**
+	 * Counts the catalog items for each filter option
+	 * by using a relation table
+	 * @param int $intFieldId
+	 * @param string $strQuery
+	 * @param array $arrParams for the $strQuery
+	 * @return DatabaseResult with fields itemcount, valueid
+	 */
+	protected function fetchRelTagCounts($intFieldId, $strQuery, array $arrParams)
+	{
+		$stmtWhere = '1';
+		if (strlen($strQuery))
+			$stmtWhere = $strQuery;
+
+		$otherFiltersQuery = sprintf('SELECT COUNT(itemid) as itemcount, valueid FROM tl_catalog_tag_rel WHERE
+									fieldid=%u AND itemid IN (SELECT id
+										FROM %s
+										WHERE %s)
+									GROUP BY valueid',
+									$intFieldId,
+									$this->strTable,
+									$stmtWhere);
+
+		$objFilter = $this->Database->prepare($otherFiltersQuery)
+									->execute($arrParams);
+		return $objFilter;
+	}
+
+	/**
+	 * @param string $strFieldName
+	 * @param string $strWhere optional
+	 * @param array $arrParams optional
+	 * @param boolean $blnOrder optional order by the field's value
+	 * @return array enumerated with all existing values
+	 */
+	protected function fetchAvailableFilterOptions($strFieldName, $strWhere='', array $arrParams = array(), $blnOrder=false)
+	{
+		$result = array();
+		// get existing options in DB
+		$objFilter = $this->Database->prepare('SELECT DISTINCT(' . $strFieldName . ')'
+											. ' FROM ' . $this->strTable
+											. (strlen($strWhere) ? ' WHERE ' . $strWhere : '')
+											. ($blnOrder ? ' ORDER BY ' . $strFieldName : ''))
+									->execute($arrParams);
+		if ($objFilter->numRows)
+		{
+			$result = $objFilter->fetchEach($strFieldName);
+		}
+		return $result;
+	}
+
+	/**
+	 * @param string $strFieldName
+	 * @param array $arrOptionIds
+	 * @param string $strWhere optional
+	 * @param array $arrParams optional
+	 * @return array : string $strFieldName . $id => int $count
+	 */
+	protected function fetchTagCounts($strFieldName, array $arrOptionIds, $strWhere='', array $arrParams = array())
+	{
+		$tmpTags = array();
+		foreach ($arrOptionIds as $id)
+		{
+			// use field name as prefix for valid names
+			$tmpTags[] = 'SUM(FIND_IN_SET(' . $id . ',' . $strFieldName . ')) AS ' . $strFieldName . $id;
+		}
+		$objResultCount = $this->Database->prepare('SELECT ' . implode(', ', $tmpTags)
+													. ' FROM ' . $this->strTable
+													. ($strWhere ? ' WHERE '. $strWhere : ''))
+										->execute($arrParams);
+		return $objResultCount->row();
+	}
+
+	/**
+	 * Generates the widget configuration for tags
+	 * @param string $strFieldName
+	 * @param array $fieldConf
+	 * @param string $input
+	 * @param array $arrCurrent filters
+	 * @param array $arrTree
+	 * @param string $strQuery from the other filters
+	 * @param array $arrParams for that $strQuery
+	 * @param $blnLastInTree
+	 * @return array Widget configuration
+	 */
+	protected function generateWidgetConfigTags($strFieldName, array $fieldConf, $input, array $arrCurrent, array $arrTree, $strQuery, array $arrParams, $blnLastInTree)
+	{
+		// first the clear option
+		$newcurrent = $arrCurrent;
+		unset($newcurrent[$strFieldName]);
+		$newcurrent = self::clearTree($strFieldName, $newcurrent, $arrTree);
+		$addOption = array();
+		$addOption['value'] = $this->generateFilterUrl($newcurrent, true, $blnLastInTree);
+		$addOption['label'] = $this->makeAllLabel($input, $fieldConf['label'][0], $this->catalog_tags_multi);
+		if (! strlen($arrCurrent[$strFieldName]))
+		{
+			$addOption['selected'] = true;
+		}
+		$options[] = $addOption;
+
+		// then all real options
+		$filterOptionCounts = $this->fetchRelTagCounts($fieldConf['eval']['catalog']['fieldId'], $strQuery, $arrParams);
+		while ($filterOptionCounts->next())
+		{
+			$id = $filterOptionCounts->valueid;
+			// maybe there's still relations to options which are already deleted
+			if (array_key_exists($id, $fieldConf['options']))
+			{
+				$optionLabel = $fieldConf['options'][$id];
+				if ($filterOptionCounts->itemcount > 0)
+				{
+					$currentIds=strlen($arrCurrent[$strFieldName]) ? explode(',', $arrCurrent[$strFieldName]) : array();
+					$selected = count($currentIds) && in_array($id, $currentIds);
+					$newcurrent = $arrCurrent;
+					$newids = array_unique(!$selected ? array_merge($currentIds, array($id)) : array_diff($currentIds, array($id)));
+					$newcurrent[$strFieldName] = ($this->catalog_tags_multi ? implode(',',$newids) : $id);
+					$newcurrent = self::clearTree($strFieldName, $newcurrent, $arrTree);
+					$url = $this->generateFilterUrl($newcurrent, true, $blnLast);
+					$blnList = ($selected && $input=='list');
+					$addOption = array();
+					$addOption['value'] = $url;
+					$addOption['label'] = $blnList ? sprintf($GLOBALS['TL_LANG']['MSC']['optionselected'], $optionLabel) : $optionLabel;
+					$addOption['id'] = $id;
+					$addOption['resultcount'] = $filterOptionCounts->itemcount;
+					$addOption['selected'] = $selected;
+					$options[] = $addOption;
 				}
 			}
 		}
-		$arrRange = deserialize($this->catalog_range,true);
-		if ($this->catalog_range_enable && count($arrRange) && strlen($arrRange[0]))
+		$result = array
+		(
+			'name'			=> $strFieldName,
+			'id'				=> 'filter_field_'.$strFieldName,
+			'label'			=> $fieldConf['label'][0],
+			'value' 		=> $this->generateFilterUrl($arrCurrent, true, $blnLast),
+			'options'		=> serialize($options),
+			'tableless'	=> true,
+			'inputType' => ($this->catalog_tags_multi && $input=='radio' ? 'checkbox' : $input),
+		);
+		if ($this->catalog_tags_multi && $input=='select')
+		{
+			$result['multiple'] = true;
+		}
+		return $result;
+	}
+
+	/**
+	 * Creates the widget configuration to choose a range
+	 * @result null || array config for widget
+	 * @post $arrCurrent might have changed values
+	 */
+	protected function generateWidgetConfigRange(array &$arrCurrent)
+	{
+		$result = null;
+		$arrRange = deserialize($this->catalog_range, true);
+		if ($this->catalog_range_enable
+			&& count($arrRange)
+			&& strlen($arrRange[0]))
 		{
 			// GET range values
 			$rangeOptions = array();
-			foreach ($arrRange as $field) 
+			foreach ($arrRange as $field)
 			{
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
+
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'text':
@@ -1500,81 +1793,89 @@ abstract class ModuleCatalog extends Module
 					case 'number':
 					case 'decimal':
 					case 'date':
-					
-						$rangeValues = substr_count($this->Input->get($field),'__') ? trimsplit('__', $this->Input->get($field)) : array('','');
-						$current[$field] = $this->Input->get($field);
+						if (substr_count($this->Input->get($field),'__'))
+						{
+							$rangeValues =  trimsplit('__', $this->Input->get($field));
+						} else {
+							$rangeValues = array('', '');
+						}
 
-						$widget = array
+						$result = array
 						(
-							'name'			=> $field,
-							'id'				=> 'filter_range_'.$field,
-							'label'			=> ($i==0 ? $fieldConf['label'][0]:''),
+							'name'		=> $field,
+							'id'		=> 'filter_range_' . $field,
+							'label'		=> ($i==0 ? $fieldConf['label'][0]:''),
 							'inputType' => 'range',
-							'value' 		=> serialize($rangeValues),
+							'value' 	=> serialize($rangeValues),
 							'multiple'	=> true,
-							'size'			=> 2,
+							'size'		=> 2,
 							'tableless' => true,
 							'addSubmit' => true,
-							'slabel' 		=> $GLOBALS['TL_LANG']['MSC']['catalogSearch'],
+							'slabel' 	=> $GLOBALS['TL_LANG']['MSC']['catalogSearch']
 						);
 
+						$arrCurrent[$field] = $this->Input->get($field);
 
+						// date picker
 						if ($fieldConf['eval']['catalog']['type'] == 'date')
 						{
 							$date = array
 							(
-								'maxlength' => 10,
-								'rgxp' 			=> 'date'
+								'maxlength'	=> 10,
+								'rgxp'		=> 'date'
 							);
 							// date picker was changed in 2.10
 							if (version_compare(VERSION, '2.10', '>='))
 								$date['datepicker'] = true;
 							else
 								$date['datepicker'] = $this->getDatePickerString();
-							$widget = array_merge($widget, $date);
+							$result = array_merge($result, $date);
 						}
-
-						$settings['range'][] = $this->parseWidget($widget, true);
-						$widgets['range'][] = $widget;
-
 						break;
-	
 					default :;
 				}
 			}
 		}
-		
+		return $result;
+	}
 
-		// Setup date values
-		$arrDates = deserialize($this->catalog_dates,true);
-
-		$arrRanges = deserialize($this->catalog_date_ranges,true);
+	/**
+	 * @param array $arrCurrent
+	 * @return null || array with configuration for the date widget
+	 */
+	protected function generateWidgetConfigDate(array $arrCurrent)
+	{
+		$result = null;
+		$arrDates = deserialize($this->catalog_dates, true);
 		if ($this->catalog_date_enable && count($arrDates))
 		{
 			foreach ($arrDates as $fieldconfig)
 			{
 				list($field, $config) = each($fieldconfig);
-				$input = $config['radio'];
 
+				$input = $config['radio'];
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
 				$options = array();
 
-				$selected = !strlen($current[$field]);
-				$newcurrent = $current;
-				unset($newcurrent[$field]);
-				$url = $this->generateFilterUrl($newcurrent, true);
+				$selected = !strlen($arrCurrent[$field]);
+
+				$newCurrent = $arrCurrent;
+				unset($newCurrent[$field]);
 
 				$addOption = array();
-				$addOption['value'] = $url;
+				$addOption['value'] = $this->generateFilterUrl($newCurrent, true);
 				$addOption['label'] = $this->makeAllLabel($input, $fieldConf['label'][0]);
 				$addOption['id'] = '';
+
 				if ($selected)
 				{
 					$addOption['selected'] = true;
 				}
-				array_push($options, $addOption);
 
-				foreach ($arrRanges as $id=>$range) 
+				$options[] = $addOption;
+
+				$arrRanges = deserialize($this->catalog_date_ranges, true);
+				foreach ($arrRanges as $id => $range)
 				{
 					$now = new Date();
 					$strToday = '';
@@ -1582,6 +1883,7 @@ abstract class ModuleCatalog extends Module
 					$strTomorrow = date($now->format, (strtotime('+1 days', $now->dayBegin) + 1));
 					$strPast = '';
 					$strFuture = '';
+
 					switch ($range)
 					{
 						case 'd':
@@ -1630,168 +1932,243 @@ abstract class ModuleCatalog extends Module
 							break;
 
 					}
-					$newcurrent = $current;
-					$newcurrent[$field] = ($strPast ? $strPast . '__' .$strYesterday : '') . $strToday . ($strFuture ? $strTomorrow . '__' . $strFuture : '');
-					$selected = ($current[$field] == $newcurrent[$field]);
-					$url = $this->generateFilterUrl($newcurrent, true);
-
+					$newCurrent = $arrCurrent;
+					$newCurrent[$field] = ($strPast ? $strPast . '__' .$strYesterday : '')
+										. $strToday
+										. ($strFuture ? $strTomorrow . '__' . $strFuture : '');
 					$addOption = array();
-					$addOption['value'] = $url;
+					$addOption['value'] = $this->generateFilterUrl($newCurrent, true);
 					$addOption['label'] = &$GLOBALS['TL_LANG']['MSC']['daterange'][$range];
 					$addOption['id'] = $range;
-					if ($selected)
+					if ($arrCurrent[$field] == $newCurrent[$field])
 					{
 						$addOption['selected'] = true;
 					}
-					array_push($options, $addOption);
-
+					$options[] = $addOption;
 				}
-				$widget = array
+
+				$result = array
 				(
-					'name' => $field,
-					'id' => 'filter_date_'.$field,
-					'label' => $fieldConf['label'][0],
-					'value' =>  $this->generateFilterUrl($current, true),
-					'tableless' => true,
-					'options' => serialize($options),
-					'inputType' => $input,
+					'name' 		=> $field,
+					'id'		=> 'filter_date_' . $field,
+					'label'		=> $fieldConf['label'][0],
+					'value'		=> $this->generateFilterUrl($arrCurrent, true),
+					'tableless'	=> true,
+					'options'	=> serialize($options),
+					'inputType'	=> $input
 				);
-				
-				$settings['date'][] = $this->parseWidget($widget, false);			
-				$widgets['date'][] = $widget;
 			}
 		}
+		return $result;
+	}
 
-
-
-		$arrSort = deserialize($this->catalog_sort,true);
+	/**
+	 * @param array $arrCurrent
+	 * @return null || array with configuration for the sort widget
+	 */
+	protected function generateWidgetConfigSort(array $arrCurrent)
+	{
+		$result = null;
+		$arrSort = deserialize($this->catalog_sort, true);
 		if ($this->catalog_sort_enable && count($arrSort))
 		{
-			// Setup sort values
 			$options = array();
-			if (count($arrSort) && $this->catalog_sort_type!='list')
+			// offer an option for unsorted
+			if (count($arrSort) && $this->catalog_sort_type != 'list')
 			{
-				$selected = !strlen($current[$field]);
-				$newcurrent = $current;
-				unset($newcurrent[$this->strOrderBy]);
-				unset($newcurrent[$this->strSort]);
-				$url = $this->generateFilterUrl($newcurrent, true);
+				$newCurrent = $arrCurrent;
+				unset($newCurrent[self::PARAMORDERBY]);
+				unset($newCurrent[self::PARAMSORT]);
 
 				$addOption = array();
-				$addOption['value'] = $url;
+				$addOption['value'] = $this->generateFilterUrl($newCurrent, true);
 				$addOption['label'] = $GLOBALS['TL_LANG']['MSC']['unsorted'];
 				$addOption['id'] = '';
-				if ($selected)
+				if (empty($arrCurrent[self::PARAMSORT])
+					&& empty($arrCurrent[self::PARAMORDERBY]))
 				{
 					$addOption['selected'] = true;
 				}
-				array_push($options, $addOption);
-
+				$options[] = $addOption;
 			}
-			foreach ($arrSort as $id=>$field) 
+
+			foreach ($arrSort as $id=>$field)
 			{
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
-				$newcurrent = $current;
-				$newcurrent[$this->strOrderBy] = $field;
+				$newCurrent = $arrCurrent;
+				$newCurrent[self::PARAMORDERBY] = $field;
 				foreach (array('asc','desc') as $order)
 				{
-					$newcurrent[$this->strSort] = $order;
-					$selected = ($current[$this->strSort] == $newcurrent[$this->strSort] && $current[$this->strOrderBy] == $newcurrent[$this->strOrderBy]);
-					$url = $this->generateFilterUrl($newcurrent, true);
+					$newCurrent[self::PARAMSORT] = $order;
 
 					$addOption = array();
-					$addOption['value'] = $url;
+					$addOption['value'] = $this->generateFilterUrl($newCurrent, true);
 					$addOption['label'] = $fieldConf['label'][0] . ' ' . $this->selectSortLabel($fieldConf['eval']['catalog']['type'], ($order=='asc'));
 					$addOption['id'] = $field.'__'.$order;
-					if ($selected)
+					if ($arrCurrent[self::PARAMSORT] == $newCurrent[self::PARAMSORT]
+						&& $arrCurrent[self::PARAMORDERBY] == $newCurrent[self::PARAMORDERBY])
 					{
 						$addOption['selected'] = true;
 					}
-					array_push($options, $addOption);
-
+					$options[] =  $addOption;
 				}
 			}
-			$widget = array
+			$result = array
 			(
-				'name' 			=> $this->strSort,
-				'id' 				=> 'filter_'.$this->strSort,
-				'value' 		=>  $this->generateFilterUrl($current, true),
+				'name'		=> self::PARAMSORT,
+				'id'		=> 'filter_' . self::PARAMSORT,
+				'value'		=>  $this->generateFilterUrl($arrCurrent, true),
 				'tableless'	=> true,
-				'options' 	=> serialize($options),
-				'inputType' => $this->catalog_sort_type,
+				'options'	=> serialize($options),
+				'inputType'	=> $this->catalog_sort_type
 			);
-			
-			$settings['sort'] = $this->parseWidget($widget, false);			
-			$widgets['sort'] = $widget;
 		}
+		return $result;
+	}
 
-
+	/**
+	 * @return null || array configuration for the search widget
+	 */
+	protected function generateWidgetConfigSearch()
+	{
+		$result = null;
 		if ($this->catalog_search_enable)
 		{
-
-			$widget = array
+			$result = array
 			(
-				'name' => $this->strSearch,
-				'id' => 'filter_'.$this->strSearch,
-				'inputType' => 'text',
-				'value' =>  $this->Input->get($this->strSearch),
-				'tableless' => true,
-				'addSubmit' => true,
-				'slabel' => $GLOBALS['TL_LANG']['MSC']['catalogSearch'],
+				'name'		=> self::PARAMSEARCH,
+				'id'		=> 'filter_'.self::PARAMSEARCH,
+				'inputType'	=> 'text',
+				'value'		=> $this->Input->get(self::PARAMSEARCH),
+				'tableless'	=> true,
+				'addSubmit'	=> true,
+				'slabel'	=> $GLOBALS['TL_LANG']['MSC']['catalogSearch'],
 			);
-			$settings['search'] =  $this->parseWidget($widget);
-			$widgets['search'] = $widget;
+		}
+		return $result;
+	}
+
+	/**
+	 * HOOK: let custom fields mimic another fieldtype to generate a filter
+	 * @param string $fieldName
+	 * @param string $fieldType
+	 * @param array $fieldConfig
+	 * @param array $config
+	 * @param array $filterUrl
+	 * @param array $query
+	 * @param array $tree
+	 * @return string field type (new one or $fieldType)
+	 */
+	protected function generateFilterWidgetHook ($fieldName, $fieldType, array $fieldConfig, array $config, array $filterUrl, array $query, array $tree)
+	{
+		$result = $fieldType;
+
+		if(array_key_exists($fieldType, $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
+		{
+			$fieldTypeArr = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType];
+
+			if (array_key_exists('generateFilterWidget', $fieldTypeArr)
+				&& is_array($fieldTypeArr['generateFilterWidget']))
+			{
+				foreach ($fieldTypeArr['generateFilterWidget'] as $callback)
+				{
+					$this->import($callback[0]);
+					$tmp = $this->$callback[0]->$callback[1]($fieldType, $fieldName, $config, $fieldConfig, $filterUrl, $query, $tree);
+					if($tmp)
+					{
+						$result = $tmp;
+					}
+				}
+			}
 		}
 
+		return $result;
+	}
 
-		$settings['url'] 		=	$this->generateFilterUrl();
-		$settings['action'] =	$this->generateFilterUrl($current);
-		$settings['widgets'] = $widgets;
+	/**
+	 * HOOK: let custom fields generate a filter widget
+	 * @param string $fieldName
+	 * @param string $fieldType
+	 * @param array $fieldConfig
+	 * @param array $config
+	 * @param array $filterUrl
+	 * @param array $query
+	 * @param array $tree
+	 * @return null || array with keys 'settings', 'widget';
+	 */
+	protected function generateFilterForFieldHook($fieldName, $fieldType, array $fieldConfig, array $config, array $filterUrl, array $query, array $tree)
+	{
+		$result = null;
+		if($fieldType
+			&& array_key_exists($fieldType,
+								$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
+		{
+			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldType];
 
+			if (array_key_exists('generateFilterForField', $fieldType)
+				&& is_array($fieldType['generateFilterForField']))
+			{
+				$callback = $fieldType['generateFilterForField'];
+				$tmp = $this->$callback[0]->$callback[1]($fieldType, $fieldName, $config, $fieldConfig, $filterUrl, $query, $tree);
+				if($tmp)
+				{
+					$result = $tmp;
+				}
+			}
+		}
+
+		return $result;
+	}
+		/**
+   * HOOK:
+	 * @param array $arrSettings
+	 * @return array $arrSettings with changes from the hooks
+	 */
+	protected function generateFilterCatalogHook(array $arrSettings)
+	{
 		if(is_array($GLOBALS['TL_HOOKS']['generateFilterCatalog']))
 		{
 			foreach ($GLOBALS['TL_HOOKS']['generateFilterCatalog'] as $callback)
 			{
 				$this->import($callback[0]);
-				$settings = $this->$callback[0]->$callback[1]($this,$settings);
+				$arrSettings = $this->$callback[0]->$callback[1]($this,$arrSettings);
 			}
 		}
-		return $settings; 
+
+		return $arrSettings;
 	}
 
-
-
-	public function parseWidget(&$widget)
+	/**
+	 *
+	 * Creates HTML code for the widget, fitting for catalog
+	 * @param array $widget
+	 * @return string HTML code for the widget
+	 */
+	public function parseWidget(array $widget)
 	{
-		$this->addWidgetAttributes($widget);
-
+		$widget = $this->addWidgetAttributes($widget);
 		$class = $widget['inputType'];
 		$options = deserialize($widget['options']);
 		$return = '';
+		if($widget['label'])
+			$label = sprintf('<h3><label for="%s">%s</label></h3>', 'ctrl_'.$widget['id'], $widget['label']);
+		else
+			$label = '';
 
-		$label = $widget['label'] ? sprintf(
-'<h3><label for="%s">%s</label></h3>
-',
-							'ctrl_'.$widget['id'], 
-							$widget['label'])
-							: '';
-
-	
 		switch ($widget['inputType'])
 		{
-			case 'list':		
-				$return = sprintf(
-'%s<div id="%s" class="list_container">
-	<ul class="list%s">', 
+			case 'list':
+				$return = sprintf('%s<div id="%s" class="list_container">
+	<ul class="list%s">',
 							$label,
-							'ctrl_'.$widget['id'], 
+							'ctrl_'.$widget['id'],
 							(strlen($widget['class']) ? ' ' . $widget['class'] : '')
 					);
 				foreach ($options as $id=>$option)
 				{
 					$class = standardize($option['id']);
 					$class = ($class == '' ? 'none' : $class);
-					
+
 					$selected = $option['selected'];
 					$return .= sprintf('
 		<li class="option%s%s"><a href="%s" title="%s">%s</a></li>',
@@ -1805,8 +2182,6 @@ abstract class ModuleCatalog extends Module
 				$return .= '
 	</ul></div>';
 				break;
-							
-
 
 			case 'range':
 				$widget['value'] = deserialize($widget['value'], true);
@@ -1818,10 +2193,10 @@ abstract class ModuleCatalog extends Module
 					window.addEvent(\'domready\', function() { ' . sprintf($widget['datepicker'], 'ctrl_' . $widget['id'] .'_'.$i) . ' });
 					//--><!]]></script>'
 					: '');
-					
+
 					// adding a <label for=""> to the inputs
 					$strLabel = ($i == 0) ? $GLOBALS['TL_LANG']['MSC']['rangeFrom'] : $GLOBALS['TL_LANG']['MSC']['rangeTo'];
-		
+
 					$arrFields[] = sprintf('%s<input type="text" name="%s[]" id="ctrl_%s" class="text%s" value="%s"%s />',
 							(strlen($strLabel)) ? '<label for="ctrl_' . $widget['id'].'_'.$i . '">' . $strLabel . '</label>' : '',
 							$widget['name'],
@@ -1830,7 +2205,7 @@ abstract class ModuleCatalog extends Module
 							specialchars($widget['value'][$i]),
 							$widget['attributes'])
 							. $datepicker . ($i==1 ? $this->addSubmit($widget) : '');
-								
+
 				}
 
 				$return = sprintf('%s<div id="ctrl_%s"%s>%s</div>',
@@ -1838,7 +2213,7 @@ abstract class ModuleCatalog extends Module
 						$widget['id'],
 						(strlen($widget['class']) ? ' class="' . $widget['class'] . '"' : ''),
 						implode(($widget['separator'] ? $widget['separator'] : ' '), $arrFields));
-				
+
 				break;
 
 			case 'text':
@@ -1847,13 +2222,12 @@ abstract class ModuleCatalog extends Module
 								$widget['id'],
 								(strlen($widget['class']) ? ' ' . $widget['class'] : ''),
 								specialchars($widget['value']),
-								$widget['attributes']) 
+								$widget['attributes'])
 								. $this->addSubmit($widget);
-				break;	
-
+				break;
 
 			case 'radio':
-			
+
 				$arrOptions = array();
 				foreach ($options as $i=>$option)
 				{
@@ -1868,13 +2242,13 @@ abstract class ModuleCatalog extends Module
 											$widget['id'].'_'.$option['id'], // we have to use the proper ID otherwise the label won't be attached to the input.
 											$option['label']);
 				}
-		
+
 				// Add a "no entries found" message if there are no options
 				if (!count($options))
 				{
 					$arrOptions[]= '<p class="tl_noopt">'.$GLOBALS['TL_LANG']['MSC']['noResult'].'</p>';
 				}
-		
+
 				$return = sprintf('%s<div id="ctrl_%s" class="radio_container%s">%s</div>',
 							$label,
 							$widget['id'],
@@ -1883,9 +2257,9 @@ abstract class ModuleCatalog extends Module
 
 				break;
 
-		
+
 			case 'checkbox':
-			
+
 				$arrOptions = array();
 				foreach ($options as $i=>$option)
 				{
@@ -1896,29 +2270,23 @@ abstract class ModuleCatalog extends Module
 						($widget['multiple'] ? specialchars($option['value']) : 1), // value
 						($option['selected'] ? ' checked="checked"' : ''), // state
 						$widget['attributes'], // more attributes
-//						$widget['id'].'_'.$i, // the id again
 						$widget['id'].'_'.$option['id'], // the id again
 						$option['label']); // and the label
 				}
-	
 				// Add a "no entries found" message if there are no options
 				if (!count($options))
 				{
 					$arrOptions[]= '<p class="noopt">'.$GLOBALS['TL_LANG']['MSC']['noResult'].'</p>';
 				}
 
-        $return = sprintf('%s<div id="ctrl_%s" class="%s%s">%s</div>',
+				$return = sprintf('%s<div id="ctrl_%s" class="%s%s">%s</div>',
 						$label,
 						$widget['id'],
 						($widget['multiple'] ? 'checkbox_container' : 'checkbox_single_container'),
 						(strlen($widget['class']) ? ' ' . $widget['class'] : ''),
-//						implode(($widget['separator'] ? $widget['separator'] : '<br />'), $arrOptions));
-						// c.schiffler - removed the separator as if none specified, we do not want one. <br /> is evil IMO.
 						implode(($widget['separator'] ? $widget['separator'] : ''), $arrOptions));
 				break;
 
-
-	
 			case 'select':
 				// Add empty option (XHTML) if there are none
 				if (!count($options))
@@ -1932,7 +2300,7 @@ abstract class ModuleCatalog extends Module
 									($option['selected'] ? ' selected="selected"' : ''),
 									$option['label']);
 				}
-				
+
 				$return = sprintf('%s<select name="%s" id="ctrl_%s" class="%s%s"%s%s>%s</select>',
 						$label,
 						$widget['name'] . ($widget['multiple'] ? '[]' : ''),
@@ -1942,22 +2310,19 @@ abstract class ModuleCatalog extends Module
 						($widget['multiple'] ? ' multiple="multiple"' : ''),
 						$widget['attributes'],
 						$strOptions);
-			
 				break;
-	
-		
-		
-			default:;
-		}		
+		}
 		return '<div class="widget'.(strlen($widget['id']) ? ' ' . $widget['id'] : '').'">
 '.$return.'
 </div>
 ';
 	}
 
-
-
-	protected function addSubmit($widget)
+	/**
+	 * @param array $widget
+	 * @return string HTML for the submit button for the widget
+	 */
+	protected function addSubmit(array $widget)
 	{
 		return (strlen($widget['slabel']) ? sprintf(' <input type="submit" id="ctrl_%s_submit" class="submit" value="%s" />',
 						$widget['id'],
@@ -1965,8 +2330,13 @@ abstract class ModuleCatalog extends Module
 						: '');
 	}
 
-
-	private function addWidgetAttributes(&$widget)
+	/**
+	 *
+	 * Adds the javascript attributes to input types which allow that
+	 * @param array $widget
+	 * @return array $widget with extra fields
+	 */
+	private function addWidgetAttributes(array $widget)
 	{
 		switch ($widget['inputType'])
 		{
@@ -1988,30 +2358,22 @@ abstract class ModuleCatalog extends Module
 			case 'select':
 				$types = array
 				(
-					'attributes'		=> $widget['multiple'] 
-									? ' onclick="window.location=this.options[this.selectedIndex].value"' 
+					'attributes'		=> $widget['multiple']
+									? ' onclick="window.location=this.options[this.selectedIndex].value"'
 									: ' onchange="window.location=this.options[this.selectedIndex].value"',
 				);
 
 				break;
-			default:;
 		}
-		if (is_array($types)) 
+		if (is_array($types))
 		{
 			$widget = array_merge($widget, $types);
 		}
-	}
-	
 
-
-	private function checkArray($arrInput) 
-	{
-		return is_array($arrInput) ? $arrInput : array();
+		return $widget;
 	}
 
-
-
-	protected function selectSortLabel($inputType, $blnAsc=true)
+	protected function selectSortLabel($inputType, $blnAsc =true)
 	{
 		$labelSuffix = '';
 		switch ($inputType)
@@ -2024,20 +2386,20 @@ abstract class ModuleCatalog extends Module
 			case 'file':
 				$labelSuffix = $blnAsc ? $GLOBALS['TL_LANG']['MSC']['AtoZ']: $GLOBALS['TL_LANG']['MSC']['ZtoA'];
 				break;
-			
+
 			case 'number':
 			case 'decimal':
 				$labelSuffix = $blnAsc ? $GLOBALS['TL_LANG']['MSC']['lowhigh']: $GLOBALS['TL_LANG']['MSC']['highlow'];
 				break;
-			
+
 			case 'checkbox':
 				$labelSuffix = $blnAsc ? $GLOBALS['TL_LANG']['MSC']['falsetrue']: $GLOBALS['TL_LANG']['MSC']['truefalse'];
 				break;
-			
+
 			case 'date':
 				$labelSuffix = $blnAsc ? $GLOBALS['TL_LANG']['MSC']['dateasc']: $GLOBALS['TL_LANG']['MSC']['datedesc'];
 				break;
-				
+
 			default:
 				if($blnAsc)
 				{
@@ -2047,11 +2409,9 @@ abstract class ModuleCatalog extends Module
 					if($GLOBALS['TL_LANG']['MSC'][$inputType.'desc'])
 						$labelSuffix=$GLOBALS['TL_LANG']['MSC'][$inputType.'desc'];
 				}
-		}		
+		}
 		return $labelSuffix;
 	}
-
-
 
 	private function getJumpTo($catalogJump, $blnJumpTo=true)
 	{
@@ -2074,7 +2434,7 @@ abstract class ModuleCatalog extends Module
 				{
 					$pageRow = $objJump->row();
 				}
-			} 
+			}
 			else
 			{
 				$pageRow = $objPage->row();
@@ -2085,23 +2445,31 @@ abstract class ModuleCatalog extends Module
 		}
 	}
 
-
-
-	public function generateFilterUrl($arrGet = array(), $blnRoot=false, $blnJumpTo=true)
+	/**
+	 * Create a proper URL to redirect to based on the filters
+	 * @param array $arrGet optional
+	 * @param boolean $blnRoot optional
+	 * @param boolean $blnJumpTo optional
+	 * @return string URL to redirect to
+	 */
+	public function generateFilterUrl(array $arrGet =array(), $blnRoot =false, $blnJumpTo =true)
 	{
-		$arrPage=$this->getJumpTo($this->catalog_jumpTo, $blnJumpTo);
+		$arrPage = $this->getJumpTo($this->catalog_jumpTo, $blnJumpTo);
 		$strParams = '';
-		if (is_array($arrGet) && ($arrGet))
+
+		if (count($arrGet))
 		{
 			foreach ($arrGet as $k=>$v)
 			{
-				if (strlen($v)) 
+				if (strlen($v))
 				{
 					$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
-					if (in_array($fieldConf['eval']['catalog']['type'], array('select', 'tags')) 
+
+					if (in_array($fieldConf['eval']['catalog']['type'], array('select', 'tags'))
 							&& $this->getAliasFieldConf($fieldConf) != 'id')
 					{
 						$arrAlias = $this->getAliasOptionList($fieldConf);
+
 						if ($fieldConf['eval']['catalog']['type'] == 'tags')
 						{
 							$tags = explode(',', $v);
@@ -2114,11 +2482,13 @@ abstract class ModuleCatalog extends Module
 						}
 						else
 						{
-							$v = $arrAlias[$v]; 
+							$v = $arrAlias[$v];
 						}
 					}
-					$v = str_replace($GLOBALS['TL_CONFIG']['catalog']['safeCheck'], $GLOBALS['TL_CONFIG']['catalog']['safeReplace'], $v);
-	
+					$v = str_replace($GLOBALS['TL_CONFIG']['catalog']['safeCheck'],
+									$GLOBALS['TL_CONFIG']['catalog']['safeReplace'],
+									$v);
+					$v = urlencode($v);
 					$strParams .= $GLOBALS['TL_CONFIG']['disableAlias'] ? '&amp;' . $k . '=' . $v  : '/' . $k . '/' . $v;
 				}
 			}
@@ -2131,45 +2501,36 @@ abstract class ModuleCatalog extends Module
 	 * @param array $arrVisible
 	 * @return array
 	 */
-	protected function processFieldSQL($arrVisible)
+	protected function processFieldSQL(array $arrVisible)
 	{
 		$arrConverted = array();
 
 		// iterate all catalog fields
-		$objFields = $this->Database->prepare("SELECT * FROM tl_catalog_fields f WHERE f.pid=(SELECT c.id FROM tl_catalog_types c WHERE c.tableName=?)")
-								   ->execute($this->strTable);
-
+		$objFields = $this->Database->prepare("SELECT *
+											FROM tl_catalog_fields f
+											WHERE f.pid=(SELECT c.id
+											FROM tl_catalog_types c
+											WHERE c.tableName=?)")
+									->execute($this->strTable);
 		$arrFields = array();
 		if ($objFields->numRows)
 		{
 			while ($objFields->next())
 			{
-				$row = $objFields->row();			
-				$arrFields[$row['colName']] = $row;
+				$arrFields[$objFields->colName] = $objFields->row();
 			}
-
 			foreach ($arrVisible as $id=>$field)
 			{
 				if (array_key_exists($field, $arrFields))
 				{
 					$arrConverted[$id] = self::sqlFieldAlias($field, $arrFields[$field]);
 				}
-
-				// HOOK: allow third party extension developers to prepare the SQL data
-				if(is_array($GLOBALS['TL_HOOKS']['processFieldSQL']) && count($GLOBALS['TL_HOOKS']['processFieldSQL']))
-				{
-					foreach($GLOBALS['TL_HOOKS']['processFieldSQL'] as $callback)
-					{
-						$this->import($callback[0]);
-						$this->$callback[0]->$callback[1]($this->catalog, $id, $field, $arrFields, $arrConverted, $this->strTable);
-					}
-				}	
-			}	
+				$this->processFieldSQLHook($id, $field, $arrFields, $arrConverted);
+			}
 		}
-
 		return $arrConverted;
 	}
-	
+
 	/**
 	 * Replaces the field name by the calc formula and alias for a calc field,
 	 * keeps the field name for every other field
@@ -2177,52 +2538,68 @@ abstract class ModuleCatalog extends Module
 	 * @param array $arrFieldConfigCatalog catalog part
 	 * @return string field name to use f.e. in field list
 	 */
-	protected static function sqlFieldAlias($strFieldName,
-	                                        array $arrFieldConfigCatalog)
+	protected static function sqlFieldAlias($strFieldName, array $arrFieldConfigCatalog)
 	{
-	  $result = $strFieldName;
-	  
-	  if ($arrFieldConfigCatalog['type'] == 'calc')
-	  {
-	    // set query value to formula
-	    $result = '(' . $arrFieldConfigCatalog['calcValue'] . ') AS ' . $strFieldName;
-    }
-    
-    return $result;
+		$result = $strFieldName;
+		if ($arrFieldConfigCatalog['type'] == 'calc')
+		{
+			// set query value to formula
+			$result = '(' . $arrFieldConfigCatalog['calcValue'] . ') AS ' . $strFieldName;
+		}
+		return $result;
 	}
-	
-	/**
+		/**
 	 * Replaces the field name by the calculation formula, if applicable
 	 * @param string $strFieldName
 	 * @param array $arrFieldConfigCatalog
 	 * @return string field name to use f.e. in WHERE statement
 	 */
-	protected static function sqlFieldName($strFieldName,
-                                         array $arrFieldConfigCatalog)
+	protected static function sqlFieldName($strFieldName, array $arrFieldConfigCatalog)
 	{
-	  $result = $strFieldName;
-	  
-	  if ($arrFieldConfigCatalog['type'] == 'calc')
-	  {
-	    // set query value to forumla
-	    $result = '(' . $arrFieldConfigCatalog['calcValue'] . ')';
-    }
-    
-    return $result;
+		$result = $strFieldName;
+
+		if ($arrFieldConfigCatalog['type'] == 'calc')
+		{
+			// set query value to forumla
+			$result = '(' . $arrFieldConfigCatalog['calcValue'] . ')';
+		}
+		return $result;
+	}
+
+	/**
+	 * HOOK: allow third party extension developers to prepare the SQL data
+	 * @param int $id
+	 * @param string $fieldName
+	 * @param array $arrFields
+	 * @param array $arrConverted
+	 * @return void
+	 */
+	protected function processFieldSQLHook($id, $fieldName, array $arrFields, array $arrConverted)
+	{
+		if(is_array($GLOBALS['TL_HOOKS']['processFieldSQL']) && count($GLOBALS['TL_HOOKS']['processFieldSQL']))
+		{
+			foreach($GLOBALS['TL_HOOKS']['processFieldSQL'] as $callback)
+			{
+				$this->import($callback[0]);
+				$this->$callback[0]->$callback[1]($this->catalog, $id, $fieldName, $arrFields, $arrConverted, $this->strTable);
+			}
+		}
 	}
 
 	/**
 	 * Generate one or more items and return them as array
-	 * @param object
-	 * @param boolean
+	 * @param Database_Result $objCatalog
+	 * @param boolean $blnLink
+	 * @param array $arrVisible optional
+	 * @param boolean $blnImageLink optional
 	 * @return array
 	 */
-	protected function generateCatalog(Database_Result $objCatalog, $blnLink=true, $visible=null, $blnImageLink=false)
+	protected function generateCatalog(Database_Result $objCatalog, $blnLink=true, array $arrVisible=array(), $blnImageLink=false)
 	{
 		$i=0;
 		$arrCatalog = array();
 
-		$objCatalog->reset();		
+		$objCatalog->reset();
 		while ($objCatalog->next())
 		{
 			$arrCatalog[$i]['id'] = $objCatalog->id;
@@ -2235,78 +2612,55 @@ abstract class ModuleCatalog extends Module
 			if ($i==0 && $blnLink)
 			{
 				$objArchive = $this->Database->prepare("SELECT aliasField FROM tl_catalog_types where id=?")
-										 ->limit(1)
-										 ->execute($objCatalog->pid);
+											->limit(1)
+											->execute($objCatalog->pid);
 
-	
 				$aliasField = $objArchive->numRows ? $objArchive->aliasField : 'alias';
 			}
-			
+
 			$class = (($i == 0) ? ' first' : '') . ((($i + 1) == $objCatalog->numRows) ? ' last' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
 			$arrCatalog[$i]['class'] = $class;
 
-			if ($blnLink) 
+			if ($blnLink)
 			{
 				$arrCatalog[$i]['link'] = $this->generateLink($objCatalog, $aliasField, $this->strTable, $this->catalog_link_window);
 				$arrCatalog[$i]['url'] = $this->generateCatalogUrl($objCatalog, $aliasField, $this->strTable);
 			}
 
-
 			$arrData = $objCatalog->row();
-			// check if editing of this record is disabled for frontend.
-			$editingallowedByFields=true;
-			foreach ($GLOBALS['TL_DCA'][$this->strTable]['fields'] as $fieldname=>$field)
-			{
-				if(is_array($visible) && !in_array($fieldname, $visible))
-					continue;
-				// HOOK: additional permission checks if this field allows editing of this record (for the current user).
-				$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$field['eval']['catalog']['type']];
-				if(is_array($fieldType) && array_key_exists('checkPermissionFERecordEdit', $fieldType) && is_array($fieldType['checkPermissionFERecordEdit']))
-				{
-					foreach ($fieldType['checkPermissionFERecordEdit'] as $callback)
-					{
-						$this->import($callback[0]);
-						// TODO: Do we need more parameters here?
-						if(!($this->$callback[0]->$callback[1]($this->strTable, $fieldname, $arrData)))
-						{
-							$editingallowedByFields=false;
-							break;
-						}
-					}
-				}
-			}
 
-			if ($this->catalog_edit_enable && $editingallowedByFields)
+			if ($this->catalog_edit_enable && $this->fieldsAllowFEEdit($arrData, $arrVisible))
 			{
 				$arrCatalog[$i]['linkEdit'] = $this->generateLink($objCatalog, $aliasField, $this->strTable, $this->catalog_link_window, true);
 				$arrCatalog[$i]['urlEdit'] = $this->generateCatalogEditUrl($objCatalog, $aliasField, $this->strTable);
 			}
 
-			if (is_array($visible))
+			// reduce to only the visible fields
+			$tmpData = array();
+			foreach ($arrVisible as $fieldName)
 			{
-				foreach($visible as $field)
-				{
-					$tmpData[$field] = $arrData[$field];
-				}
-				$arrData = $tmpData;
+				$tmpData[$fieldName] = $arrData[$fieldName];
 			}
-			
+			$arrData = $tmpData;
 
+			// fields
 			foreach ($arrData as $k=>$v)
 			{
-			
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
-				
-				$blnParentCheckbox = $fieldConf['eval']['catalog']['parentCheckbox'] && !$arrData[$fieldConf['eval']['catalog']['parentCheckbox']];
-				
-				if (in_array($k, array('id','pid','sorting','tstamp')) || $fieldConf['inputType'] == 'password' || $blnParentCheckbox)
+
+				$blnParentCheckbox = $fieldConf['eval']['catalog']['parentCheckbox']
+									&& !$arrData[$fieldConf['eval']['catalog']['parentCheckbox']];
+
+				if (in_array($k, $this->systemColumns)
+					|| $fieldConf['inputType'] == 'password'
+					|| $blnParentCheckbox)
 					continue;
 
 				$strLabel = strlen($label = $fieldConf['label'][0]) ? $label : $k;
 				$strType = $fieldConf['eval']['catalog']['type'];
 
 				$arrValues = $this->parseValue($this->type.$i, $k, $v, $blnImageLink, $objCatalog);
-				
+
 				$linked = deserialize($this->catalog_islink, true);
 				if ($this->catalog_link_override && is_array($linked) && in_array($k, $linked))
 				{
@@ -2331,11 +2685,11 @@ abstract class ModuleCatalog extends Module
 						{
 							// set sort order
 							$sortCol =	$fieldConf['eval']['catalog']['sortCol'];
-							if (!strlen($sortCol)) 
+							if (!strlen($sortCol))
 							{
 								$sortCol = 'sorting';
 							}
-									
+
 							$sortOrder = $this->Database->fieldExists($sortCol, $refTable) ? $sortCol : $refCol;
 
 							// Get referenced fields
@@ -2348,7 +2702,7 @@ abstract class ModuleCatalog extends Module
 								$objJump = $this->Database->prepare("SELECT tableName, aliasField, jumpTo FROM tl_catalog_types WHERE tableName=?")
 														->limit(1)
 														->execute($refTable);
-														
+
 								// Add Ref Catalog Links
 								if ($objJump->numRows)
 								{
@@ -2361,7 +2715,7 @@ abstract class ModuleCatalog extends Module
 								}
 
 								// add to reference array
-								$arrCatalog[$i]['data'][$k]['ref'] = $objRef->fetchAllAssoc();								
+								$arrCatalog[$i]['data'][$k]['ref'] = $objRef->fetchAllAssoc();
 							}
 						}
 						break;
@@ -2371,7 +2725,6 @@ abstract class ModuleCatalog extends Module
 						// add file and image information
 						$arrCatalog[$i]['data'][$k]['files'] = $arrValues['items'];
 						$arrCatalog[$i]['data'][$k]['meta'] = $arrValues['values'];
-
 						break;
 
 					default:
@@ -2382,34 +2735,118 @@ abstract class ModuleCatalog extends Module
 								$arrCatalog[$i]['data'][$k][$kk] = $vv;
 						}
 				}
-
 			}
 			// HOOK: allow other extensions to manipulate the item before returning them in the array
-			if(is_array($GLOBALS['TL_HOOKS']['generateCatalogItem']))
-			{
-				foreach ($GLOBALS['TL_HOOKS']['generateCatalogItem'] as $callback)
-				{
-					$this->import($callback[0]);
-					$arrCatalog[$i] = $this->$callback[0]->$callback[1]($arrCatalog[$i], $arrData, $this);
-				}
-			}
+			$arrCatalog[$i] = $this->generateCatalogItemHook($arrCatalog[$i], $arrData);
 			$i++;
 		}
 		return $arrCatalog;
 	}
 
 	/**
-	 * Parse one or more items and pipe them through the given template
-	 * @param object
-	 * @param boolean
-	 * @return array
+	 * @param array $arrData
+	 * @param array $arrVisible
+	 * @return boolean do all field configurations/hooks allow frontend editing
+	 * of this record?
 	 */
-	protected function parseCatalog(Database_Result $objCatalog, $blnLink=true, $template='catalog_full', $visible=null, $blnImageLink=false)
+	protected function fieldsAllowFEEdit(array $arrData, array $arrVisible)
 	{
-		$objTemplate = new FrontendTemplate($template);
-		$arrCatalog = $this->generateCatalog($objCatalog, $blnLink, $visible, $blnImageLink);
+		$result = true;
+		foreach ($GLOBALS['TL_DCA'][$this->strTable]['fields'] as $fieldName => $fieldConfig)
+		{
+			// only check permission for visible fields
+			if (count($arrVisible) && ! in_array($fieldName, $arrVisible))
+				continue;
+			// HOOK: additional permission checks if this field allows editing of this record (for the current user).
+			if (! $this->checkPermissionFERecordEditHook($fieldName, $arrData))
+			{
+				// one false is enough
+				$result = false;
+				break;
+			}
+		}
+		return $result;
+	}
 
+	/**
+	 * Checks the checkPermissionFEEdit hooks for the field
+	 *
+	 * @see ModuleCatalogEdit::fieldAllowedForCurrentUserHooks()
+	 * @param string $strFieldName
+	 * @param array $arrData
+	 * @return bool do all hooks allow editing this field for the current user?
+	 */
+	protected function checkPermissionFERecordEditHook($strFieldName, array $arrData)
+	{
+		// HOOK result must be boolean!
+		$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$GLOBALS['TL_DCA'][$this->strTable]['fields'][$strFieldName]['eval']['catalog']['type']];
+		if (is_array($fieldType)
+			&& array_key_exists('checkPermissionFERecordEdit', $fieldType)
+			&& is_array($fieldType['checkPermissionFERecordEdit']))
+		{
+			foreach ($fieldType['checkPermissionFERecordEdit'] as $callback)
+			{
+				$this->import($callback[0]);
+				// TODO: Do we need more parameters here?
+				if (!($this->$callback[0]->$callback[1]($this->strTable, $strFieldName, $arrData)))
+				{
+					// one false is enough
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * HOOK: allow other extensions to manipulate the item before returning them in the array
+	 * @param array $arrCatalogItem
+	 * @param array $arrData
+	 * @return array $arrCatalogItem with changes from the hooks
+	 */
+	protected function generateCatalogItemHook(array $arrCatalogItem, array $arrData)
+	{
+		if(is_array($GLOBALS['TL_HOOKS']['generateCatalogItem']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['generateCatalogItem'] as $callback)
+			{
+				$this->import($callback[0]);
+				$arrCatalogItem = $this->$callback[0]->$callback[1]($arrCatalogItem, $arrData, $this);
+			}
+		}
+		return $arrCatalogItem;
+	}
+
+	/**
+	 * Parse one or more items and pipe them through the given template
+	 * @param Database_Result $objCatalog
+	 * @param boolean $blnLink optional
+	 * @param string $strTemplate optional
+	 * @param array $arrVisible optional
+	 * @return string
+	 */
+	protected function parseCatalog(Database_Result $objCatalog, $blnLink=true, $strTemplate='catalog_full', $arrVisible=array(), $blnImageLink=false)
+	{
+		$objTemplate = new FrontendTemplate($strTemplate);
+		$arrCatalog = $this->generateCatalog($objCatalog, $blnLink, $arrVisible, $blnImageLink);
 		// HOOK: allow other extensions to manipulate the items before passing it to the template
+		$arrCatalog = $this->parseCatalogHook($arrCatalog, $objTemplate);
+
+		$objTemplate->entries         = $arrCatalog;
+		$objTemplate->moduleTemplate  = $this->Template;
+		$objTemplate->searchEmptyMsg  = $GLOBALS['TL_LANG']['MSC']['catalogSearchEmpty'];
+		$objTemplate->noItemsMsg      = $GLOBALS['TL_LANG']['MSC']['noItemsMsg'];
+		return $objTemplate->parse();
+	}
+
+	/**
+	 * HOOK: allow other extensions to manipulate the items list
+	 * @param array $arrCatalog
+	 * @param FrontendTemplate $objTemplate
+	 * @return array $arrCatalog with changes made by hooks
+	 */
+	protected function parseCatalogHook(array $arrCatalog, FrontendTemplate $objTemplate)
+	{
 		if(is_array($GLOBALS['TL_HOOKS']['parseCatalog']))
 		{
 			foreach ($GLOBALS['TL_HOOKS']['parseCatalog'] as $callback)
@@ -2418,56 +2855,74 @@ abstract class ModuleCatalog extends Module
 				$arrCatalog = $this->$callback[0]->$callback[1]($arrCatalog, $objTemplate, $this);
 			}
 		}
-		$objTemplate->entries         = $arrCatalog;
-		$objTemplate->moduleTemplate  = $this->Template;
-		$objTemplate->noItemsMsg	  = $GLOBALS['TL_LANG']['MSC']['noItemsMsg'];
-
-		return $objTemplate->parse();
+		return $arrCatalog;
 	}
 
-
-	protected function generateCatalogUrl(Database_Result $objCatalog, $aliasField='alias', $strTable, $strPrependParams='')
+	/**
+	 * Generate the url to a catalog item.
+	 * @param Database_Result $objCatalog the database result holding the current item.
+	 * @param string $strAliasField the alias field to use, optional. If empty the routine will try "alias" and if that does not exist fallback to id
+	 * @param string $strTable the tablename to use, optional. If empty, the current table will get used.
+	 * @param string $strPrependParams parameters that shall be prepended to the /items/ part of the url, optional.
+	 * @return string the generated url.
+	 */
+	protected function generateCatalogUrl(Database_Result $objCatalog, $strAliasField='alias', $strTable='', $strPrependParams='')
 	{
-
-		if (!strlen($aliasField))
+		// fallback alias field
+		$aliasField = 'id';
+		if (strlen($strAliasField)
+			&& (! $GLOBALS['TL_CONFIG']['disableAlias'])
+			&& $this->Database->fieldExists($strAliasField, ($strTable?$strTable:$this->strTable))
+			&& strlen($objCatalog->$strAliasField))
 		{
-			$aliasField = 'alias';
+			$aliasField = $strAliasField;
 		}
-
-		$useJump = ($this instanceof ModuleCatalogList || $this instanceof ModuleCatalogFeatured || $this instanceof ModuleCatalogRelated || $this instanceof ModuleCatalogReference || $this instanceof ModuleCatalogNavigation); 
-
+		$useJump = ($this instanceof ModuleCatalogList
+					|| $this instanceof ModuleCatalogFeatured
+					|| $this instanceof ModuleCatalogRelated
+					|| $this instanceof ModuleCatalogReference
+					|| $this instanceof ModuleCatalogNavigation);
 		$jumpTo = ($useJump && $this->jumpTo) ? $this->jumpTo : $objCatalog->parentJumpTo;
 		$arrPage=$this->getJumpTo($jumpTo, true);
-		return ampersand($this->generateFrontendUrl($arrPage, $strPrependParams . '/items/' . (($this->Database->fieldExists($aliasField, $strTable) && strlen($objCatalog->$aliasField) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $objCatalog->$aliasField : $objCatalog->id)));
-		
+		return ampersand($this->generateFrontendUrl($arrPage, $strPrependParams . '/items/' . $objCatalog->$aliasField));
 	}
 
-	private function generateCatalogEditUrl(Database_Result $objCatalog, $aliasField='alias', $strTable)
+	/**
+	 * Create the URL leading to the edit page for the catalog item
+	 * @param Database_Result $objCatalog the database result holding the current item.
+	 * @param string $strAliasField the alias field to use, optional. If empty the routine will try "alias" and if that does not exist fallback to id
+	 * @param string $strTable the tablename to use, optional. If empty, the current table will get used.
+	 * @param string $strPrependParams parameters that shall be prepended to the /items/ part of the url, optional.
+	 * @return string the generated url.
+	 */
+	protected function generateCatalogEditUrl(Database_Result $objCatalog, $strAliasField='alias', $strTable='', $strPrependParams='')
 	{
-
-		if (!strlen($aliasField))
+		// fallback alias field
+		$aliasField = 'id';
+		if (strlen($strAliasField)
+			&& (! $GLOBALS['TL_CONFIG']['disableAlias'])
+			&& $this->Database->fieldExists($strAliasField, ($strTable?$strTable:$this->strTable))
+			&& strlen($objCatalog->$strAliasField))
 		{
-			$aliasField = 'alias';
+			$aliasField = $strAliasField;
 		}
-
-		$arrPage=$this->getJumpTo($this->catalog_editJumpTo, true);
-
+		$arrPage = $this->getJumpTo($this->catalog_editJumpTo, true);
 		// Link to catalog edit
-		return ampersand($this->generateFrontendUrl($arrPage, '/items/' . (($this->Database->fieldExists($aliasField, $strTable) && strlen($objCatalog->$aliasField) && !$GLOBALS['TL_CONFIG']['disableAlias']) ? $objCatalog->$aliasField : $objCatalog->id)));
-		
+		return ampersand($this->generateFrontendUrl($arrPage, $strPrependParams . '/items/' . $objCatalog->$aliasField));
 	}
-
 
 	/**
 	 * Generate a link and return it as string
-	 * @param string
-	 * @param object
-	 * @param boolean
-	 * @return string
+	 * @param Database_Result $objCatalog
+	 * @param string $strAliasField
+	 * @param string $strTable
+	 * @param boolean $blnWindow
+	 * @param boolean $blnEdit optional link to the edit page? default is the reader page
+	 * @param string $strLink optional custom link text
 	 */
-	protected function generateLink(Database_Result $objCatalog, $aliasField, $strTable, $blnWindow, $blnEdit=false, $strLink='')
+	protected function generateLink(Database_Result $objCatalog, $strAliasField, $strTable, $blnWindow, $blnEdit=false, $strLink='')
 	{
-		$linkUrl = (!$blnEdit ? $this->generateCatalogUrl($objCatalog, $aliasField, $strTable) : $this->generateCatalogEditUrl($objCatalog, $aliasField, $strTable));
+		$linkUrl = (!$blnEdit ? $this->generateCatalogUrl($objCatalog, $strAliasField, $strTable) : $this->generateCatalogEditUrl($objCatalog, $strAliasField, $strTable));
 		$strLink = strlen($strLink) ? $strLink : (!$blnEdit ? $GLOBALS['TL_LANG']['MSC']['viewCatalog'] : $GLOBALS['TL_LANG']['MSC']['editCatalog']);
 		$strTitle = (!$blnEdit ? $GLOBALS['TL_LANG']['MSC']['viewCatalog'] : $GLOBALS['TL_LANG']['MSC']['editCatalog']);
 
@@ -2479,41 +2934,44 @@ abstract class ModuleCatalog extends Module
 						);
 	}
 
-
- 	/**
+	/**
 	 * Format the catalog value according to its settings and return it as HTML string
-	 * @param integer
-	 * @param string
-	 * @param variable
-	 * @param boolean
+	 * @param string $strId identifies the item in the list of items
+	 * @param string $strFieldName
+	 * @param mixed $value
+	 * @param boolean $blnImageLink optional
+	 * @param Database_Result $objCatalog optional
 	 * @return string
 	 */
-
-	protected function formatValue($id, $k, $value, $blnImageLink=true, $objCatalog=array())
+	protected function formatValue($strId, $strFieldName, $value, $blnImageLink=true, $objCatalog =null)
 	{
-		$arrFormat = $this->parseValue($id, $k, $value, $blnImageLink, $objCatalog);
+		$arrFormat = $this->parseValue($strId, $strFieldName, $value, $blnImageLink, $objCatalog);
 		return $arrFormat['html'];
 	}
-	
 
- 	/**
+	/**
 	 * parse the catalog values and return information as an array
-	 * @param integer
-	 * @param string
-	 * @param variable
-	 * @param boolean
+	 * @param string $strId identifies the item in the list of items
+	 * @param string $strFieldName
+	 * @param mixed $value
+	 * @param boolean $blnImageLink optional
+	 * @param Database_Result $objCatalog optional
 	 * @return array
 	 */
-  
-	protected function parseValue($id, $k, $value, $blnImageLink=true, $objCatalog=array())
+	protected function parseValue($strId, $strFieldName, $value, $blnImageLink =true, $objCatalog =null)
 	{
 		$raw = $value;
 		$arrItems = deserialize($value, true);
 		$arrValues = deserialize($value, true);
 		$strHtml = $value;
-		$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
+		$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$strFieldName];
+		// deleted field?
+		if(!$fieldConf)
+			return array();
 
-		if((version_compare(VERSION, '2.10', '>=')) && $fieldConf['eval']['rte'] && $GLOBALS['TL_CONFIG']['useRTE'])
+		if(version_compare(VERSION, '2.10', '>=')
+			&& $fieldConf['eval']['rte']
+			&& $GLOBALS['TL_CONFIG']['useRTE'])
 		{
 			global $objPage;
 			$this->import('String');
@@ -2542,12 +3000,11 @@ abstract class ModuleCatalog extends Module
 				break;
 
 			case 'file':
-				$files = $this->parseFiles($id, $k, $raw);
+				$files = $this->parseFiles($strId, $strFieldName, $raw);
 				$arrItems = $files['files'];
 				$arrValues = $files['src'];
 				$strHtml = implode('', $files['html']);
 				break;
-
 
 			case 'url':
 				if (strlen($raw))
@@ -2566,35 +3023,23 @@ abstract class ModuleCatalog extends Module
 						$website = $matches[2][0];
 						$strHtml = '<a href="'.ampersand($raw).'"'.(preg_match('@^(https?://|ftp://)@i', $value) ? ' onclick="window.open(this.href); return false;"' : '').'>'.$website.'</a>';
 					}
-				
 				}
 				break;
-		
-			// allow custom fields.
+			// allow custom fields
 			default:
-				if(array_key_exists($fieldConf['eval']['catalog']['type'], $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
+				if (count($arrHook = $this->parseValueHook($strId, $strFieldName, $value, $blnImageLink, $objCatalog, $fieldConf)))
 				{
-					// HOOK: try to format the fieldtype as it is a custom added one.
-					$fieldType=$GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$fieldConf['eval']['catalog']['type']];
-					if(array_key_exists('parseValue', $fieldType) && is_array($fieldType['parseValue']))
-					{
-						foreach ($fieldType['parseValue'] as $callback)
-						{
-							$this->import($callback[0]);
-							$ret=$this->$callback[0]->$callback[1]($id, $k, $value, $blnImageLink, $objCatalog, $this, $fieldConf);
-							$arrItems = $ret['items'];
-							$arrValues = $ret['values'];
-							$strHtml = $ret['html'];
-						}
-					}
+					$arrItems = $arrHook['items'];
+					$arrValues = $arrHook['values'];
+					$strHtml = $arrHook['html'];
 				}
-		}		
+				break;
+		}
 
-		// special formatting 
+		// special formatting
 		$formatStr = $fieldConf['eval']['catalog']['formatStr'];
 		if (strlen($formatStr))
 		{
-			//$formatStr = htmlspecialchars_decode($fieldConf['eval']['catalog']['formatStr']);
 			$value = $arrValues[0];
 			switch ($fieldConf['eval']['catalog']['formatFunction'])
 			{
@@ -2603,7 +3048,7 @@ abstract class ModuleCatalog extends Module
 						break;
 				case 'number':
 						$decimalPlaces = is_numeric($formatStr) ? intval($formatStr) : 0;
-						$value = number_format($value, $decimalPlaces, 
+						$value = number_format($value, $decimalPlaces,
 								$GLOBALS['TL_LANG']['MSC']['decimalSeparator'],
 								$GLOBALS['TL_LANG']['MSC']['thousandsSeparator']);
 						break;
@@ -2611,14 +3056,13 @@ abstract class ModuleCatalog extends Module
 						if (strlen($raw) && $raw !== 0)
 						{
 							$date = new Date($raw);
-							$value = $this->parseDate((strlen($formatStr) ? $formatStr : $GLOBALS['TL_CONFIG']['dateFormat']), $date->tstamp);
+							$value = $this->parseDate($formatStr, $date->tstamp);
 						}
 						else
 						{
 							$value = '';
 						}
 						break;
-				default:;
 			}
 			$arrValues[0] = $value;
 			$strHtml = $value;
@@ -2638,39 +3082,87 @@ abstract class ModuleCatalog extends Module
 		return $return;
 	}
 
+	/**
+	 * Invoke the 'parseValue' hook for the field
+	 * @param string $strId identifies the item in the catalog output
+	 * @param string $k
+	 * @param mixed $value
+	 * @param boolean $blnImageLink
+	 * @param Database_Result $objCatalog can be null
+	 * @param array $arrFieldConf
+	 * @return array : empty || 'items' => array, 'values' => array, 'html' => string
+	 */
+	protected function parseValueHook($strId, $k, $value, $blnImageLink, $objCatalog, array $arrFieldConf)
+	{
+		$result = array();
 
- 	/**
+		if(array_key_exists($arrFieldConf['eval']['catalog']['type'], $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes']))
+		{
+			// HOOK: try to format the fieldtype as it is a custom added one.
+			$fieldType = $GLOBALS['BE_MOD']['content']['catalog']['fieldTypes'][$arrFieldConf['eval']['catalog']['type']];
+
+			if(array_key_exists('parseValue', $fieldType)
+			&& is_array($fieldType['parseValue']))
+			{
+				$html = array();
+				$items = array();
+				$values = array();
+				foreach ($fieldType['parseValue'] as $callback)
+				{
+					$this->import($callback[0]);
+					$arrHook = $this->$callback[0]->$callback[1]($strId, $k, $value, $blnImageLink, $objCatalog, $this, $arrFieldConf);
+					$html[] = $arrHook['html'];
+					if(is_array($arrHook['items']))
+						$items = array_merge($arrHook['items'], $items);
+					if(is_array($arrHook['values']))
+						$values = array_merge($arrHook['values'], $values);
+				}
+				// take all hooks into account, the result will be better understood than
+				// several hooks overwriting eachother's results
+				$result = array (
+					'html' => implode('', $html),
+					'items' => $items,
+					'values' => $values
+				);
+			}
+		}
+		return $result;
+	}
+
+	/**
 	 * parse files into HTML and other information and return as an array
-	 * @param integer
-	 * @param string
-	 * @param variable
+	 * @param string $strId some identification of the item in the current catalog
+	 * @param string $k
+	 * @param mixed $files either string or array
 	 * @return array
 	 */
 
-	public function parseFiles($id, $k, $files)
-	{	
+	public function parseFiles($strId, $k, $files)
+	{
 		$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
 
-		$blnThumnailOverride = $this->catalog_thumbnails_override && ($this instanceof ModuleCatalogList || $this instanceof ModuleCatalogFeatured || $this instanceof ModuleCatalogRelated || $this instanceof ModuleCatalogReference);
-
+		$blnThumnailOverride = $this->catalog_thumbnails_override
+								&& ($this instanceof ModuleCatalogList
+									|| $this instanceof ModuleCatalogFeatured
+									|| $this instanceof ModuleCatalogRelated
+									|| $this instanceof ModuleCatalogReference);
 		// setup standard linking
 		$showLink = $fieldConf['eval']['catalog']['showLink'];
-		
-		// image override 
+		// image override
 		if ($blnThumnailOverride)
 		{
-			$showLink = $this->catalog_imagemain_field == $k ? $this->catalog_imagemain_fullsize : 
+			$showLink = $this->catalog_imagemain_field == $k ? $this->catalog_imagemain_fullsize :
 					($this->catalog_imagegallery_field == $k ? $this->catalog_imagegallery_fullsize : ''); // override default
 		}
-
 		$sortBy = $blnThumnailOverride ? $this->sortBy : $fieldConf['eval']['catalog']['sortBy'];
-		
-		$files = deserialize($files,true);
+
+		$files = deserialize($files, true);
 		$countFiles = count($files);
+
 		if (!is_array($files) || $countFiles < 1)
 		{
 			return array('files'=>array(),'src'=>array(),'html'=>array());
-		}	
+		}
 
 		// required for parseMetaFile function (in FrontEnd)
 		$this->multiSRC = $files;
@@ -2684,7 +3176,7 @@ abstract class ModuleCatalog extends Module
 		$arrValues = array();
 		$auxDate = array();
 
-		$counter = 0; 
+		$counter = 0;
 		$allowedDownload = trimsplit(',', strtolower($GLOBALS['TL_CONFIG']['allowedDownload']));
 		if (strlen($fieldConf['eval']['extensions']))
 		{
@@ -2704,16 +3196,18 @@ abstract class ModuleCatalog extends Module
 				$objFile = new File($file);
 
 				$showImage = $objFile->isGdImage && $fieldConf['eval']['catalog']['showImage'];
-				if (!$showImage && in_array($objFile->extension, $allowedDownload) || $showImage) 
+				if (!$showImage && in_array($objFile->extension, $allowedDownload) || $showImage)
 				{
-					$class = (($counter == 0) ? ' first' : '') . (($counter == ($countFiles -1 )) ? ' last' : '') . ((($counter % 2) == 0) ? ' even' : ' odd');
+					$class = (($counter == 0) ? ' first' : '')
+						. (($counter == ($countFiles -1 )) ? ' last' : '')
+						. ((($counter % 2) == 0) ? ' even' : ' odd');
 
 					$this->parseMetaFile(dirname($file), true);
 					$strBasename = strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : specialchars($objFile->basename);
 					$alt = (strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : ucfirst(str_replace('_', ' ', preg_replace('/^[0-9]+_/', '', $objFile->filename))));
 
 					$auxDate[] = $objFile->mtime;
-					
+
 					// images
 					if ($showImage)
 					{
@@ -2721,7 +3215,7 @@ abstract class ModuleCatalog extends Module
 						$h = $fieldConf['eval']['catalog']['imageSize'][1] ? $fieldConf['eval']['catalog']['imageSize'][1] : '';
 						if ($blnThumnailOverride)
 						{
-							$newsize =  deserialize($this->catalog_imagemain_field == $k ? $this->catalog_imagemain_size 
+							$newsize =  deserialize($this->catalog_imagemain_field == $k ? $this->catalog_imagemain_size
 								: ($this->catalog_imagegallery_field == $k ? $this->catalog_imagegallery_size : array()) );
 							$w = ($newsize[0] ? $newsize[0] : '');
 							$h = ($newsize[1] ? $newsize[1] : '');
@@ -2732,7 +3226,7 @@ abstract class ModuleCatalog extends Module
 						(
 							'src'	=> $src,
 							'alt'	=> $alt,
-							'lb'	=> 'lb'.$id,
+							'lb'	=> 'lb'.$strId,
 							'w' 	=> $size[0],
 							'h' 	=> $size[1],
 							'wh'	=> $size[3],
@@ -2740,12 +3234,16 @@ abstract class ModuleCatalog extends Module
 							'metafile' => $this->arrMeta[$objFile->basename],
 						);
 						$tmpFile = '<img src="'.$src.'" alt="'.$alt.'" '.$size[3].' />';
-						if ($showLink)	
+						if ($showLink)
 						{
-							// $tmpFile = '<a rel="lightbox[lb'.$id.']" href="'.$file.'" title="'.$alt.'">'.$tmpFile.'</a>';
-							// we have to supply the catalog id here as we might have more than one catalog with a field with the same name 
+							// we have to supply the catalog id here as we might have more than one catalog with a field with the same name
 							// which will cause the lightbox to display the images for items with the same id in both.
-							$tmpFile = '<a rel="lightbox[lb' . $this->strTable . $id . ']" href="'.$file.'" title="'.$alt.'">'.$tmpFile.'</a>';
+							if(version_compare(TL_VERSION, '2.11', '>='))
+							{
+								$tmpFile = '<a data-lightbox="lb' . $this->strTable . $strId . '" href="'.$file.'" title="'.$alt.'">'.$tmpFile.'</a>';
+							} else {
+								$tmpFile = '<a rel="lightbox[lb' . $this->strTable . $strId . ']" href="'.$file.'" title="'.$alt.'">'.$tmpFile.'</a>';
+							}
 						}
 					}
 					// files
@@ -2779,33 +3277,31 @@ abstract class ModuleCatalog extends Module
 			else if (is_dir(TL_ROOT . '/' . $file))
 			{
 				// Folders
-
 				$subfiles = scan(TL_ROOT . '/' . $file);
 				$this->parseMetaFile($file);
-		
 				foreach ($subfiles as $subfile)
 				{
 					if (is_file(TL_ROOT . '/' . $file . '/' . $subfile))
-					{	
+					{
 						$objFile = new File($file . '/' . $subfile);
 
 						$showImage = $objFile->isGdImage && $fieldConf['eval']['catalog']['showImage'];
-						if (!$showImage && in_array($objFile->extension, $allowedDownload) || $showImage) 
+						if (!$showImage && in_array($objFile->extension, $allowedDownload) || $showImage)
 						{
-							$class = (($counter == 0) ? ' first' : '') . ((($counter % 2) == 0) ? ' even' : ' odd');		
+							$class = (($counter == 0) ? ' first' : '') . ((($counter % 2) == 0) ? ' even' : ' odd');
 
 							$strBasename = strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : specialchars($objFile->basename);
 							$alt = (strlen($this->arrMeta[$objFile->basename][0]) ? $this->arrMeta[$objFile->basename][0] : ucfirst(str_replace('_', ' ', preg_replace('/^[0-9]+_/', '', $objFile->filename))));
 
 							$auxDate[] = $objFile->mtime;
-			
+
 							if ($showImage)
 							{
 								$w = $fieldConf['eval']['catalog']['imageSize'][0] ? $fieldConf['eval']['catalog']['imageSize'][0] : '';
 								$h = $fieldConf['eval']['catalog']['imageSize'][1] ? $fieldConf['eval']['catalog']['imageSize'][1] : '';
 								if ($blnThumnailOverride)
 								{
-									$newsize =  deserialize($this->catalog_imagemain_field == $k ? $this->catalog_imagemain_size 
+									$newsize =  deserialize($this->catalog_imagemain_field == $k ? $this->catalog_imagemain_size
 										: ($this->catalog_imagegallery_field == $k ? $this->catalog_imagegallery_size : array()) );
 									$w = ($newsize[0] ? $newsize[0] : '');
 									$h = ($newsize[1] ? $newsize[1] : '');
@@ -2817,7 +3313,7 @@ abstract class ModuleCatalog extends Module
 								(
 									'src'	=> $src,
 									'alt'	=> $alt,
-									'lb'	=> 'lb'.$id,
+									'lb'	=> 'lb'.$strId,
 									'w' 	=> $size[0],
 									'h' 	=> $size[1],
 									'wh'	=> $size[3],
@@ -2826,12 +3322,16 @@ abstract class ModuleCatalog extends Module
 								);
 
 								$tmpFile = '<img src="'.$src.'" alt="'.$alt.'" '.$size[3].' />';
-								if ($showLink)	
-								{
-									// $tmpFile = '<a rel="lightbox[lb'.$id.']" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
-									// we have to supply the catalog id here as we might have more than one catalog with a field with the same name here.
-									$tmpFile = '<a rel="lightbox[lb' . $this->strTable . $id . ']" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
 
+								if ($showLink)
+								{
+									// we have to supply the catalog id here as we might have more than one catalog with a field with the same name here.
+									if(version_compare(TL_VERSION, '2.11', '>='))
+									{
+										$tmpFile = '<a data-lightbox="lb' . $this->strTable . $strId . '" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
+									} else {
+										$tmpFile = '<a rel="lightbox[lb' . $this->strTable . $strId . ']" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
+									}
 								}
 
 							}
@@ -2843,7 +3343,7 @@ abstract class ModuleCatalog extends Module
 && count($_GET) || strlen($_GET['page'])) ? '&amp;' : '?'). 'file=' . $this->urlEncode($file . '/' . $subfile);
 								$icon = 'system/themes/' . $this->getTheme() . '/images/' . $objFile->icon;
 								$sizetext = '('.number_format(($objFile->filesize/1024), 1, $GLOBALS['TL_LANG']['MSC']['decimalSeparator'], $GLOBALS['TL_LANG']['MSC']['thousandsSeparator']).' kB)';
-								
+
 								$arrSource[$file . '/' . $subfile] = array
 								(
 									'title' => $strBasename,
@@ -2858,7 +3358,7 @@ abstract class ModuleCatalog extends Module
 								$iconfile = '<img src="'.$icon.'" alt="'.$alt.'" />';
 								$tmpFile = $iconfile.' <a href="'.$url.'" title="'.$alt.'">'.$text.' '.$sizetext.'</a>';
 							}
-							
+
 							$arrFiles[$file . '/' . $subfile] = $file . '/' . $subfile;
 							$arrValues[$file . '/' . $subfile] = '<span class="'.($showImage ? 'image' : 'file').$class.'">'.$tmpFile.'</span>';
 							$counter ++;
@@ -2930,19 +3430,16 @@ abstract class ModuleCatalog extends Module
 		$return['src'] 		= $source;
 		$return['html']		= $values;
 
-
 		return $return;
 	}
 
-
 	/**
 	 * Replace Catalog InsertTags including TL InsertTags
-	 * @param string
-	 * @param array
+	 * @param string $strValue
+	 * @param array $arrCatalog
 	 * @return string
 	 */
-
-	protected function replaceCatalogTags($strValue, $arrCatalog)
+	protected function replaceCatalogTags($strValue, array $arrCatalog)
 	{
 		$strValue = trim($strValue);
 
@@ -2965,7 +3462,7 @@ abstract class ModuleCatalog extends Module
 				}
 			}
 		}
-		
+
 		// Replace standard insert tags
 		if (strlen($strValue))
 		{
@@ -2973,17 +3470,14 @@ abstract class ModuleCatalog extends Module
 		}
 
 		return $strValue;
-	} 
-
-
+	}
 
 	/**
 	 * Generate Front-end Url with only catalog ID as parameter
-	 * @param integer
-	 * @param integer
+	 * @param int $field optional
+	 * @param int $value optional
 	 * @return string
 	 */
-
 	public function generateCatalogNavigationUrl($field=false, $value=false)
 	{
 		$jumpTo= $this->catalog_jumpTo?$this->catalog_jumpTo:$this->jumpTo;
@@ -2994,7 +3488,7 @@ abstract class ModuleCatalog extends Module
 			return ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 		}
 
-		if($field)
+		if($field !== false)
 		{
 			$strParams = $GLOBALS['TL_CONFIG']['disableAlias'] ? '&amp;' . $field . '=' . $value  : '/' . $field . '/' . $value;
 		} else {
@@ -3003,10 +3497,16 @@ abstract class ModuleCatalog extends Module
 
 		// Return link to catalog reader page with item alias
 		return ampersand($this->generateFrontendUrl($pageRow, $strParams));
-		
 	}
 
-
+	/**
+	 * Generates the catalog navigation
+	 * @param int $id
+	 * @param int $level
+	 * @param boolean $blnTags optional
+	 * @param string $value optional
+	 * @return string HTML code for the navigation
+	 */
 	protected function renderCatalogNavigationItems($id, $level=1, $blnTags=false, $value='')
 	{
 		$aliasField = $this->getAliasField($this->strTable);
@@ -3024,7 +3524,7 @@ abstract class ModuleCatalog extends Module
 		{
 			return '';
 		}
-		
+
 		$items = array();
 
 		// Determine the layout template
@@ -3048,7 +3548,7 @@ abstract class ModuleCatalog extends Module
 		while($objNodes->next())
 		{
 			$href = $this->generateCatalogUrl($objNodes, $aliasField, $this->strTable, sprintf('/%s/%s', $this->catalog_navigation, $value?$value:$id));
-			
+
 			// Active field
 			if ($this->Input->get('items') == $objNodes->id || $this->Input->get('items') == $objNodes->$aliasField)
 			{
@@ -3059,15 +3559,9 @@ abstract class ModuleCatalog extends Module
 					'isActive' => true,
 					'subitems' => $subitems,
 					'class' => (strlen($strClass) ? $strClass : ''),
-//					'pageTitle' => specialchars($objJump->pageTitle),
 					'title' => specialchars($objNodes->$showField),
 					'link' => $objNodes->$showField,
 					'href' => $href,
-//					'alias' => $objJump->alias,
-//					'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
-//					'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
-//					'accesskey' => $objJump->accesskey,
-//					'tabindex' => $objJump->tabindex
 				);
 
 				continue;
@@ -3080,41 +3574,37 @@ abstract class ModuleCatalog extends Module
 				'isActive' => false,
 				'subitems' => $subitems,
 				'class' => (strlen($strClass) ? $strClass : ''),
-//				'pageTitle' => specialchars($objJump->pageTitle),
 				'title' => specialchars($objNodes->$showField),
 				'link' => $objNodes->$showField,
 				'href' => $href,
-//				'alias' => $objJump->alias,
-//				'target' => (($objJump->type == 'redirect' && $objJump->target) ? ' window.open(this.href); return false;' : ''),
-//				'description' => str_replace(array("\n", "\r"), array(' ' , ''), $objJump->description),
-//				'accesskey' => $objJump->accesskey,
-//				'tabindex' => $objJump->tabindex
 			);
-
 		}
 
 		// Add classes first and last
 		if (count($items))
 		{
 			$last = count($items) - 1;
-
 			$items[0]['class'] = trim($items[0]['class'] . ' first');
 			$items[$last]['class'] = trim($items[$last]['class'] . ' last');
 		}
 
 		$objTemplate->items = $items;
 		return count($items) ? $objTemplate->parse() : '';
-		
 	}
 
-
+	/**
+	 * used internally by internalRenderCatalogNavigation() to hold the trail of the currently selected item.
+	 */
 	protected $arrTrail=array();
+	/**
+	 * used internally by internalRenderCatalogNavigation() to hold the field used to navigate.
+	 */
 	protected $objNavField=NULL;
 
 	/**
 	 * Recursively compile the catalog navigation menu and return it as HTML string
-	 * @param integer
-	 * @param integer
+	 * @param int
+	 * @param int
 	 * @return string
 	 */
 	protected function internalRenderCatalogNavigation($pid, $level, $strActive=NULL)
@@ -3129,12 +3619,12 @@ abstract class ModuleCatalog extends Module
 			{
 				$strItemCount = '(SELECT COUNT(t.id) AS count FROM tl_catalog_tag_rel AS t RIGHT JOIN ' . $this->strTable . ' AS c ON (t.itemid=c.id) WHERE t.valueid=o.id AND t.fieldid=' . $this->objNavField->id . (!BE_USER_LOGGED_IN && $this->publishField ? ' AND c.' . $this->publishField.'=1' : '') . ') AS itemCount';
 			} else {
-				$strItemCount = '(SELECT COUNT(t.id) AS count FROM ' . $this->strTable . ' AS t WHERE ' . 
-				(!BE_USER_LOGGED_IN && $this->publishField ? 't.'.$this->publishField.'=1 AND ' : '') . 
+				$strItemCount = '(SELECT COUNT(t.id) AS count FROM ' . $this->strTable . ' AS t WHERE ' .
+				(!BE_USER_LOGGED_IN && $this->publishField ? 't.'.$this->publishField.'=1 AND ' : '') .
 				$this->catalog_navigation . ' IN (SELECT id FROM  ' . $this->objNavField->sourceTable . ' AS t WHERE pid=o.id) OR '.$this->catalog_navigation.'=o.id) AS itemCount';
 			}
-			$objNodes = $this->Database->execute('SELECT '.$strRoot.', id, ' . $this->objNavField->valueField . 
-											', (SELECT COUNT(*) FROM '. $this->objNavField->sourceTable .' i WHERE i.pid=o.id) AS childCount, ' . 
+			$objNodes = $this->Database->execute('SELECT '.$strRoot.', id, ' . $this->objNavField->valueField .
+											', (SELECT COUNT(*) FROM '. $this->objNavField->sourceTable .' i WHERE i.pid=o.id) AS childCount, ' .
 											$this->objNavField->sourceColumn . ' AS name, ' .
 											$strItemCount .
 											' FROM '. $this->objNavField->sourceTable. ' o WHERE '.$strRoot.' IN ('.implode(',',$ids).') ORDER BY '. $this->objNavField->sort);
@@ -3173,13 +3663,13 @@ abstract class ModuleCatalog extends Module
 				{
 					$subitems .= $this->renderCatalogNavigationItems($objNodes->id, $level, ($this->objNavField->type == 'tags'), $value);
 				}
-				if (count($objNodes->childCount) && $this->objNavField->blnChildren) 
+				if (count($objNodes->childCount) && $this->objNavField->blnChildren)
 				{
 					$subitems .= $this->internalRenderCatalogNavigation($objNodes->id, $level, $strActive);
 				}
 			}
 
-			$strClass .= trim((strlen($subitems) ? 'submenu' : '') 
+			$strClass .= trim((strlen($subitems) ? 'submenu' : '')
 							. (strlen($arrJump['cssClass']) ? ' ' . $arrJump['cssClass'] : '')
 							. ($isTrail ? ' trail' : '')
 							. ' ' . (count($items)%2 ? 'odd' : 'even')
@@ -3246,7 +3736,7 @@ abstract class ModuleCatalog extends Module
 	{
 		$HTTPReferer = (!$skipRawReferer) ? $this->Environment->httpReferer : $this->getReferer();
 
-		// We check the real HTTP referer first, as we might have multiple tabs open in 
+		// We check the real HTTP referer first, as we might have multiple tabs open in
 		// this environment and therefore want to use the "real" referer.
 		if((!$skipRawReferer) && preg_match('#[\/?&]'.$strNavField.'#', $HTTPReferer))
 		{
@@ -3282,13 +3772,13 @@ abstract class ModuleCatalog extends Module
 
 	/**
 	 * Look up all needed stuff and then call the recursive function internalRenderCatalogNavigation
-	 * @param integer
+	 * @param integer $pid
 	 * @return string
 	 */
 	protected function renderCatalogNavigation($pid)
 	{
 		$this->arrTrail=array();
-		// get reference table and column		
+		// get reference table and column
 		$objFields = $this->Database->prepare('SELECT * FROM tl_catalog_fields WHERE pid=? AND colName=?')
 											->limit(1)
 											->execute($this->catalog, $this->catalog_navigation);
@@ -3370,10 +3860,10 @@ abstract class ModuleCatalog extends Module
 		}
 		return $this->internalRenderCatalogNavigation($pid, 1, $root);
 	}
-	
-	/**
+		/**
 	 * List and generate comment form
-	 * @param object
+	 * @param Database_Result $objCatalog
+	 * @return void
 	 */
 	public function processComments(Database_Result $objCatalog)
 	{
@@ -3382,7 +3872,9 @@ abstract class ModuleCatalog extends Module
 									 ->limit(1)
 									 ->execute($objCatalog->pid);
 
-		if ($objArchive->numRows < 1 || !$objArchive->allowComments || !in_array('comments', $this->Config->getActiveModules()))
+		if ($objArchive->numRows < 1
+			|| !$objArchive->allowComments
+			|| !in_array('comments', $this->Config->getActiveModules()))
 		{
 			$this->Template->allowComments = false;
 			return;
@@ -3398,8 +3890,6 @@ abstract class ModuleCatalog extends Module
 		$objConfig->disableCaptcha = $objArchive->disableCaptcha;
 		$objConfig->bbcode = $objArchive->bbcode;
 		$objConfig->moderate = $objArchive->moderate;
-		// TODO: add notifies here.
-		$arrNotifies=array($GLOBALS['TL_ADMIN_EMAIL']);
 
 		// issue #1690 hide member details not working anymore.
 		if($objArchive->hideMember && ($this->Input->post('FORM_SUBMIT')=='com_'. $this->strTable .'_'. $objCatalog->id))
@@ -3409,15 +3899,11 @@ abstract class ModuleCatalog extends Module
 			$this->Input->setPost('name', trim($this->Member->firstname . ' ' . $this->Member->lastname));
 			$this->Input->setPost('email', trim($this->Member->email));
 		}
+
+		// TODO: add notifies here.
+		$arrNotifies=array($GLOBALS['TL_ADMIN_EMAIL']);
 		$this->Comments->addCommentsToTemplate($this->Template, $objConfig, $this->strTable, $objCatalog->id, $arrNotifies);
 
-		if($objArchive->hideMember)
-		{
-			$fields = $this->Template->fields;
-			unset($fields['name']);
-			unset($fields['email']);
-			$this->Template->fields=$fields;
-		}
 		if($objArchive->disableWebsite)
 		{
 			$fields = $this->Template->fields;
@@ -3425,6 +3911,129 @@ abstract class ModuleCatalog extends Module
 			$this->Template->fields=$fields;
 		}
 	}
-}
 
+	/**
+	 * Finishes compiling by writing an error message to the template
+	 * @param string $strMessage
+	 */
+	protected function compileError($strMessage)
+	{
+		global $objPage;
+		$this->Template->error = $strMessage;
+
+		// Do not index the page
+		$objPage->noSearch = 1;
+		$objPage->cache = 0;
+	}
+
+	/**
+	 * Finishes compiling by returning the catalogInvalid error
+	 * @return void
+	 */
+	protected function compileInvalidCatalog()
+	{
+		$result = $this->compileError($GLOBALS['TL_LANG']['MSC']['catalogInvalid']);
+		// Send 404 header
+		header('HTTP/1.0 404 Not Found');
+		return $result;
+	}
+
+	/**
+	 * Finishes compiling by returning the catalogItemInvalid error
+	 * @return void
+	 */
+	protected function compileInvalidItem()
+	{
+		$result = $this->compileError($GLOBALS['TL_LANG']['ERR']['catalogItemInvalid']);
+		// Send 404 header
+		header('HTTP/1.0 404 Not Found');
+		return $result;
+	}
+
+	/**
+	 * Fetches information about the catalogType from the Database
+	 * or returns null if it's invalid
+	 * @return Database_Result for the catalogType
+	 * || null if catalogType is not valid
+	 */
+	protected function getValidCatalogType()
+	{
+		$objCatalogType = $this->Database->prepare('SELECT * FROM tl_catalog_types WHERE id=?')
+										->execute($this->catalog);
+		// validity check
+		if (!$objCatalogType->numRows || !strlen($objCatalogType->tableName))
+		{
+			return null;
+		}
+		else
+		{
+			return $objCatalogType;
+		}
+	}
+
+	/**
+	 * Writes general information into the template
+	 * @return void
+	 */
+	protected function basicVarsToTemplate()
+	{
+		$this->Template->catalog = '';
+		$this->Template->referer = $this->getReferer(ENCODE_AMPERSANDS);
+		$this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
+	}
+
+	/**
+	 * Fetches the requested item from the Database
+	 * based on the id or the alias from the request
+	 * If $arrFields is given, the field names are converted to SQL statements
+	 * when applicable (calc fields)
+	 * @param array $arrFields optional fields to get from DB
+	 * @return null|Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
+	 */
+	protected function fetchCatalogItem(array $arrFields =array())
+	{
+		$objResult = null;
+		$value = $this->Input->get('items');
+		// We have to handle numeric input data differently from string input, as otherwise
+		// we have the problem that within MySQL the following is really true:
+		// Given: id INT(10), alias VARCHAR(...) and a string to match in a query 'somestring'.
+		// id=15
+		// alias='15-some-alias-beginning-with-digits'
+		// somestring='15'
+		// in MySQL this all(!) matches in the original Query here, therefore we have to change it
+		// (and in all other modules aswell).
+		// So, if the input is numeric, do id lookup, otherwise do the alias lookup.
+		// Note we are enforcing a "no numeric aliases policy here but we
+		// can live with that as we would get random results anyway.
+		if(strlen($value))
+		{
+			$strAliasField = is_numeric($value) ? 'id' : ($this->strAliasField ? $this->strAliasField : '');
+			if(strlen($strAliasField))
+			{
+				$fields = '*';
+				if (count($arrFields))
+				{
+					$arrConverted = $this->processFieldSQL($arrFields);
+					$fields = implode(',', $this->systemColumns) . ',' . implode(',', $arrConverted);
+				}
+				$objResult = $this->Database->prepare('SELECT ' . $fields . ','
+													. ' (SELECT name FROM tl_catalog_types'
+													. '  WHERE tl_catalog_types.id=' . $this->strTable . '.pid)'
+													. ' AS catalog_name,'
+													. ' (SELECT jumpTo FROM tl_catalog_types'
+													. '  WHERE tl_catalog_types.id=' . $this->strTable . '.pid)'
+													. ' AS parentJumpTo'
+													. ' FROM ' . $this->strTable . ' WHERE '. $strAliasField . '=?')
+											->limit(1)
+											->execute($value);
+
+				if($objResult && $objResult->numRows < 1)
+				{
+					$objResult = null;
+				}
+			}
+		}
+		return $objResult;
+	}
+}
 ?>

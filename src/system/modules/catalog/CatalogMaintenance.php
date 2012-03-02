@@ -3,24 +3,22 @@
 /**
  * The Catalog extension allows the creation of multiple catalogs of custom items,
  * each with its own unique set of selectable field types, with field extendability.
- * The Front-End modules allow you to build powerful listing and filtering of the 
+ * The Front-End modules allow you to build powerful listing and filtering of the
  * data in each catalog.
- * 
+ *
  * PHP version 5
- * @copyright	Martin Komara, Thyon Design, CyberSpectrum 2007-2009
- * @author		Martin Komara, 
- * 				John Brand <john.brand@thyon.com>,
- * 				Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Catalog
- * @license		LGPL 
+ * @license		LGPL
  * @filesource
  */
 
 /**
  * Class CatalogMaintenance
  *
- * @copyright	CyberSpectrum 2011
- * @author		Christian Schiffler <c.schiffler@cyberspectrum.de>
+ * @copyright	CyberSpectrum and others, see CONTRIBUTORS
+ * @author		Christian Schiffler <c.schiffler@cyberspectrum.de> and others, see CONTRIBUTORS
  * @package		Controller
  */
 class CatalogMaintenance extends Backend
@@ -51,7 +49,6 @@ class CatalogMaintenance extends Backend
 		$this->Template->updateMessage = '';
 
 		$this->fixTags();
-//		$this->checkFields();
 
 		$this->Template->href = $this->getReferer(true);
 		$this->Template->title = specialchars($GLOBALS['TL_LANG']['MSC']['backBT']);
@@ -93,7 +90,7 @@ class CatalogMaintenance extends Backend
 			echo file_get_contents(TL_ROOT . '/system/themes/' . $this->getTheme() . '/images/ok.gif');
 			exit;
 		}
-		
+
 		if ($this->Input->post('act') == 'tags')
 		{
 			// determine all selected tag fields.
@@ -141,10 +138,8 @@ class CatalogMaintenance extends Backend
 			while($objTagFields->next())
 			{
 				$arrData['options'][$objTagFields->id] = sprintf('%s (%s.%s)', $objTagFields->name, $objTagFields->tableName, $objTagFields->colName);
-//				$arrData['options'][$objTagFields->pid.'.'.$objTagFields->pid] = sprintf('%s (%s.%s)', $objTagFields->name, $objTagFields->tableName, $objTagFields->colName);
 			}
 			$objWidget = new CheckBox($this->prepareForWidget($arrData, 'fields', NULL, 'fields', 'tl_catalog_maintenance'));
-//			$objWidget->options = $arrData['options'];
 			$this->Template->tagsContent = '
 <div' . ($arrData['eval']['tl_class'] ? ' class="' . $arrData['eval']['tl_class'] . '"' : '') . '>' . $objWidget->parse() . (($GLOBALS['TL_CONFIG']['oldBeTheme'] || !$objWidget->hasErrors()) ? ((!$GLOBALS['TL_CONFIG']['showHelp'] || !strlen($GLOBALS['TL_LANG']['tl_maintenance']['catalogTagsRebuild'][1]))?'':'
   <p class="tl_help' . (!$GLOBALS['TL_CONFIG']['oldBeTheme'] ? ' tl_tip' : '') . '">'.$GLOBALS['TL_LANG']['tl_maintenance']['catalogTagsRebuild'][1].'</p>') : '') . '
@@ -163,7 +158,7 @@ class CatalogMaintenance extends Backend
 		if(TL_MODE != 'BE')
 			return;
 		$columns = $this->Database->listFields($tableName, true);
-		
+
 		// skip the indexes
 		foreach($columns as $key => $column)
 		{
@@ -172,7 +167,7 @@ class CatalogMaintenance extends Backend
 				unset($columns[$key]);
 			}
 		}
-		
+
 		$invalid=array();
 		$valid=array_merge(array_keys($GLOBALS['TL_DCA'][$tableName]['fields']), $this->systemColumns);
 		foreach($columns as $col)
