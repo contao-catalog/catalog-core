@@ -3984,16 +3984,15 @@ abstract class ModuleCatalog extends Module
 
 	/**
 	 * Fetches the requested item from the Database
-	 * based on the id or the alias from the request
+	 * based on the id or the alias
 	 * If $arrFields is given, the field names are converted to SQL statements
 	 * when applicable (calc fields)
 	 * @param array $arrFields optional fields to get from DB
 	 * @return null|Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
 	 */
-	protected function fetchCatalogItem(array $arrFields =array())
+	protected function fetchCatalogItem($varId, array $arrFields=array())
 	{
 		$objResult = null;
-		$value = $this->Input->get('items');
 		// We have to handle numeric input data differently from string input, as otherwise
 		// we have the problem that within MySQL the following is really true:
 		// Given: id INT(10), alias VARCHAR(...) and a string to match in a query 'somestring'.
@@ -4005,9 +4004,9 @@ abstract class ModuleCatalog extends Module
 		// So, if the input is numeric, do id lookup, otherwise do the alias lookup.
 		// Note we are enforcing a "no numeric aliases policy here but we
 		// can live with that as we would get random results anyway.
-		if(strlen($value))
+		if($varId)
 		{
-			$strAliasField = is_numeric($value) ? 'id' : ($this->strAliasField ? $this->strAliasField : '');
+			$strAliasField = is_numeric($varId) ? 'id' : ($this->strAliasField ? $this->strAliasField : '');
 			if(strlen($strAliasField))
 			{
 				$fields = '*';
@@ -4025,7 +4024,7 @@ abstract class ModuleCatalog extends Module
 													. ' AS parentJumpTo'
 													. ' FROM ' . $this->strTable . ' WHERE '. $strAliasField . '=?')
 											->limit(1)
-											->execute($value);
+											->execute($varId);
 
 				if($objResult && $objResult->numRows < 1)
 				{
@@ -4035,5 +4034,19 @@ abstract class ModuleCatalog extends Module
 		}
 		return $objResult;
 	}
+
+
+    /**
+     * Fetches the requested item from the Database
+     * based on the id or the alias from the request
+     * If $arrFields is given, the field names are converted to SQL statements
+     * when applicable (calc fields)
+     * @param array $arrFields optional fields to get from DB
+     * @return null|Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
+     */
+    protected function fetchCatalogItemFromRequest(array $arrFields=array())
+    {
+        return $this->fetchCatalogItem($this->Input->get('items'), $arrFields);
+    }
 }
 ?>
