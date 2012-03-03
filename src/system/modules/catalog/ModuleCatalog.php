@@ -1222,7 +1222,14 @@ abstract class ModuleCatalog extends Module
 				{
 					$queries[] = $where;
 					if (count($arrFilterUrl['values']['where'][$field]))
-						$params = array_merge($params, $arrFilterUrl['values']['where'][$field]);
+					{
+						if(is_array($arrFilterUrl['values']['where'][$field]))
+						{
+							$params = array_merge($params, $arrFilterUrl['values']['where'][$field]);
+						}else {
+							$params[] = $arrFilterUrl['values']['where'][$field];
+						}
+					}
 				}
 			}
 		}
@@ -4036,17 +4043,17 @@ abstract class ModuleCatalog extends Module
 	}
 
 
-    /**
-     * Fetches the requested item from the Database
-     * based on the id or the alias from the request
-     * If $arrFields is given, the field names are converted to SQL statements
-     * when applicable (calc fields)
-     * @param array $arrFields optional fields to get from DB
-     * @return null|Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
-     */
-    protected function fetchCatalogItemFromRequest(array $arrFields=array())
-    {
-        return $this->fetchCatalogItem($this->Input->get('items'), $arrFields);
-    }
+	/**
+	 * Fetches the requested item from the Database
+	 * based on the id or the alias from the request
+	 * If $arrFields is given, the field names are converted to SQL statements
+	 * when applicable (calc fields)
+	 * @param array $arrFields optional fields to get from DB
+	 * @return null|Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
+	 */
+	protected function fetchCatalogItemFromRequest(array $arrFields=array())
+	{
+		return $this->fetchCatalogItem($this->Input->get('items'), $arrFields);
+	}
 }
 ?>

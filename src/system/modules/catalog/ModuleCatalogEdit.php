@@ -510,7 +510,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 		$this->objDCEdit = new DC_DynamicTableEdit($this->strTable, $this->objCatalogType, $this, $arrValues);
 
 		// if no item, then check if add allowed and then show add form
-		if (count($arrValues) == 0)
+		if (!is_object($objItem))
 			$blnModeAdd = true;
 		else
 		{
