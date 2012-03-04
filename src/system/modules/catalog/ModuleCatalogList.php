@@ -363,19 +363,20 @@ class ModuleCatalogList extends ModuleCatalog
 				{
 					$searchProcedure[] = $filterurl['procedure']['search'][$field];
 					
-					if (is_array($field, $filterurl['values']['search']))
+					if (is_array($filterurl['values']['search'][$field]))
 					{
-					  $searchValues[$field] = $filterurl['values']['search'][$field];
+					  $searchValues = array_merge($searchValues, $filterurl['values']['search'][$field]);
 					}
 					else
 					{
-						$searchValues[$field] = $filterurl['values']['search'][$field];
+						$searchValues[] = $filterurl['values']['search'][$field];
 					}
 				}
 			}
 
+			// field binding not possible here
 			$filterurl['procedure']['where'][] = ' ('.implode(" OR ", $searchProcedure).')';
-			$filterurl['values']['where'] = count($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'], $searchValues)) : $searchValues;
+			$filterurl['values']['where'][] = $searchValues;
 		}
 		
 		return $filterurl;
