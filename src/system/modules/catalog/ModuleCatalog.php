@@ -873,11 +873,10 @@ abstract class ModuleCatalog extends Module
 				{
 					$searchProcedures = array();
 					$searchValues = array();
-
+					
 					foreach($objModules->catalog_search as $searchfield)
 					{
-						if (array_key_exists($searchfield, $moduleFilterUrl['current'])
-							  && array_key_exists($searchfield, $moduleFilterUrl['procedure']['search']))
+						if (array_key_exists($searchfield, $moduleFilterUrl['procedure']['search']))
 						{
 							$searchProcedures[] = $moduleFilterUrl['procedure']['search'][$searchfield];
 							$searchValues = array_merge($searchValues, $moduleFilterUrl['values']['search'][$searchfield]);
