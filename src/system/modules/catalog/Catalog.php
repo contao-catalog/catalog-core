@@ -1020,13 +1020,13 @@ class Catalog extends Backend
 						break;
 
 				case 'date':
-						$value = date($fieldConf['eval']['catalog']['formatStr'], $value);
+						$value = date($fieldConf['eval']['catalog']['formatStr'], intval($value));
 						break;
 
 				default:
 						if ($fieldConf['eval']['rgxp'] == 'date' || $fieldConf['eval']['rgxp'] == 'datim')
 						{
-							$value = date($GLOBALS['TL_CONFIG'][$fieldConf['eval']['rgxp'].'Format'], $value);
+							$value = date($GLOBALS['TL_CONFIG'][$fieldConf['eval']['rgxp'].'Format'], intval($value));
 						}
 			}
 

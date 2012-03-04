@@ -2151,7 +2151,7 @@ abstract class ModuleCatalog extends Module
 		return $result;
 	}
 		/**
-   * HOOK:
+   * HOOK: generateFilterCatalog
 	 * @param array $arrSettings
 	 * @return array $arrSettings with changes from the hooks
 	 */
@@ -2955,7 +2955,7 @@ abstract class ModuleCatalog extends Module
 	}
 
 	/**
-	 * HOOK: allow other extensions to manipulate the item before returning them in the array
+	 * HOOK: generateCatalogItem allow other extensions to manipulate the item before returning them in the array
 	 * @param array $arrCatalogItem
 	 * @param array $arrData
 	 * @return array $arrCatalogItem with changes from the hooks
