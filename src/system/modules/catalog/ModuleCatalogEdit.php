@@ -105,7 +105,9 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 	public function show() {}
 	public function showAll() {}
 	public function undo() {}
-	public function __construct($strTable, Database_Result $objCatalogType, ModuleCatalogEdit $objModule, array $arrData)
+	
+	public function __construct($strTable, Database_Result $objCatalogType,
+	                            ModuleCatalogEdit $objModule, array $arrData)
 	{
 		// TODO: is anything missing in here? remember to only include stuff that we really need in this stub implementation.
 		$this->objCatalogType = $objCatalogType;
@@ -182,6 +184,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 			$strAliasSuffix = '-' . $this->objActiveRecord->id;
 			$strAlias = substr($strAlias, 0, self::MAXALIASLENGTH - strlen($strAliasSuffix)) . $strAliasSuffix;
 		}
+
 		$this->objActiveRecord->$aliasCol = $strAlias;
 	}
 
@@ -206,6 +209,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 
 					$this->objActiveRecord->$field=$this->$callback[0]->$callback[1]($data, $this);
 				}
+				
 				$this->field = '$field';
 			}
 		}
@@ -233,6 +237,7 @@ class DC_DynamicTableEdit extends DC_DynamicTable
 
 					$this->objActiveRecord->$field=$this->$callback[0]->$callback[1]($data, $this);
 				}
+				
 				$this->field = '$field';
 			}
 		}
@@ -411,6 +416,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 	 * @var DC_DynamicTableEdit
 	 */
 	protected $objDCEdit = NULL;
+	
 	/**
 	 * ID for identifying the submitted form
 	 * @var string
@@ -1124,68 +1130,18 @@ class ModuleCatalogEdit extends ModuleCatalog
 
 		elseif (in_array($fieldConfig['eval']['rgxp'], array('date', 'time', 'datim')))
 		{
-			// date picker was changed in 2.10
-			if(version_compare(VERSION.'.'.BUILD, '2.10.0', '>='))
-			{
-				$rgxp = $fieldConfig['eval']['rgxp'];
-
-				switch ($rgxp)
-				{
-					case 'datim':
-						$time = ",\n      timePicker: true";
-						break;
-					case 'time':
-						$time = ",\n      timePickerOnly: true";
-						break;
-					default:
-						$time = '';
-						break;
-				}
-				$datepicker = '<img src="plugins/datepicker/icon.gif" width="20" height="20" id="toggle_' . $objWidget->id . '" class="datepicker_' . $objWidget->id . '">';
-
-				$format = $GLOBALS['TL_CONFIG'][$rgxp.'Format'];
-
-				$GLOBALS['TL_CSS'][] = 'plugins/datepicker/dashboard.css';
-				$GLOBALS['TL_JAVASCRIPT'][] = 'plugins/datepicker/datepicker.js';
-				$GLOBALS['TL_HEAD'][]=
-				'<script type="text/javascript"><!--//--><![CDATA[//><!-- 
-				window.addEvent(\'domready\', function() {
-					new DatePicker(\'#ctrl_' . $objWidget->id . '\', {
-						allowEmpty: true,
-						toggleElements: \'#toggle_' . $objWidget->id . '\',
-						pickerClass: \'datepicker_dashboard\',
-						format: \'' . $format . '\',
-						inputOutputFormat: \'' . $format . '\',
-						positionOffset: { x:130, y:-185 }' . $time . ',
-						startDay: ' . $GLOBALS['TL_LANG']['MSC']['weekOffset'] . ',
-						days: [\''. implode("','", $GLOBALS['TL_LANG']['DAYS']) . '\'],
-						dayShort: ' . $GLOBALS['TL_LANG']['MSC']['dayShortLength'] . ',
-						months: [\''. implode("','", $GLOBALS['TL_LANG']['MONTHS']) . '\'],
-						monthShort: ' . $GLOBALS['TL_LANG']['MSC']['monthShortLength'] . '
-					});
-				});
-				//--><!]]></script>';
-
-				$objWidget->datepicker = $datepicker;
-				$result = preg_replace('#(</td>.+)(</td>.+</tr>)#s', ' \\1' . $datepicker . ' \\2', $objWidget->parse(), 1);
-			} else {
-				$GLOBALS['TL_HEAD'][]='
-				<script type="text/javascript"><!--//--><![CDATA[//><!--
-				window.addEvent(\'domready\', function() { ' . sprintf($this->getDatePickerString(), 'ctrl_' . $objWidget->id) . ' });
-				//--><!]]></script>';
-
-				// files moved since 2.8 RC1
-				if(version_compare(VERSION.'.'.BUILD, '2.8.0', '<'))
-				{
-					$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/calendar.js" type="text/javascript"></script>';
-					$GLOBALS['TL_CSS'][] = 'plugins/calendar/calendar.css';
-				} else {
-					$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/js/calendar.js" type="text/javascript"></script>';
-					$GLOBALS['TL_CSS'][] = 'plugins/calendar/css/calendar.css';
-				}
-
-				$result = $objWidget->parse();
-			}
+			$objDate = new Date($objWidget->value,
+			                    $GLOBALS['TL_CONFIG'][$fieldConfig['eval']['rgxp'] . 'Format']);
+			
+      $objWidget->value = $objDate->$fieldConfig['eval']['rgxp'];
+      
+      $datepicker = $this->datePicker($objWidget->value,
+                                      $fieldConfig['eval']['rgxp'],
+                                      $objWidget->id);
+      
+			$result = preg_replace('#(</td>.+)(</td>.+</tr>)#s',
+    		                     ' \\1' . $datepicker . ' \\2',
+  		                       $objWidget->parse(), 1);
 		}
 		return $result;
 	}

@@ -396,8 +396,6 @@ abstract class ModuleCatalog extends Module
 								case 'select':
 									$v = $arrAlias[$v];
 									break;
-
-								default:;
 							}
 						}
 						$current[$field] = $v;
@@ -1525,8 +1523,6 @@ abstract class ModuleCatalog extends Module
 									case 'date':
 										$fieldValue = $label;
 										break;
-
-									default:
 								}
 
 								$newcurrent = $current;
@@ -1826,20 +1822,11 @@ abstract class ModuleCatalog extends Module
 						// date picker
 						if ($fieldConf['eval']['catalog']['type'] == 'date')
 						{
-							$date = array
-							(
-								'maxlength'	=> 10,
-								'rgxp'		=> 'date'
-							);
-							// date picker was changed in 2.10
-							if (version_compare(VERSION, '2.10', '>='))
-								$date['datepicker'] = true;
-							else
-								$date['datepicker'] = $this->getDatePickerString();
-							$result = array_merge($result, $date);
+							$result['maxlength']  = 10;
+							$result['rgxp'] 			= 'date';
+							$result['datepicker'] = true;
 						}
 						break;
-					default :;
 				}
 			}
 		}
@@ -2193,28 +2180,28 @@ abstract class ModuleCatalog extends Module
 			case 'range':
 				$widget['value'] = deserialize($widget['value'], true);
 				$arrFields = array();
-				for ($i=0; $i<2; $i++)
+				
+				foreach (array('From', 'To') as $i => $bound)
 				{
-					$datepicker = ($widget['datepicker'] ? '
-					<script type="text/javascript"><!--//--><![CDATA[//><!--
-					window.addEvent(\'domready\', function() { ' . sprintf($widget['datepicker'], 'ctrl_' . $widget['id'] .'_'.$i) . ' });
-					//--><!]]></script>'
-					: '');
+				  $inputId = $widget['id'] . '_' . $bound;
+				  $datepicker = '';
+				  
+				  if ($widget['datepicker'])
+				    $datepicker = $this->datePicker(0, $widget['rgxp'], $inputId);
 
-					// adding a <label for=""> to the inputs
-					$strLabel = ($i == 0) ? $GLOBALS['TL_LANG']['MSC']['rangeFrom'] : $GLOBALS['TL_LANG']['MSC']['rangeTo'];
-
+				  // adding a <label for=""> to the inputs
+					$strLabel = $GLOBALS['TL_LANG']['MSC']['range' . $bound];
+		      
 					$arrFields[] = sprintf('%s<input type="text" name="%s[]" id="ctrl_%s" class="text%s" value="%s"%s />',
-							(strlen($strLabel)) ? '<label for="ctrl_' . $widget['id'].'_'.$i . '">' . $strLabel . '</label>' : '',
+							(strlen($strLabel)) ? '<label for="ctrl_' . $inputId . '">' . $strLabel . '</label>' : '',
 							$widget['name'],
-							$widget['id'].'_'.$i,
+							$inputId,
 							(strlen($widget['class']) ? ' ' . $widget['class'] : ''),
 							specialchars($widget['value'][$i]),
 							$widget['attributes'])
-							. $datepicker . ($i==1 ? $this->addSubmit($widget) : '');
-
+							. $datepicker . ($bound == 'To' ? $this->addSubmit($widget) : '');
 				}
-
+        
 				$return = sprintf('%s<div id="ctrl_%s"%s>%s</div>',
 						$label,
 						$widget['id'],
@@ -2318,11 +2305,136 @@ abstract class ModuleCatalog extends Module
 						$widget['attributes'],
 						$strOptions);
 				break;
-		}
+		}		
 		return '<div class="widget'.(strlen($widget['id']) ? ' ' . $widget['id'] : '').'">
 '.$return.'
 </div>
 ';
+	}
+	
+	/**
+	 * Generates the code to include a date picker for a field
+	 * and includes the libraries and the styles for it 
+	 * @param mixed $initValue
+	 * @param string $strRgxp
+	 * @param string $strWidgetId
+	 * @return string HTML to add after the field 
+	 * @post $GLOBALS['TL_JAVASCRIPT'] contains the datepicker library
+	 * @post $GLOBALS['TL_CSS'] contains the datepicker styles
+	 */
+	protected function datePicker($initValue, $strRgxp, $strWidgetId)
+	{
+		// load datepicker library and styles
+		// Contao takes care of duplicates
+	  if (version_compare(VERSION, '2.10', '>='))
+	  {
+	    $GLOBALS['TL_CSS'][] = 'plugins/datepicker/dashboard.css';
+	    $GLOBALS['TL_JAVASCRIPT'][] = 'plugins/datepicker/datepicker.js';
+	  }
+	  else if(version_compare(VERSION.'.'.BUILD, '2.8.0', '<'))
+		{
+			$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/calendar.js" type="text/javascript"></script>';
+			$GLOBALS['TL_CSS'][] = 'plugins/calendar/calendar.css';
+		} else {
+			$GLOBALS['TL_HEAD'][]='<script src="plugins/calendar/js/calendar.js" type="text/javascript"></script>';
+			$GLOBALS['TL_CSS'][] = 'plugins/calendar/css/calendar.css';
+		}
+	  
+	  $loaderScript = '<script type="text/javascript"><!--//--><![CDATA[//><!--
+	    window.addEvent(\'domready\', function() {'
+	    . $this->datePickerString($initValue, $strRgxp, $strWidgetId) . '
+	    });
+	    //--><!]]></script>';
+	  
+	  $result = $loaderScript;
+	  
+	  // image needed in HTML for the new datepicker script *sigh* 
+	  if (version_compare(VERSION, '2.10', '>='))
+	  {
+	    $result = '<img src="plugins/datepicker/icon.gif" width="20" height="20" id="toggle_'
+				   . $strWidgetId . '" style="vertical-align:-6px;" />' . $result;
+	  }
+	  
+	  return $result;
+	}
+	
+	/**
+	 * Creates the JS call for a new datepicker instance
+	 * @see Controller::getDatePickerString()
+	 * @param mixed $initValue
+	 * @param string $strRgxp name of the regular expression from eval
+	 * @param string $strWidgetId to identify the widget
+	 * @return string HTML and JS source code 
+	 */
+	protected function datePickerString($initValue, $strRgxp, $strWidgetId)
+	{ 
+	  $result = '';
+	  
+    if (version_compare(VERSION, '2.10', '<'))
+      $result = $this->getDatePickerString();
+    
+    else
+    {
+      $time = '';
+      
+      /**
+       * @see DataContainer::row()
+       */
+	    switch ($strRgxp)
+	    {
+	      case 'datim':
+	        $time = ",\n      timePicker: true";
+	        break;
+	        
+	      case 'time':
+	        if (version_compare(VERSION, '2.11', '<'))
+	          $time = ",\n      timePickerOnly: true";
+	        
+	        else
+	          $time = ",\n      pickOnly:\"time\"";
+	        
+	        break;
+	      break;
+	    }
+	    
+	    $format = $GLOBALS['TL_CONFIG'][$strRgxp.'Format'];
+	    
+	    if (version_compare(VERSION, '2.11', '<'))
+	    {
+	      $result = "new DatePicker('#ctrl_" . $strWidgetId . "', {
+  	      allowEmpty: true,
+  	      toggleElements: '#toggle_" . $strWidgetId . "',
+  	      pickerClass: 'datepicker_dashboard',
+  	      format: '" . $format . "',
+  	      inputOutputFormat: '" . $format . "',
+  	      positionOffset:{x:130,y:-185}" . $time . ",
+  	      startDay: " . $GLOBALS['TL_LANG']['MSC']['weekOffset'] . ",
+  	      days:[' " . implode("','", $GLOBALS['TL_LANG']['DAYS']) . "'],
+  	      dayShort: " . $GLOBALS['TL_LANG']['MSC']['dayShortLength'] . ",
+  	      months:['" . implode("','", $GLOBALS['TL_LANG']['MONTHS']) . "'],
+  	      monthShort: " . $GLOBALS['TL_LANG']['MSC']['monthShortLength'] . "
+  	      });";
+	    }
+	    
+	    else
+	    {
+	      $format = Date::formatToJs($format);
+	      
+	      $result = 'new Picker.Date($$("#ctrl_' . $strWidgetId . '"), {
+	        draggable:false,
+	        toggle:$$("#toggle_' . $strWidgetId . '"),
+	        format:"' . $format . '",
+	        positionOffset:{
+	          x:-197,y:-182}' . $time . ',
+	          pickerClass:"datepicker_dashboard",
+	          useFadeInOut:!Browser.ie,
+	          startDay:' . $GLOBALS['TL_LANG']['MSC']['weekOffset'] . ',
+	          titleFormat:"' . $GLOBALS['TL_LANG']['MSC']['titleFormat'] . '"
+	      });';
+	    }
+    }
+	    
+    return $result;
 	}
 
 	/**
