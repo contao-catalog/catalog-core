@@ -69,19 +69,20 @@ class ModuleCatalogList extends ModuleCatalog
 	protected function compile()
 	{
 		$filterurl = $this->parseFilterUrl($this->catalog_search);
-
+		
 		$arrCondition = deserialize($this->catalog_condition, true);
 		$blnCondition = false;
 
-		if ($this->catalog_condition_enable && is_array($arrCondition))
+		if ($this->catalog_condition_enable
+		    && count($arrCondition))
 		{
-			$blnCondition = count($arrCondition)
-							&& count(array_intersect_key($filterurl['current'], array_flip($arrCondition))) >= count($arrCondition);
+			$blnCondition = count(array_intersect_key($filterurl['current'],
+			                      array_values($arrCondition))) == count($arrCondition);
 		}
 
 		if (!$this->catalog_condition_enable
 			|| ($this->catalog_condition_enable && $blnCondition)
-			|| is_array($filterurl['procedure']['search']))
+			|| count($filterurl['procedure']['search']))
 		{
 			$this->catalog_search = deserialize($this->catalog_search, true);
 
@@ -163,6 +164,7 @@ class ModuleCatalogList extends ModuleCatalog
 			}
 			else
 				$this->Template->header = $GLOBALS['TL_LANG']['MSC']['catalogSearchEmpty'];
+			
 			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);
 		} // condition check
 		else
@@ -218,17 +220,17 @@ class ModuleCatalogList extends ModuleCatalog
 	 */
 	protected function generateStmtParams(array $arrFilterUrl)
 	{
-		$params = array($this->catalog);
+		$params = array($this->catalog); // first parameter will be the pid
 
-		if (is_array($arrFilterUrl['values']['where']))
+		if (count($arrFilterUrl['values']['where']))
 		{
-			$params = array_merge($params, $arrFilterUrl['values']['where']);
+			$params = array_merge($params, ModuleCatalog::flatParams($arrFilterUrl['values']['where']));
 		}
 
 		// add tags combination here...
 
-		if (is_array($arrFilterUrl['values']['tags'])) {
-			$params = array_merge($params, $arrFilterUrl['values']['tags']);
+		if (count($arrFilterUrl['values']['tags'])) {
+			$params = array_merge($params, ModuleCatalog::flatParams($arrFilterUrl['values']['tags']));
 		}
 
 		return $params;
@@ -282,8 +284,9 @@ class ModuleCatalogList extends ModuleCatalog
 	 */
 	protected function fetchItems($intLimit, $offset, $strWhere, $strOrder, array $arrParams)
 	{
-		$arrFields = array_merge($this->processFieldSQL($this->catalog_visible), $this->systemColumns);
-
+		$arrFields = array_merge($this->processFieldSQL($this->catalog_visible),
+		                         $this->systemColumns);
+		
 		if($this->strAliasField)
 		{
 			$arrFields[] = $this->strAliasField;
@@ -315,18 +318,18 @@ class ModuleCatalogList extends ModuleCatalog
 	{
 		$where = array();
 
-		if($this->catalog_where)
+		if(strlen($this->catalog_where))
 			$where[] = $this->replaceInsertTags($this->catalog_where);
-
-		if ($arrFilterUrl['procedure']['where'])
+		
+		if (count($arrFilterUrl['procedure']['where']))
 		{
 			$where[] = implode(" " . $this->catalog_query_mode . " ", $arrFilterUrl['procedure']['where']);
 		}
-
+    
 		// TODO: changing the catalog_tags_mode to catalog_query_mode here will allow us to filter multiple tags.
 		// 		 but this beares side kicks in ModuleCatalog aswell. Therefore we might rather want to add another combination method
 		//		 here?
-		if ($arrFilterUrl['procedure']['tags'])
+		if (count($arrFilterUrl['procedure']['tags']))
 		{
 			$where[] = implode(" " . $this->catalog_tags_mode . " ", $arrFilterUrl['procedure']['tags']);
 		}
@@ -349,7 +352,7 @@ class ModuleCatalogList extends ModuleCatalog
 	{
 		if (is_array($this->catalog_search)
 			&& strlen($this->catalog_search[0])
-			&& is_array($filterurl['procedure']['search']))
+			&& count($filterurl['procedure']['search']))
 		{
 			$searchProcedure = array();
 			$searchValues = array();
@@ -359,23 +362,22 @@ class ModuleCatalogList extends ModuleCatalog
 				if (array_key_exists($field, $filterurl['procedure']['search']))
 				{
 					$searchProcedure[] = $filterurl['procedure']['search'][$field];
-					if (is_array($filterurl['values']['search'][$field]))
+					
+					if (is_array($field, $filterurl['values']['search']))
 					{
-						foreach($filterurl['values']['search'][$field] as $item)
-						{
-							$searchValues[] = $item;
-						}
+					  $searchValues[$field] = $filterurl['values']['search'][$field];
 					}
 					else
 					{
-						$searchValues[] = $filterurl['values']['search'][$field];
+						$searchValues[$field] = $filterurl['values']['search'][$field];
 					}
 				}
 			}
 
 			$filterurl['procedure']['where'][] = ' ('.implode(" OR ", $searchProcedure).')';
-			$filterurl['values']['where'] = is_array($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'],$searchValues)) : $searchValues;
+			$filterurl['values']['where'] = count($filterurl['values']['where']) ? (array_merge($filterurl['values']['where'], $searchValues)) : $searchValues;
 		}
+		
 		return $filterurl;
 	}
 
