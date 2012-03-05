@@ -288,9 +288,9 @@ class ModuleCatalogNotify extends ModuleCatalog
 		$objEmail->from = $GLOBALS['TL_ADMIN_EMAIL'];
 		$objEmail->subject = $this->replaceCatalogTags($this->catalog_subject, $arrItem);
 			
-		// replace catalog and other inserttags
-		$text = $this->replaceCatalogTags($this->catalog_notify, $arrItem);
-
+		$text = ModuleCatalog::replaceCatalogTags($this->catalog_notify, $arrItem);
+		$text = $this->replaceInsertTags($text);
+		
 		// replace catalog name
 		$text = str_replace('##catalog##', $objCatalogType->name, $text);
 		
@@ -390,7 +390,7 @@ class ModuleCatalogNotify extends ModuleCatalog
     if($objResult
        && (!BE_USER_LOGGED_IN)
        && $this->publishField
-       && (! $objResult->__get($this->publishField)))
+       && (! $objResult->{$this->publishField}))
     {
       $objResult = null;
     }

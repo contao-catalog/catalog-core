@@ -2,27 +2,23 @@
 
 <form action="<?php echo $this->action; ?>" id="<?php echo $this->formId; ?>" method="post" enctype="<?php echo $this->enctype; ?>">
 <div class="formbody">
-<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>">
-<input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}">
+<input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>" />
+<input type="hidden" name="REQUEST_TOKEN" value="{{request_token}}" />
 
 <?php foreach($this->arrWidgets as $objWidget): ?>
 <div class="field_<?php echo $objWidget->name; ?> <?php echo $objWidget->type; ?>">
-<?php if(!in_array($objWidget->type, array('checkbox'))): ?>
-<?php echo $objWidget->generateLabel(); ?>
-<?php echo $objWidget->generateWithError(); ?><?php if($objWidget->datepicker) echo $objWidget->datepicker; ?>
-<?php elseif($objWidget instanceof FormExplanation): ?>
+
 <?php echo $objWidget->parse(); ?>
-<?php else: ?>
-<?php echo $objWidget->generateWithError(); ?><?php if($objWidget->datepicker) echo $objWidget->datepicker; ?>
-<?php endif; ?>
+<?php if($objWidget->datepicker) echo $objWidget->datepicker; ?>
+
 <span class="tip"><?php echo $objWidget->tip; ?></span>
 </div>
 <?php endforeach; ?>
 
 <div class="submit_container <?php echo $this->rowLast; ?>">
-<input type="submit" name="save" id="save" class="tl_submit" accesskey="s" value="<?php echo specialchars($GLOBALS['TL_LANG']['MSC']['save']); ?>">
-<input type="submit" name="saveNclose" id="saveNclose" class="tl_submit" accesskey="c" value="<?php echo specialchars($GLOBALS['TL_LANG']['MSC']['saveNclose']); ?>">
-<input type="submit" name="saveNcreate" id="saveNcreate" class="tl_submit" accesskey="n" value="<?php echo specialchars($GLOBALS['TL_LANG']['MSC']['saveNcreate']); ?>">
+<input type="submit" name="save" id="save" class="tl_submit" accesskey="s" value="<?php echo specialchars($GLOBALS['TL_LANG']['MSC']['save']); ?>" />
+<input type="submit" name="saveNclose" id="saveNclose" class="tl_submit" accesskey="c" value="<?php echo specialchars($GLOBALS['TL_LANG']['MSC']['saveNclose']); ?>" />
+<input type="submit" name="saveNcreate" id="saveNcreate" class="tl_submit" accesskey="n" value="<?php echo specialchars($GLOBALS['TL_LANG']['MSC']['saveNcreate']); ?>" />
 </div>
 </div>
 </form>

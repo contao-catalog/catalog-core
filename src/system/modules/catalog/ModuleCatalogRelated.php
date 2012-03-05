@@ -85,7 +85,8 @@ class ModuleCatalogRelated extends ModuleCatalog
 		
 			$arrCatalog = $objCatalog->fetchAllAssoc();
 			$arrCatalog = $arrCatalog[0];
-			$strWhere = $this->replaceCatalogTags($this->catalog_where, $arrCatalog);
+			$strWhere = ModuleCatalog::replaceCatalogTags($this->catalog_where, $arrCatalog);
+			$strWhere = $this->replaceInsertTags($strWhere);
 			$strOrder = ($this->catalog_random_disable) ? trim($this->catalog_order) : "RAND()";
 	
 			// Add Related Query
@@ -139,12 +140,8 @@ class ModuleCatalogRelated extends ModuleCatalog
 				
 			// Template variables
 			$this->Template->visible = $this->catalog_visible;
-
 		}
-
 	}
-
-
 }
 
 ?>

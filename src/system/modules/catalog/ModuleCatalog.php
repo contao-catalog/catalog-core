@@ -417,16 +417,17 @@ abstract class ModuleCatalog extends Module
 
 		// GET from here on
 
+		$procedure = array('search' => array(), 'where' => array(), 'tags' => array(), 'tree' => array());
+		$values = array('search' => array(), 'where' => array(), 'tags' => array(), 'tree' => array());
+		
 		// return if no filter parameters in URL
-		if (! (is_array($current) || count($current)))
+		if (! count($current))
 		{
-			return array();
+			return array('procedure' => $procedure, 'values' => $values, 'current' => $current);
 		}
 		
 		// Setup Variables, procedures and values are stored per field
 		$baseurl = $this->generateFilterUrl();
-		$procedure = array('search' => array(), 'where' => array(), 'tags' => array(), 'tree' => array());
-		$values = array('search' => array(), 'where' => array(), 'tags' => array(), 'tree' => array());
 		$searchPhrases = self::splitSearchKeywords($this->Input->get(self::PARAMSEARCH));
 
 		// GET search value if several phrases are used
@@ -3589,12 +3590,12 @@ abstract class ModuleCatalog extends Module
 	}
 
 	/**
-	 * Replace Catalog InsertTags including TL InsertTags
-	 * @param string $strValue
-	 * @param array $arrCatalog
-	 * @return string
+	 * Replace Catalog InsertTags in a text
+	 * @param string $strValue the text
+	 * @param array $arrCatalog a catalog item
+	 * @return string $strValue with replaced {{catalog::…}} tags
 	 */
-	protected function replaceCatalogTags($strValue, array $arrCatalog)
+	public static function replaceCatalogTags($strValue, array $arrCatalog)
 	{
 		$strValue = trim($strValue);
 
@@ -3617,13 +3618,7 @@ abstract class ModuleCatalog extends Module
 				}
 			}
 		}
-
-		// Replace standard insert tags
-		if (strlen($strValue))
-		{
-			$strValue = $this->replaceInsertTags($strValue);
-		}
-
+		
 		return $strValue;
 	}
 
@@ -4142,6 +4137,7 @@ abstract class ModuleCatalog extends Module
 	 * based on the id or the alias
 	 * If $arrFields is given, the field names are converted to SQL statements
 	 * when applicable (calc fields)
+	 * @param mixed $varId id or alias from request
 	 * @param array $arrFields optional fields to get from DB
 	 * @return null|Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
 	 */
@@ -4187,6 +4183,7 @@ abstract class ModuleCatalog extends Module
 				}
 			}
 		}
+		
 		return $objResult;
 	}
 

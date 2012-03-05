@@ -86,7 +86,8 @@ class ModuleCatalogReference extends ModuleCatalog
 			$arrCatalog = $objCatalog->fetchAllAssoc();
 			$arrCatalog = $arrCatalog[0];
 
-			$strWhere = $this->replaceCatalogTags($this->catalog_where, $arrCatalog);
+			$strWhere = ModuleCatalog::replaceCatalogTags($this->catalog_where, $arrCatalog);
+			$strWhere = $this->replaceInsertTags($strWhere);
 			$strOrder = ($this->catalog_random_disable) ? trim($this->catalog_order) : "RAND()";
 	
 			// Add Related Query
@@ -196,44 +197,7 @@ class ModuleCatalogReference extends ModuleCatalog
 			$this->Template->visible = $this->catalog_visible;
 
 		}
-
 	}
-
-	protected function replaceCatalogTags($strValue, $arrCatalog)
-	{
-		$strValue = trim($strValue);
-
-		// Replace tags in messageText and messageHtml
-		$tags = array();
-		preg_match_all('/{{[^}]+}}/i', $strValue, $tags);
-
-		// Replace tags of type {{catalog::fieldname}}
-		foreach ($tags[0] as $tag)
-		{
-			$elements = explode('::', trim(str_replace(array('{{', '}}'), array('', ''), $tag)));
-
-			// {{catalog::fieldname}}
-			if (strtolower($elements[0]) == 'catalog')
-			{
-				$key = $elements[1];
-				if (array_key_exists($key, $arrCatalog))
-				{
-					$strValue = str_replace($tag, str_replace("\n", "<br>", $arrCatalog[$key]), $strValue);
-				}
-			}
-		}
-		
-
-		// Replace standard insert tags
-		if (strlen($strValue))
-		{
-			$strValue = $this->replaceInsertTags($strValue);
-		}
-
-		return $strValue;
-	} 
-
-
 }
 
 ?>
