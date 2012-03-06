@@ -280,26 +280,43 @@ class ModuleCatalogList extends ModuleCatalog
 	 * @param string $strWhere part for the WHERE clause
 	 * @param string $strOrder part for the ORDER BY clause
 	 * @param array $arrParams to pass to the statement
+	 * @param array $arrJoins all TABLE JOINs that shall also be applied as array of strings like: 'LEFT JOIN tl_something ON ({{table}}.id=tl_something.ref_id)') - the token {{table}} will get replaced automatically.
 	 * @return Database_Result
 	 */
-	protected function fetchItems($intLimit, $offset, $strWhere, $strOrder, array $arrParams)
+	protected function fetchItems($intLimit, $offset, $strWhere, $strOrder, array $arrParams, array $arrJoins=array())
 	{
-		$arrFields = array_merge($this->processFieldSQL($this->catalog_visible),
-		                         $this->systemColumns);
-		
+		$arrFields = $this->processFieldSQL($this->catalog_visible);
+		// prepend columns to minimize the possibility of collisions when using JOINs
+		foreach ($this->systemColumns as $field)
+		{
+			$arrFields[] = $this->strTable . '.' . $field;
+		}
+
 		if($this->strAliasField)
 		{
 			$arrFields[] = $this->strAliasField;
+		}
+
+		if($arrJoins)
+		{
+			$strJoins = str_replace('{{table}}', $this->strTable, implode(' ', $arrJoins));
+		} else {
+			$strJoins = '';
 		}
 
 		$strOrder = strlen($strOrder) ? " ORDER BY " . $strOrder : "";
 
 		$strWhereOrder = ($strWhere?" AND " . $strWhere:'').$strOrder;
 		// Run Query
-		$objCatalogStmt = $this->Database->prepare('SELECT '.implode(',', $arrFields).',
-													(SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS catalog_name,
-													(SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo
-													FROM '.$this->strTable.' WHERE pid=?'.$strWhereOrder);
+		$objCatalogStmt = $this->Database->prepare(sprintf('SELECT %1$s,
+													(SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=%2$s.pid) AS catalog_name,
+													(SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=%2$s.pid) AS parentJumpTo
+													FROM %2$s %3$s WHERE pid=? %4$s',
+													implode(',', $arrFields),
+													$this->strTable,
+													$strJoins,
+													$strWhereOrder
+													));
 		// Limit result
 		if ($intLimit > 0)
 		{
@@ -325,7 +342,7 @@ class ModuleCatalogList extends ModuleCatalog
 		{
 			$where[] = implode(" " . $this->catalog_query_mode . " ", $arrFilterUrl['procedure']['where']);
 		}
-    
+
 		// TODO: changing the catalog_tags_mode to catalog_query_mode here will allow us to filter multiple tags.
 		// 		 but this beares side kicks in ModuleCatalog aswell. Therefore we might rather want to add another combination method
 		//		 here?
@@ -365,7 +382,7 @@ class ModuleCatalogList extends ModuleCatalog
 					
 					if (is_array($filterurl['values']['search'][$field]))
 					{
-					  $searchValues = array_merge($searchValues, $filterurl['values']['search'][$field]);
+						$searchValues = array_merge($searchValues, $filterurl['values']['search'][$field]);
 					}
 					else
 					{

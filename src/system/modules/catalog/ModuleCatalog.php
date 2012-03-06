@@ -441,14 +441,24 @@ abstract class ModuleCatalog extends Module
 			foreach ($searchFields as $fieldName)
 			{
 				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$fieldName];
+				// deleted field but still mentioned in module configuration?
+				if(!$fieldConf)
+					continue;
 				$sqlFieldName = self::sqlFieldName($fieldName, $fieldConf['eval']['catalog']);
 				
 				switch ($fieldConf['eval']['catalog']['type'])
 				{
 					case 'date':
 						// month only search
-						$sqlFieldName = 'CAST(MONTHNAME(FROM_UNIXTIME(' . $fieldName .')) AS CHAR';
+						$sqlFieldName = 'CAST(MONTHNAME(FROM_UNIXTIME(' . $fieldName .')) AS CHAR)';
 						break;
+
+					case 'select' :
+						list($itemTable, $valueCol) = explode('.', $fieldConf['eval']['catalog']['foreignKey']);
+						$sqlFieldName = '(SELECT '.$valueCol.' FROM ' .$itemTable . ' WHERE id='.$fieldName . ')';
+						break;
+					// TODO: add support for other fieldtypes here (tags, ...)
+
 				}
 				
 				$searchFieldNames[] = $sqlFieldName;
@@ -458,7 +468,6 @@ abstract class ModuleCatalog extends Module
 			$procedure['search'][$searchFields[0]] = str_repeat($searchFieldName, count($searchPhrases)) . '1'; // terminate the last AND
 			$values['search'][$searchFields[0]] = self::searchFor($searchPhrases);
 		}
-
 		foreach ($fields as $field=>$data)
 		{
 			$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$field];
@@ -545,8 +554,10 @@ abstract class ModuleCatalog extends Module
 					default:
 						// HOOK: Might be a custom field type, check if that one has registered a hook
 						$hookQuery = $this->generateFilterHook($field, $fieldConf, $searchPhrase);
-						$procedure['search'][$field] = $hookQuery['procedure'];
-						$values['search'][$field] = array_merge($values['search'][$field], $hookQuery['values']);
+						if($hookQuery['procedure'])
+							$procedure['search'][$field] = $hookQuery['procedure'];
+						if($hookQuery['values'])
+							$values['search'][$field] = array_merge($values['search'][$field], $hookQuery['values']);
 				}
 			} // /search
 
@@ -595,19 +606,19 @@ abstract class ModuleCatalog extends Module
 				$strSqlWhereClause = '(' . $sqlFieldName . ' BETWEEN ? AND ?)';
 
 				if (strlen($minValue))
-          $values['where'][$field][] = $minValue;
-				
+					$values['where'][$field][] = $minValue;
+
 				else
 					$strSqlWhereClause = '(' . $sqlFieldName . ' < ?)';
 
 				if (strlen($maxValue))
 					$values['where'][$field][] = $maxValue;
-				
+
 				else
 					$strSqlWhereClause = '(' . $sqlFieldName . ' > ?)';
-			  				
+
 				$procedure['where'][$field] = $strSqlWhereClause;
-				
+
 				// use the __ notation again
 				$current[$field] = $this->Input->get($field);
 			}
@@ -643,8 +654,8 @@ abstract class ModuleCatalog extends Module
 					case 'checkbox':
 						$procedure['where'][$field] = $field."=?";
 						$values['where'][$field][] = ($this->Input->get($field) == 'true' ? 1 : 0);
-						
-						if ($blnTree && in_array($field, $arrTree)) 
+
+						if ($blnTree && in_array($field, $arrTree))
 						{
 							$procedure['tree'][$field] = $field . "=?";
 							$values['tree'][$field][] = ($this->Input->get($field) == 'true' ? 1 : 0);
@@ -662,19 +673,19 @@ abstract class ModuleCatalog extends Module
 						{
 							$procedure['where'][$field] = $field."=?";
 							$values['where'][$field][] = $value;
-							if ($blnTree && in_array($field, $arrTree)) 
+							if ($blnTree && in_array($field, $arrTree))
 							{
 								$procedure['tree'][$field] = $field."=?";
 								$values['tree'][$field][] = $value;
 							}
 						}
 						break;
-						
+
 					case 'date':
 						$procedure['where'][$field] = $field . "=?";
 						$value = new Date($this->Input->get($field));
 						$values['where'][$field][] = $value->timestamp;
-            
+
 						if ($blnTree && in_array($field, $arrTree)) 
 						{
 							$procedure['tree'][$field] = $field . "=?";
@@ -696,29 +707,27 @@ abstract class ModuleCatalog extends Module
 						break;
 
 					default: // f.e. calc
-  				  if ($fieldConf['eval']['catalog']['formatFunction'] == 'date')
-    					{
-    					  $dayBegin = strtotime($this->Input->get($field));
-    					  $dayEnd = $dayBegin + 24*60*60 -1;
-    					  
-    					  $procedure['where'][$field] = $sqlFieldName . ' BETWEEN ' . $dayBegin . ' AND ' . $dayEnd; 
-    					}
-    					
-    					else
-    					{
-    					  $procedure['where'][$field] = $sqlFieldName ."=?";
-    					  $values['where'][$field][] = $this->Input->get($field);
-    					}
+						if ($fieldConf['eval']['catalog']['formatFunction'] == 'date')
+						{
+							$dayBegin = strtotime($this->Input->get($field));
+							$dayEnd = $dayBegin + 24*60*60 -1;
+							$procedure['where'][$field] = $sqlFieldName . ' BETWEEN ' . $dayBegin . ' AND ' . $dayEnd; 
+						}
+
+						else
+						{
+							$procedure['where'][$field] = $sqlFieldName ."=?";
+							$values['where'][$field][] = $this->Input->get($field);
+						}
+
+						$current[$field] = $this->Input->get($field);
   
-  						$current[$field] = $this->Input->get($field);
-  
-  						if ($blnTree && in_array($field, $arrTree)) 
-  						{
-  							$procedure['tree'][$field] = $sqlFieldName ."=?";
-  							$values['tree'][$field][] = $this->Input->get($field);
-  						}
-  						
-  						break;
+						if ($blnTree && in_array($field, $arrTree))
+						{
+							$procedure['tree'][$field] = $sqlFieldName ."=?";
+							$values['tree'][$field][] = $this->Input->get($field);
+						}
+						break;
 				}
 			} // /filter
 
@@ -874,7 +883,7 @@ abstract class ModuleCatalog extends Module
 				{
 					$searchProcedures = array();
 					$searchValues = array();
-					
+
 					foreach($objModules->catalog_search as $searchfield)
 					{
 						if (array_key_exists($searchfield, $moduleFilterUrl['procedure']['search']))
@@ -887,8 +896,8 @@ abstract class ModuleCatalog extends Module
 					// mix search into where
 					if (count($searchProcedures))
 					{
-					  $queries[] = ' (' . implode(' OR ', $searchProcedures) .')';
-					  $params = array_merge($params, $searchValues);
+						$queries[] = ' (' . implode(' OR ', $searchProcedures) .')';
+						$params = array_merge($params, $searchValues);
 					}
 				}
 
@@ -918,18 +927,19 @@ abstract class ModuleCatalog extends Module
 					$queries[] = implode(' '.$objModules->catalog_tags_mode.' ',
 					                     $moduleFilterUrl['procedure']['tags']);
 				
-  				if (count($moduleFilterUrl['values']['tags'])) {
-  					$params = array_merge($params, self::flatParams($moduleFilterUrl['values']['tags']));
-  				}
+					if (count($moduleFilterUrl['values']['tags']))
+					{
+						$params = array_merge($params, self::flatParams($moduleFilterUrl['values']['tags']));
+					}
 				}
 			}
 		}
 		
 		return array
 		(
-		    'query' => implode(' AND ', $queries),
-		    'params' => $params
-    );
+			'query' => implode(' AND ', $queries),
+			'params' => $params
+		);
 	}
 	
 	/**
@@ -939,14 +949,14 @@ abstract class ModuleCatalog extends Module
 	 */
 	protected static function flatParams(array $arrParams)
 	{
-	  $params = array();
-	  
-	  foreach ($arrParams as $field => $values)
-	  {
-	    $params = array_merge($params, $values);
-	  }
-	  
-	  return $params;
+		$params = array();
+
+		foreach ($arrParams as $field => $values)
+		{
+			$params = array_merge($params, $values);
+		}
+
+		return $params;
 	}
 
 	/**
@@ -1189,12 +1199,12 @@ abstract class ModuleCatalog extends Module
 
 			if ($pos !== false)
 			{
-  			for ($i=0; $i < $pos; $i++)
-  			{
-  			  $fieldName = $arrTree[$i];
-  			  
-  				if (strlen($arrFilterUrl['procedure']['tree'][$fieldName]))
-  					$queries[] = $arrFilterUrl['procedure']['tree'][$fieldName];
+				for ($i=0; $i < $pos; $i++)
+				{
+					$fieldName = $arrTree[$i];
+
+					if (strlen($arrFilterUrl['procedure']['tree'][$fieldName]))
+						$queries[] = $arrFilterUrl['procedure']['tree'][$fieldName];
           
   				if (strlen($arrFilterUrl['values']['tree'][$fieldName]))
   					$params = array_merge($params, $arrFilterUrl['values']['tree'][$fieldName]);
@@ -1220,33 +1230,33 @@ abstract class ModuleCatalog extends Module
 	{
 		$queries = array();
 		$params = array();
-		
+
 		$treeQuery = self::buildTreeQuery($strField, $arrFilterUrl, $arrTree);
 		if (count($treeQuery['query']))
 		{
 			$queries = $treeQuery['query'];
 			$params = $treeQuery['params'];
 		}
-		
+
 		if (count($arrBasicQuery['query']))
 		{
 			$queries[] = $arrBasicQuery['query'];
 			$params = array_merge($params, $arrBasicQuery['params']);
 		}
-		
+
 		// combine together all query params we are using
 		// TODO: take the tree into account here
-    if (count($arrFilterUrl['procedure']['where']))
+		if (count($arrFilterUrl['procedure']['where']))
 		{
 			foreach($arrFilterUrl['procedure']['where'] as $field => $where)
 			{
-			  // ignore conditions generated by the field or which use this field
+				// ignore conditions generated by the field or which use this field
 				// would be nice to filter tags in OR mode, but this mode is selected
 				// in the lister module
-        if ($field != $strField && ! self::fieldInSql($where, $strField))
+				if ($field != $strField && ! self::fieldInSql($where, $strField))
 				{
 					$queries[] = $where;
-					
+
 					if (count($arrFilterUrl['values']['where'][$field]))
 					{
 						$params = array_merge($params, $arrFilterUrl['values']['where'][$field]);
@@ -1254,7 +1264,7 @@ abstract class ModuleCatalog extends Module
 				}
 			}
 		}
-		
+
 		return array (
 			'query' => implode(' AND ', $queries),
 			'params' => $params
@@ -1296,8 +1306,8 @@ abstract class ModuleCatalog extends Module
 		// optionally restrict to published items
 		if ((! BE_USER_LOGGED_IN) && $this->publishField)
 		{
-		  if (array_key_exists($this->publishField, $query))
-		    $queries[] = $this->publishField . '=1';
+			if (array_key_exists($this->publishField, $query))
+		  		$queries[] = $this->publishField . '=1';
 		}
 
 		return array (
@@ -1322,11 +1332,11 @@ abstract class ModuleCatalog extends Module
 			$pos = (array_search($strField, $arrTree)+1);
 			
 			if ($pos !== false)
-			{			  
-  			for ($i=$pos; $i<=count($arrTree); $i++)
-  			{
-  				unset($result[$arrTree[$i]]);
-  			}
+			{
+				for ($i=$pos; $i<=count($arrTree); $i++)
+  				{
+  					unset($result[$arrTree[$i]]);
+				}
 			}
 		}
 
@@ -1363,7 +1373,7 @@ abstract class ModuleCatalog extends Module
 			// Get Tree View
 			$tree = $this->getTree();
 			$basicQuery = $this->buildBasicQuery();
-			
+
 			// Setup filters and option values
 			$filterOptions = array();
 			foreach ($arrFilters as $fieldconfig)
@@ -1750,14 +1760,14 @@ abstract class ModuleCatalog extends Module
 	 * @return array Widget configuration
 	 */
 	protected function generateWidgetConfigTags($strFieldName, array $fieldConf,
-	                                            $input, array $arrCurrent,
-	                                            array $arrTree, $strQuery,
-	                                            array $arrParams, $blnLastInTree)
+												$input, array $arrCurrent,
+												array $arrTree, $strQuery,
+												array $arrParams, $blnLastInTree)
 	{
 		$newcurrent = $arrCurrent;
 		unset($newcurrent[$strFieldName]);
 		$newcurrent = self::clearTree($strFieldName, $newcurrent, $arrTree);
-		
+
 		// first the clear option
 		$addOption = array();
 		$addOption['value'] = $this->generateFilterUrl($newcurrent, true, $blnLastInTree);
@@ -1858,11 +1868,11 @@ abstract class ModuleCatalog extends Module
 						// date picker
 						if ($fieldConf['eval']['catalog']['type'] == 'date')
 						{
-							$result['maxlength']  = 10;
-							$result['rgxp'] 			= 'date';
-							$result['datepicker'] = true;
+							$result['maxlength']	= 10;
+							$result['rgxp']			= 'date';
+							$result['datepicker']	= true;
 						}
-						
+
 						break;
 				}
 			}
@@ -2150,8 +2160,8 @@ abstract class ModuleCatalog extends Module
 
 		return $result;
 	}
-		/**
-   * HOOK: generateFilterCatalog
+	/**
+	 * HOOK: generateFilterCatalog
 	 * @param array $arrSettings
 	 * @return array $arrSettings with changes from the hooks
 	 */
@@ -2217,16 +2227,16 @@ abstract class ModuleCatalog extends Module
 			case 'range':
 				$widget['value'] = deserialize($widget['value'], true);
 				$arrFields = array();
-				
+
 				foreach (array('From', 'To') as $i => $bound)
 				{
-				  $inputId = $widget['id'] . '_' . $bound;
-				  $datepicker = '';
-				  
-				  if ($widget['datepicker'])
-				    $datepicker = $this->datePicker(0, $widget['rgxp'], $inputId);
+					$inputId = $widget['id'] . '_' . $bound;
+					$datepicker = '';
 
-				  // adding a <label for=""> to the inputs
+					if ($widget['datepicker'])
+						$datepicker = $this->datePicker(0, $widget['rgxp'], $inputId);
+
+					// adding a <label for=""> to the inputs
 					$strLabel = $GLOBALS['TL_LANG']['MSC']['range' . $bound];
 		      
 					$arrFields[] = sprintf('%s<input type="text" name="%s[]" id="ctrl_%s" class="text%s" value="%s"%s />',
@@ -2238,7 +2248,7 @@ abstract class ModuleCatalog extends Module
 							$widget['attributes'])
 							. $datepicker . ($bound == 'To' ? $this->addSubmit($widget) : '');
 				}
-        
+
 				$return = sprintf('%s<div id="ctrl_%s"%s>%s</div>',
 						$label,
 						$widget['id'],
@@ -2342,7 +2352,7 @@ abstract class ModuleCatalog extends Module
 						$widget['attributes'],
 						$strOptions);
 				break;
-		}		
+		}
 		return '<div class="widget'.(strlen($widget['id']) ? ' ' . $widget['id'] : '').'">
 '.$return.'
 </div>
