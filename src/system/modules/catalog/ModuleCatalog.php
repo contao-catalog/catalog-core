@@ -3379,15 +3379,17 @@ abstract class ModuleCatalog extends Module
 					{
 						$w = $fieldConf['eval']['catalog']['imageSize'][0] ? $fieldConf['eval']['catalog']['imageSize'][0] : '';
 						$h = $fieldConf['eval']['catalog']['imageSize'][1] ? $fieldConf['eval']['catalog']['imageSize'][1] : '';
+						$m = $fieldConf['eval']['catalog']['imageSize'][2] ? $fieldConf['eval']['catalog']['imageSize'][2] : '';
 						if ($blnThumnailOverride)
 						{
 							$newsize =  deserialize($this->catalog_imagemain_field == $k ? $this->catalog_imagemain_size
 								: ($this->catalog_imagegallery_field == $k ? $this->catalog_imagegallery_size : array()) );
 							$w = ($newsize[0] ? $newsize[0] : '');
 							$h = ($newsize[1] ? $newsize[1] : '');
+							$m = ($newsize[2] ? $newsize[2] : '');
 						}
-						$src = $this->getImage($this->urlEncode($file), $w, $h, $fieldConf['eval']['catalog']['imageSize'][2]);
-						$size = getimagesize(TL_ROOT . '/' . $src);
+						$src = $this->getImage($this->urlEncode($file), $w, $h, $m);
+						$size = getimagesize(TL_ROOT . '/' . urldecode($src));
 						$arrSource[$file] = array
 						(
 							'src'	=> $src,
@@ -3465,15 +3467,17 @@ abstract class ModuleCatalog extends Module
 							{
 								$w = $fieldConf['eval']['catalog']['imageSize'][0] ? $fieldConf['eval']['catalog']['imageSize'][0] : '';
 								$h = $fieldConf['eval']['catalog']['imageSize'][1] ? $fieldConf['eval']['catalog']['imageSize'][1] : '';
+								$m = $fieldConf['eval']['catalog']['imageSize'][2] ? $fieldConf['eval']['catalog']['imageSize'][2] : '';
 								if ($blnThumnailOverride)
 								{
 									$newsize =  deserialize($this->catalog_imagemain_field == $k ? $this->catalog_imagemain_size
 										: ($this->catalog_imagegallery_field == $k ? $this->catalog_imagegallery_size : array()) );
 									$w = ($newsize[0] ? $newsize[0] : '');
 									$h = ($newsize[1] ? $newsize[1] : '');
+                                    $m = ($newsize[2] ? $newsize[2] : '');
 								}
-								$src = $this->getImage($this->urlEncode($file . '/' . $subfile), $w, $h, $fieldConf['eval']['catalog']['imageSize'][2]);
-								$size = getimagesize(TL_ROOT . '/' . $src);
+								$src = $this->getImage($this->urlEncode($file . '/' . $subfile), $w, $h, $m);
+								$size = getimagesize(TL_ROOT . '/' . urldecode($src));
 
 								$arrSource[$file . '/' . $subfile] = array
 								(
