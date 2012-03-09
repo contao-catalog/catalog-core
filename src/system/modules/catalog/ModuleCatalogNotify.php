@@ -385,7 +385,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 	 */
 	protected function fetchCatalogItemFromRequest(array $arrFields =array()) {
     $objResult = parent::fetchCatalogItemFromRequest($arrFields);
-
+    
     // restrict to published items
     if($objResult
        && (!BE_USER_LOGGED_IN)

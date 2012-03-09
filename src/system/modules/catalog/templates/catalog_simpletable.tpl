@@ -5,9 +5,7 @@
 <tr>
 <?php list($field, $heading) = each($this->entries); ?>
 <?php foreach ($heading['data'] as $field=>$data): ?>
-<?php if (!in_array($field, array('catalog_name','parentJumpTo'))): ?>
 <th class="field <?php echo $field; ?>"><?php echo $data['label']; ?></th>
-<?php endif; ?>
 <?php endforeach; ?>
 </tr>
 </thead>

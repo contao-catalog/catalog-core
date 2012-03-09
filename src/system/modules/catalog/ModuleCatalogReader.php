@@ -75,7 +75,7 @@ class ModuleCatalogReader extends ModuleCatalog
       return $this->compileInvalidCatalog();
     }
 		
-    $objItem = $this->fetchCatalogItemFromRequest();
+    $objItem = $this->fetchCatalogItemFromRequest($this->catalog_visible);
 
     // give error if nothing found
     if(! $objItem)
@@ -286,8 +286,8 @@ class ModuleCatalogReader extends ModuleCatalog
 	 * @see ModuleCatalog::fetchCatalogItemFromRequest()
 	 */
 	protected function fetchCatalogItemFromRequest(array $arrFields =array()) {
-    $objResult = parent::fetchCatalogItemFromRequest($this->catalog_visible);
-
+    $objResult = parent::fetchCatalogItemFromRequest($arrFields);
+    
     // restrict to published items
     if($objResult
        && (!BE_USER_LOGGED_IN)

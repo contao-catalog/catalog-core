@@ -6,7 +6,7 @@
 <div class="item<?php echo $entry['class'] ? ' '.$entry['class'] : ''; ?>">
 <?php if($entry['linkEdit']): ?><?php echo $entry['linkEdit']; ?><?php endif; ?>
 <?php foreach ($entry['data'] as $field=>$data): ?>
-<?php if (strlen($data['raw']) && !in_array($field, array('catalog_name','parentJumpTo'))): ?>
+<?php if (strlen($data['raw'])): ?>
 <div class="field <?php echo $field; ?>">
 	<div class="label"><?php echo $data['label']; ?></div>
 	<div class="value"><?php echo $data['value']; ?></div>

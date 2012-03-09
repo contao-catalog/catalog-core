@@ -22,7 +22,8 @@
  * @package		Controller
  */
 abstract class ModuleCatalog extends Module
-{	/**
+{
+	/**
 	 * Tablename
 	 * @var string
 	 */
@@ -64,7 +65,7 @@ abstract class ModuleCatalog extends Module
 	 * @var array
 	 */
 	protected $systemColumns = array('id', 'pid', 'sorting', 'tstamp');
-
+	
 	/**
 	 * @var string
 	 */
@@ -2764,11 +2765,14 @@ abstract class ModuleCatalog extends Module
 	{
 		$i=0;
 		$arrCatalog = array();
-
+		
 		$objCatalog->reset();
 		while ($objCatalog->next())
 		{
-			$arrCatalog[$i]['id'] = $objCatalog->id;
+			foreach ($this->systemColumns as $sysCol)
+			{
+				$arrCatalog[$i][$sysCol] = $objCatalog->{$sysCol};
+			}
 			$arrCatalog[$i]['catalog_name'] = $objCatalog->catalog_name;
 			$arrCatalog[$i]['parentJumpTo'] = $objCatalog->parentJumpTo;
 			$arrCatalog[$i]['tablename'] = $this->strTable;
@@ -4144,61 +4148,65 @@ abstract class ModuleCatalog extends Module
 		$this->Template->catalog = '';
 		$this->Template->referer = $this->getReferer(ENCODE_AMPERSANDS);
 		$this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
-	}
-
+	}	
+	
 	/**
-	 * Fetches the requested item from the Database
-	 * based on the id or the alias
-	 * If $arrFields is given, the field names are converted to SQL statements
-	 * when applicable (calc fields)
-	 * @param mixed $varId id or alias from request
-	 * @param array $arrFields optional fields to get from DB
-	 * @return null|Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
+	 * Fetches all items which should be displayed from the database
+	 *
+	 * @pre isset($this->objCatalogType)
+	 * @param array $arrFields which fields show be fetched, additionally to $this->systemColumns
+	 * @param string $strWhere optional part for the WHERE clause
+	 * @param array $arrParams optional to pass to the statement
+	 * @param string $strOrder optional part for the ORDER BY clause
+	 * @param int $intLimit optional to how many items?
+	 * @param int $intOffset optional start from which item?
+	 * @param array $arrJoins all TABLE JOINs that shall also be applied as array of strings like: 'LEFT JOIN tl_something ON ({{table}}.id=tl_something.ref_id)') - the token {{table}} will get replaced automatically.
+	 * @return Database_Result
 	 */
-	protected function fetchCatalogItem($varId, array $arrFields=array())
+	protected function fetchCatalogItems(array $arrFields, $strWhere ='',
+																				array $arrParams =array(),
+																				$strOrder ='', $intLimit =0,
+																				$intOffset =0, array $arrJoins=array())
 	{
-		$objResult = null;
-		// We have to handle numeric input data differently from string input, as otherwise
-		// we have the problem that within MySQL the following is really true:
-		// Given: id INT(10), alias VARCHAR(...) and a string to match in a query 'somestring'.
-		// id=15
-		// alias='15-some-alias-beginning-with-digits'
-		// somestring='15'
-		// in MySQL this all(!) matches in the original Query here, therefore we have to change it
-		// (and in all other modules aswell).
-		// So, if the input is numeric, do id lookup, otherwise do the alias lookup.
-		// Note we are enforcing a "no numeric aliases policy here but we
-		// can live with that as we would get random results anyway.
-		if($varId)
-		{
-			$strAliasField = is_numeric($varId) ? 'id' : ($this->strAliasField ? $this->strAliasField : '');
-			if(strlen($strAliasField))
-			{
-				$fields = '*';
-				if (count($arrFields))
-				{
-					$arrConverted = $this->processFieldSQL($arrFields);
-					$fields = implode(',', $this->systemColumns) . ',' . implode(',', $arrConverted);
-				}
-				$objResult = $this->Database->prepare('SELECT ' . $fields . ','
-													. ' (SELECT name FROM tl_catalog_types'
-													. '  WHERE tl_catalog_types.id=' . $this->strTable . '.pid)'
-													. ' AS catalog_name,'
-													. ' (SELECT jumpTo FROM tl_catalog_types'
-													. '  WHERE tl_catalog_types.id=' . $this->strTable . '.pid)'
-													. ' AS parentJumpTo'
-													. ' FROM ' . $this->strTable . ' WHERE '. $strAliasField . '=?')
-											->limit(1)
-											->execute($varId);
-
-				if($objResult && $objResult->numRows < 1)
-				{
-					$objResult = null;
-				}
-			}
-		}
-		
-		return $objResult;
+	  $arrFields = $this->processFieldSQL($arrFields);
+	  
+	  // prepend columns to minimize the possibility of collisions when using JOINs
+	  foreach ($this->systemColumns as $sysField)
+	  {
+	    $arrFields[] = sprintf('%s.%s AS %s',
+	        $this->strTable,
+	        $sysField, $sysField);
+	  }
+	
+	  if($this->strAliasField)
+	    $arrFields[] = $this->strAliasField;
+	  
+	  $strJoins = '';
+	  if($arrJoins)
+	    $strJoins = str_replace('{{table}}', $this->strTable, implode(' ', $arrJoins));
+	  
+	  $strOrder = strlen($strOrder) ? " ORDER BY " . $strOrder : "";
+	  $strWhereOrder = ($strWhere?" AND " . $strWhere:'') . $strOrder;
+	  
+	  // pid
+	  $params = array($this->objCatalogType->id);
+	  $params = array_merge($params, $arrParams);
+	  	  
+	  // Run Query
+	  $objCatalogStmt = $this->Database->prepare(sprintf('SELECT %1$s,
+	      (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=%2$s.pid) AS catalog_name,
+	      (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=%2$s.pid) AS parentJumpTo
+	      FROM %2$s %3$s WHERE pid=? %4$s',
+	      implode(',', $arrFields),
+	      $this->strTable,
+	      $strJoins,
+	      $strWhereOrder));
+	  
+	  // Limit result
+	  if ($intLimit > 0)
+	    $objCatalogStmt->limit($intLimit, $intOffset);
+	  
+	  return $objCatalogStmt->execute($params);
 	}
 
 
@@ -4207,12 +4215,21 @@ abstract class ModuleCatalog extends Module
 	 * based on the id or the alias from the request
 	 * If $arrFields is given, the field names are converted to SQL statements
 	 * when applicable (calc fields)
-	 * @param array $arrFields optional fields to get from DB
-	 * @return null|Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
+	 * @param array $arrFields fields to get from DB
+	 * @return Database_Result with all item's fields + 'catalog_name' + 'parentJumpTo'
 	 */
-	protected function fetchCatalogItemFromRequest(array $arrFields=array())
+	protected function fetchCatalogItemFromRequest(array $arrFields)
 	{
-		return $this->fetchCatalogItem($this->Input->get('items'), $arrFields);
+		$items = $this->Input->get('items');
+		$aliasField = 'id';
+		
+		if ((! is_numeric($items)
+				&& strlen($this->strAliasField)))
+			$aliasField = $this->strAliasField;
+		
+		$where = $aliasField . '=?';
+		
+		return $this->fetchCatalogItems($arrFields, $where, array($items));
 	}
 }
 ?>

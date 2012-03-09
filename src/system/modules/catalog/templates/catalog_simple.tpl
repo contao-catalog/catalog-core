@@ -5,12 +5,10 @@
 <?php foreach ($this->entries as $entry): ?>
 <div class="item<?php echo $entry['class'] ? ' '.$entry['class'] : ''; ?>">
 <?php foreach ($entry['data'] as $field=>$data): ?>
-<?php if (!in_array($field, array('catalog_name','parentJumpTo'))): ?>
 <div class="field <?php echo $field; ?>">
 	<div class="label"><?php echo $data['label']; ?></div>
 	<div class="value"><?php echo $data['value']; ?></div>
 </div>
-<?php endif; ?>
 <?php endforeach; ?>
 
 <?php if ($entry['showLink'] && $entry['link']): ?>

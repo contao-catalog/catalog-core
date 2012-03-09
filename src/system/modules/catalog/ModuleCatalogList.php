@@ -24,7 +24,8 @@
  */
 
 class ModuleCatalogList extends ModuleCatalog
-{	/**
+{
+	/**
 	 * Template
 	 * @var string
 	 */
@@ -48,16 +49,16 @@ class ModuleCatalogList extends ModuleCatalog
 				$objTemplate->href = 'contao/main.php?do=themes&amp;table=tl_module&amp;act=edit&amp;id=' . $this->id;
 			else
 				$objTemplate->href = 'typolight/main.php?do=modules&amp;act=edit&amp;id=' . $this->id;
-
+			
 			return $objTemplate->parse();
 		}
 
 		// Fallback template
 		if (!strlen($this->catalog_layout))
 			$this->catalog_layout = $this->strTemplate;
-
+		
 		$this->strTemplate = $this->catalog_layout;
-
+		
 		$this->catalog_visible = deserialize($this->catalog_visible);
 		
 		return parent::generate();
@@ -140,8 +141,9 @@ class ModuleCatalogList extends ModuleCatalog
 				$this->Template->pagination = $objPagination->generate("\n  ");
 			}
 			
-			$objCatalog = $this->fetchItems($limit, $offset, $strWhere, $strOrder, $arrParams);
-
+			$objCatalog = $this->fetchCatalogItems($this->catalog_visible, $strWhere,
+																						$arrParams, $strOrder, $limit, $offset);
+			
 			if (!$limit)
 				$total = $objCatalog->numRows;
 			
@@ -185,6 +187,7 @@ class ModuleCatalogList extends ModuleCatalog
 
 		// Template variables
 		$this->Template->visible = $this->catalog_visible;
+		$this->Template->arrSystemColumns = $this->systemColumns;
 	}
 		/**
 	 * Replaces the catalog var in the template with a message that the
@@ -220,8 +223,8 @@ class ModuleCatalogList extends ModuleCatalog
 	 */
 	protected function generateStmtParams(array $arrFilterUrl)
 	{
-		$params = array($this->catalog); // first parameter will be the pid
-
+		$params = array();
+		
 		if (count($arrFilterUrl['values']['where']))
 		{
 			$params = array_merge($params, ModuleCatalog::flatParams($arrFilterUrl['values']['where']));
@@ -237,7 +240,7 @@ class ModuleCatalogList extends ModuleCatalog
 	}
 
 	/**
-	 * @param array $filterurl
+	 * @param array $arrFilterUrl
 	 * @return string for the ORDER BY part
 	 */
 	protected function generateStmtOrderBy(array $arrFilterUrl)
@@ -262,68 +265,16 @@ class ModuleCatalogList extends ModuleCatalog
 	 */
 	protected function fetchItemCount($strWhere, array $arrParams)
 	{
+		// pid
+		$params = array_merge(array($this->objCatalogType->id), $arrParams);
+		
 		$objTotalStmt = $this->Database->prepare(sprintf("SELECT COUNT(id) AS count FROM %s WHERE pid=? %s", 
 													$this->strTable,
 													$strWhere?" AND " . $strWhere:''
 												));
 
-		$objTotal = $objTotalStmt->execute($arrParams);
+		$objTotal = $objTotalStmt->execute($params);
 		return $objTotal->count;
-	}
-
-	/**
-	 * Fetches all items which should be displayed from the database
-	 *
-	 * @pre isset($this->objCatalogType)
-	 * @param int $intLimit to how many items?
-	 * @param int $offset start from which item?
-	 * @param string $strWhere part for the WHERE clause
-	 * @param string $strOrder part for the ORDER BY clause
-	 * @param array $arrParams to pass to the statement
-	 * @param array $arrJoins all TABLE JOINs that shall also be applied as array of strings like: 'LEFT JOIN tl_something ON ({{table}}.id=tl_something.ref_id)') - the token {{table}} will get replaced automatically.
-	 * @return Database_Result
-	 */
-	protected function fetchItems($intLimit, $offset, $strWhere, $strOrder, array $arrParams, array $arrJoins=array())
-	{
-		$arrFields = $this->processFieldSQL($this->catalog_visible);
-		// prepend columns to minimize the possibility of collisions when using JOINs
-		foreach ($this->systemColumns as $field)
-		{
-			$arrFields[] = $this->strTable . '.' . $field;
-		}
-
-		if($this->strAliasField)
-		{
-			$arrFields[] = $this->strAliasField;
-		}
-
-		if($arrJoins)
-		{
-			$strJoins = str_replace('{{table}}', $this->strTable, implode(' ', $arrJoins));
-		} else {
-			$strJoins = '';
-		}
-
-		$strOrder = strlen($strOrder) ? " ORDER BY " . $strOrder : "";
-
-		$strWhereOrder = ($strWhere?" AND " . $strWhere:'').$strOrder;
-		// Run Query
-		$objCatalogStmt = $this->Database->prepare(sprintf('SELECT %1$s,
-													(SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id=%2$s.pid) AS catalog_name,
-													(SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=%2$s.pid) AS parentJumpTo
-													FROM %2$s %3$s WHERE pid=? %4$s',
-													implode(',', $arrFields),
-													$this->strTable,
-													$strJoins,
-													$strWhereOrder
-													));
-		// Limit result
-		if ($intLimit > 0)
-		{
-			$objCatalogStmt->limit($intLimit, $offset);
-		}
-
-		return $objCatalogStmt->execute($arrParams);
 	}
 
 	/**
