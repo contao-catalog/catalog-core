@@ -285,7 +285,7 @@ class ModuleCatalogReader extends ModuleCatalog
 	 * (non-PHPdoc)
 	 * @see ModuleCatalog::fetchCatalogItemFromRequest()
 	 */
-	protected function fetchCatalogItemFromRequest(array $arrFields =array()) {
+	protected function fetchCatalogItemFromRequest(array $arrFields) {
     $objResult = parent::fetchCatalogItemFromRequest($arrFields);
     
     // restrict to published items
