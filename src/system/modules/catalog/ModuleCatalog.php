@@ -457,7 +457,6 @@ abstract class ModuleCatalog extends Module
 						$sqlFieldName = '(SELECT '.$valueCol.' FROM ' .$itemTable . ' WHERE id='.$fieldName . ')';
 						break;
 					// TODO: add support for other fieldtypes here (tags, ...)
-
 				}
 				
 				$searchFieldNames[] = $sqlFieldName;
@@ -488,7 +487,8 @@ abstract class ModuleCatalog extends Module
 					case 'decimal':
 					case 'file':
 					case 'url':
-						$procedure['search'][$field] = '('.$field.' LIKE ?)';
+					case 'calc':
+						$procedure['search'][$field] = '(' . $sqlFieldName . ' LIKE ?)';
 						$values['search'][$field][] = '%' . $searchPhrase . '%';
 						break;
 
