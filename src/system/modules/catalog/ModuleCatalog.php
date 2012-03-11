@@ -24,24 +24,6 @@
 abstract class ModuleCatalog extends Module
 {
 	/**
-	 * Tablename
-	 * @var string
-	 */
-	protected	$strTable;
-
-	/**
-	 * Name of the alias field (if any), empty otherwise
-	 * @var string
-	 */
-	protected	$strAliasField;
-
-	/**
-	 * Name of the publish field (if any), empty otherwise
-	 * @var string
-	 */
-	protected	$publishField;
-
-	/**
 	 * Search String
 	 * @var string
 	 */
@@ -76,6 +58,31 @@ abstract class ModuleCatalog extends Module
 	 * @var Database_Result
 	 */
 	protected $objCatalogType;
+	
+	/**
+	 * (non-PHPdoc)
+	 * @see Module::__get()
+	 */
+	public function __get($strKey)
+	{
+		switch ($strKey) {
+			case 'strTable':
+				return $this->objCatalogType->tableName;
+				break;
+				
+			case 'strAliasField':
+				return $this->objCatalogType->aliasField;
+				break;
+				
+			case 'strPublishField':
+			case 'publishField': // TODO remove usages of publishField
+				return $this->objCatalogType->publishField;
+				break;
+				
+			default:
+				return parent::__get($strKey);
+		}
+	}
 
 	/**
 	 * @post $this->objCatalogType isset
@@ -95,15 +102,11 @@ abstract class ModuleCatalog extends Module
 			$this->catalog_tags_mode = 'AND';
 		}
 
-		$this->objCatalogType = $this->getValidCatalogType();
+		$this->objCatalogType = $this->getValidCatalogType($this->catalog);
 
 		// get DCA
 		if ($this->objCatalogType)
 		{
-			$this->strTable=$this->objCatalogType->tableName;
-			$this->strAliasField=$this->objCatalogType->aliasField;
-			$this->publishField=$this->objCatalogType->publishField;
-
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');
 			if (!$GLOBALS['TL_DCA'][$this->strTable]['Cataloggenerated'])
@@ -4137,13 +4140,14 @@ abstract class ModuleCatalog extends Module
 	/**
 	 * Fetches information about the catalogType from the Database
 	 * or returns null if it's invalid
+	 * @param int $intId
 	 * @return Database_Result for the catalogType
 	 * || null if catalogType is not valid
 	 */
-	protected function getValidCatalogType()
+	protected function getValidCatalogType($intId)
 	{
 		$objCatalogType = $this->Database->prepare('SELECT * FROM tl_catalog_types WHERE id=?')
-										->execute($this->catalog);
+										->execute($intId);
 		// validity check
 		if (!$objCatalogType->numRows || !strlen($objCatalogType->tableName))
 		{
