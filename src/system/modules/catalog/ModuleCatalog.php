@@ -3140,12 +3140,13 @@ abstract class ModuleCatalog extends Module
 		// deleted field?
 		if(!$fieldConf)
 			return array();
-
+		
+		global $objPage;
+		
 		if(version_compare(VERSION, '2.10', '>=')
 			&& $fieldConf['eval']['rte']
 			&& $GLOBALS['TL_CONFIG']['useRTE'])
 		{
-			global $objPage;
 			$this->import('String');
 			// reformat the RTE output to the proper format
 			if($objPage->outputFormat == 'xhtml')
@@ -3160,6 +3161,19 @@ abstract class ModuleCatalog extends Module
 
 		switch ($fieldConf['eval']['catalog']['type'])
 		{
+			case 'longtext':
+				if (! ($fieldConf['eval']['allowHtml']
+							 || $fieldConf['eval']['rte']))
+				{
+					if ($objPage->outputFormat == 'xhtml')
+						$strHtml = nl2br_xhtml($strHtml);
+	
+					elseif ($objPage->outputFormat == 'html5')
+						$strHtml = nl2br_html5($strHtml);
+				}
+				
+				break;
+				
 			case 'select':
 			case 'tags':
 				if ($fieldConf['options'])
