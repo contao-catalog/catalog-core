@@ -82,19 +82,14 @@ class ModuleCatalogNotify extends ModuleCatalog
 	 */
 	protected function compile()
 	{
-		global $objPage;
-
-		if(! $this->objCatalogType)
-		{
+		if (! $this->objCatalogType)
 		  return $this->compileInvalidCatalog();
-		}
 		
-		$objCatalog = $this->fetchCatalogItemFromRequest();
+		// all fields for catalog insert tags
+		$objCatalog = $this->fetchCatalogItemFromRequest(array_keys($this->getCatalogFields()));
 		
-		if(! $objCatalog)
-		{
+		if (! $objCatalog)
 		  return $this->compileInvalidItem();
-		}
 
 		$this->Template->fields = '';
 		$this->Template->sent = false;
@@ -145,13 +140,11 @@ class ModuleCatalogNotify extends ModuleCatalog
 			);
 
 			$strClass = $GLOBALS['TL_FFL'][$inputType];
-
+			
 			// Continue if the class is not defined
 			if (!$this->classFileExists($strClass))
-			{
 				continue;
-			}
-
+			
 			$objWidget = new $strClass($this->prepareForWidget($arrData, $field));
 
 			$objWidget->storeValues = true;
@@ -274,7 +267,8 @@ class ModuleCatalogNotify extends ModuleCatalog
 		$this->Template->slabel = specialchars($GLOBALS['TL_LANG']['MSC']['notifySubmit']);
 		$this->Template->action = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 	}
-		/**
+	
+	/**
 	 * Actually sends the email
 	 * @param array $arrItem all values of the catalog item
 	 * @param array $arrNotification all values from the form

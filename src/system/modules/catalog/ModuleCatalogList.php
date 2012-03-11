@@ -59,7 +59,7 @@ class ModuleCatalogList extends ModuleCatalog
 		
 		$this->strTemplate = $this->catalog_layout;
 		
-		$this->catalog_visible = deserialize($this->catalog_visible);
+		$this->catalog_visible = deserialize($this->catalog_visible, true);
 		
 		return parent::generate();
 	}

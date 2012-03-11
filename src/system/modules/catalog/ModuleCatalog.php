@@ -243,26 +243,24 @@ abstract class ModuleCatalog extends Module
 		// fall back to all types
 		if (count($arrTypes) == 0)
 			$types = $GLOBALS['BE_MOD']['content']['catalog']['typesCatalogFields'];
+		
 		else
 			$types = $arrTypes;
 
 		$fields = array();
-
-		$objFields = $this->Database->prepare('SELECT * FROM tl_catalog_fields WHERE pid=? ORDER BY sorting')
+		
+		$objFields = $this->Database->prepare(sprintf("SELECT * FROM tl_catalog_fields WHERE pid=? AND type IN ('%s') ORDER BY sorting",
+																									implode("', '", $types)))
 									->execute($this->catalog);
-
+		
 		while ($objFields->next())
 		{
-			if (!in_array($objFields->type, $types))
-				continue;
-
 			$fields[$objFields->colName] = array (
 				'label' => $objFields->name,
 				'type' => $objFields->type,
 			);
-
 		}
-
+		
 		return $fields;
 	}
 
@@ -2665,10 +2663,10 @@ abstract class ModuleCatalog extends Module
 
 	/**
 	 * Translate SQL if needed (needed for calculated fields)
-	 * @param array $arrVisible
-	 * @return array
+	 * @param array $arrFields : string fieldname
+	 * @return array : string fieldname or alias for sql
 	 */
-	protected function processFieldSQL(array $arrVisible)
+	protected function processFieldSQL(array $arrFields)
 	{
 		$arrConverted = array();
 
@@ -2679,20 +2677,24 @@ abstract class ModuleCatalog extends Module
 											FROM tl_catalog_types c
 											WHERE c.tableName=?)")
 									->execute($this->strTable);
-		$arrFields = array();
+		
+		$fieldConfigs = array();
+		
 		if ($objFields->numRows)
 		{
 			while ($objFields->next())
+				$fieldConfigs[$objFields->colName] = $objFields->row();
+			
+			foreach ($arrFields as $id => $field)
 			{
-				$arrFields[$objFields->colName] = $objFields->row();
+				if (array_key_exists($field, $fieldConfigs))
+					$arrConverted[$id] = self::sqlFieldAlias($field, $fieldConfigs[$field]);
 			}
-			foreach ($arrVisible as $id=>$field)
+			
+			// allow extension developers to prepare SQL data
+			foreach ($arrConverted as $id => $alias)
 			{
-				if (array_key_exists($field, $arrFields))
-				{
-					$arrConverted[$id] = self::sqlFieldAlias($field, $arrFields[$field]);
-				}
-				$this->processFieldSQLHook($id, $field, $arrFields, $arrConverted);
+				$this->processFieldSQLHook($id, $arrFields[$id], $fieldConfigs, $arrConverted);
 			}
 		}
 		return $arrConverted;

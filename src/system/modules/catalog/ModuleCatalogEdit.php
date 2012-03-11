@@ -489,7 +489,7 @@ class ModuleCatalogEdit extends ModuleCatalog
 
     $this->strTemplate = $this->catalog_layout;
 
-    $this->catalog_edit = deserialize($this->catalog_edit);
+    $this->catalog_edit = deserialize($this->catalog_edit, true);
     $this->catalog_edit_default_value = deserialize($this->catalog_edit_default_value, true);
 
     // needed for onsubmit_callback etc.
@@ -532,10 +532,11 @@ class ModuleCatalogEdit extends ModuleCatalog
     $blnModeAdd = false;
 
     // get catalog item as an array
-    $objItem = $this->fetchCatalogItemFromRequest();
-
-    if($objItem)
+    $objItem = $this->fetchCatalogItemFromRequest($this->catalog_edit);
+    
+    if($objItem && $objItem->numRows)
       $arrValues = $objItem->fetchAssoc();
+    
     else
       $arrValues = array();
 
@@ -546,16 +547,17 @@ class ModuleCatalogEdit extends ModuleCatalog
     // not just those selected for editing.
     if (($this->Input->post('FORM_SUBMIT') == self::FORMID)
         && $this->catalog_edit_use_default
-        && $this->catalog_edit_default_value)
+        && count($this->catalog_edit_default_value))
     {
       $arrValues = array_merge($arrValues, $this->catalog_edit_default_value);
     }
-
+    
     $this->objDCEdit = new DC_DynamicTableEdit($this->strTable, $this->objCatalogType, $this, $arrValues);
 
     // if no item, then check if add allowed and then show add form
-    if (!is_object($objItem))
+    if (is_null($objItem) || $objItem->numRows == 0)
       $blnModeAdd = true;
+    
     else
     {
       // check if editing of this record is disabled for frontend
