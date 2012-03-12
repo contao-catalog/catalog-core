@@ -122,7 +122,7 @@ class ModuleCatalogRelated extends ModuleCatalog
 			$strRelated = implode(' AND ', $strRelated);
 
 
-			$arrQuery = $this->processFieldSQL($this->catalog_visible);		
+			$arrQuery = $this->processFieldSQL($this->catalog_visible, $this->strTable);		
 			if($this->strAliasField)
 				$arrQuery[] = $this->strAliasField;
 			// Run Query

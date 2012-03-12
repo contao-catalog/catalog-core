@@ -2667,9 +2667,10 @@ abstract class ModuleCatalog extends Module
 	/**
 	 * Translate SQL if needed (needed for calculated fields)
 	 * @param array $arrFields : string fieldname
+	 * @param string $strTable
 	 * @return array : string fieldname or alias for sql
 	 */
-	protected function processFieldSQL(array $arrFields)
+	protected function processFieldSQL(array $arrFields, $strTable)
 	{
 		$arrConverted = array();
 
@@ -2679,7 +2680,7 @@ abstract class ModuleCatalog extends Module
 											WHERE f.pid=(SELECT c.id
 											FROM tl_catalog_types c
 											WHERE c.tableName=?)")
-									->execute($this->strTable);
+									->execute($strTable);
 		
 		$fieldConfigs = array();
 		
@@ -4189,22 +4190,22 @@ abstract class ModuleCatalog extends Module
 																				$strOrder ='', $intLimit =0,
 																				$intOffset =0, array $arrJoins=array())
 	{
-	  $arrFields = $this->processFieldSQL($arrFields);
+		$table = $this->objCatalogType->tableName;
+	  $arrFields = $this->processFieldSQL($arrFields, $table);
 	  
 	  // prepend columns to minimize the possibility of collisions when using JOINs
 	  foreach ($this->systemColumns as $sysField)
 	  {
 	    $arrFields[] = sprintf('%s.%s AS %s',
-	        $this->strTable,
-	        $sysField, $sysField);
+	        $table, $sysField, $sysField);
 	  }
 	
-	  if($this->strAliasField)
-	    $arrFields[] = $this->strAliasField;
+	  if($this->objCatalogType->aliasField)
+	    $arrFields[] = $this->objCatalogType->aliasField;
 	  
 	  $strJoins = '';
 	  if($arrJoins)
-	    $strJoins = str_replace('{{table}}', $this->strTable, implode(' ', $arrJoins));
+	    $strJoins = str_replace('{{table}}', $table, implode(' ', $arrJoins));
 	  
 	  $strOrder = strlen($strOrder) ? " ORDER BY " . $strOrder : "";
 	  $strWhereOrder = ($strWhere?" AND " . $strWhere:'') . $strOrder;
@@ -4219,7 +4220,7 @@ abstract class ModuleCatalog extends Module
 	      (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id=%2$s.pid) AS parentJumpTo
 	      FROM %2$s %3$s WHERE pid=? %4$s',
 	      implode(',', $arrFields),
-	      $this->strTable,
+	      $table,
 	      $strJoins,
 	      $strWhereOrder));
 	  
