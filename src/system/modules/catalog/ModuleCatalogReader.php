@@ -255,7 +255,7 @@ class ModuleCatalogReader extends ModuleCatalog
 
 		// divide input string into single words
 		$arrKeywords = explode(',', $strInput);
-
+		
 		foreach($arrKeywords as $strKeyword)
 		{
 			// ignore unimportant words, empty strings and words shorter than 3 chars
@@ -272,16 +272,8 @@ class ModuleCatalogReader extends ModuleCatalog
 
 		return($strKeywords);
 	}
-		/**
-	 * (non-PHPdoc)
-	 * @see ModuleCatalog::basicVarsToTemplate()
-	 */
-	protected function basicVarsToTemplate() {
-	  parent::basicVarsToTemplate();
-	
-	  $this->Template->gobackDisable = $this->catalog_goback_disable;
-	}
-		/**
+		
+	/**
 	 * (non-PHPdoc)
 	 * @see ModuleCatalog::fetchCatalogItemFromRequest()
 	 */

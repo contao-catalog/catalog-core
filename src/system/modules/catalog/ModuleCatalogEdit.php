@@ -444,12 +444,6 @@ class ModuleCatalogEdit extends ModuleCatalog
   protected $strTemplate = 'mod_catalogedit';
 
   /**
-   * Redirect
-   * @var string
-   */
-  protected $referrerUrl;
-
-  /**
    * dynamic table driver as interface to the actual table
    * @var DC_DynamicTableEdit
    */
@@ -460,7 +454,7 @@ class ModuleCatalogEdit extends ModuleCatalog
    * @var string
    */
   const FORMID = 'tl_catalog_items';
-
+  
   /**
    * (non-PHPdoc)
    * @see ModuleCatalogEdit::generate()
@@ -522,7 +516,6 @@ class ModuleCatalogEdit extends ModuleCatalog
    */
   public function compile()
   {
-    $this->refererUrl = $this->getReferer(ENCODE_AMPERSANDS);
     $this->basicVarsToTemplate();
 
     if (!$this->objCatalogType)
@@ -740,17 +733,6 @@ class ModuleCatalogEdit extends ModuleCatalog
     }
 
     return $objCaptcha;
-  }
-
-  /**
-   * Writes basic catalog information into the template
-   * @return void
-   */
-  protected function basicVarsToTemplate()
-  {
-    $this->Template->catalog = '';
-    $this->Template->referer = $this->refererUrl;
-    $this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
   }
 
   /**

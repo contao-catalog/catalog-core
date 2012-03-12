@@ -4166,9 +4166,10 @@ abstract class ModuleCatalog extends Module
 	protected function basicVarsToTemplate()
 	{
 		$this->Template->catalog = '';
+		$this->Template->gobackDisable = $this->catalog_goback_disable;
 		$this->Template->referer = $this->getReferer(ENCODE_AMPERSANDS);
 		$this->Template->back = $GLOBALS['TL_LANG']['MSC']['goBack'];
-	}	
+	}
 	
 	/**
 	 * Fetches all items which should be displayed from the database

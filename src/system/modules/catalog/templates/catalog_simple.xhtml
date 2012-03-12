@@ -22,12 +22,8 @@
 <?php endforeach; ?>
 </div>
  
-<?php else: ?>
-
-<?php if ($this->condition): ?>
+<?php elseif ($this->condition): ?>
 <p class="condition"><?php echo $this->condition; ?></p>
 <?php else: ?>
 <p class="info"><?php echo $this->searchEmptyMsg; ?></p>
-<?php endif; ?>
-
 <?php endif; ?>

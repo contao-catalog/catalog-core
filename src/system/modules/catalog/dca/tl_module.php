@@ -36,7 +36,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legen
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_recipients,catalog_recipient_fields,catalog_notify,catalog_useJumpTo;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 // catalog edit AND modify list above ^^
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,jumpTo,disableCaptcha;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,catalog_goback_disable,jumpTo,disableCaptcha;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
 
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'catalog_filter_enable';

@@ -7,6 +7,5 @@
 <?php if ($this->error): ?><p class="error"><?php echo $this->error; ?></p><?php endif; ?>
 <?php echo $this->form; ?>
 
-<p class="back"><a href="<?php echo $this->referer; ?>" title="<?php echo $this->back; ?>"><?php echo $this->back; ?></a></p>
-
+<?php if (!$this->gobackDisable): ?><p class="back"><a href="<?php echo $this->referer; ?>" title="<?php echo $this->back; ?>"><?php echo $this->back; ?></a></p><?php endif; ?>
 </div>
