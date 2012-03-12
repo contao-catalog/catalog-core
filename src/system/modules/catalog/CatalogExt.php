@@ -115,7 +115,7 @@ class CatalogExt extends Frontend
 	{
 		$stmt = $this->Database->prepare('SELECT *
 										FROM ' . $objCatalogType->tableName .
-										'WHERE pid=? ' . (strlen($strWhere) ? " AND " . $strWhere : "") .
+										' WHERE pid=? ' . (strlen($strWhere) ? " AND " . $strWhere : "") .
 										(strlen($strOrderBy) ? " ORDER BY " . $strOrderBy : ""));
 		if ($intLimit > 0)
 			$stmt->limit($intLimit);
