@@ -283,8 +283,8 @@ class ModuleCatalogReader extends ModuleCatalog
     // restrict to published items
     if($objResult
        && (!BE_USER_LOGGED_IN)
-       && $this->publishField
-       && (! $objResult->{$this->publishField}))
+       && strlen($this->objCatalogType->publishField)
+       && (! $objResult->{$this->objCatalogType->publishField}))
     {
       $objResult = null;
     }

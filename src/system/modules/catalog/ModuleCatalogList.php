@@ -92,7 +92,7 @@ class ModuleCatalogList extends ModuleCatalog
 			$arrParams = $this->generateStmtParams($filterurl);
 			$strWhere = $this->generateStmtWhere($filterurl);
 			$strOrder = $this->generateStmtOrderBy($filterurl);
-
+			
 			if (strlen($this->Input->post('per_page')))
 			{
 				$this->perPage = $this->Input->post('per_page');
@@ -189,7 +189,8 @@ class ModuleCatalogList extends ModuleCatalog
 		$this->Template->visible = $this->catalog_visible;
 		$this->Template->arrSystemColumns = $this->systemColumns;
 	}
-		/**
+	
+	/**
 	 * Replaces the catalog var in the template with a message that the
 	 * conditions where not met.
 	 * @param array $arrCondition
@@ -235,10 +236,10 @@ class ModuleCatalogList extends ModuleCatalog
 		if (count($arrFilterUrl['values']['tags'])) {
 			$params = array_merge($params, ModuleCatalog::flatParams($arrFilterUrl['values']['tags']));
 		}
-
+		
 		return $params;
 	}
-
+	
 	/**
 	 * @param array $arrFilterUrl
 	 * @return string for the ORDER BY part
@@ -246,14 +247,14 @@ class ModuleCatalogList extends ModuleCatalog
 	protected function generateStmtOrderBy(array $arrFilterUrl)
 	{
 		$result = '';
-
+		
 		if (strlen($arrFilterUrl['procedure']['orderby']))
 		{
 			$result = 'ORDER BY ' . $arrFilterUrl['procedure']['orderby'];
 		} else {
 			$result = trim($this->replaceInsertTags($this->catalog_order));
 		}
-
+		
 		return $result;
 	}
 
@@ -267,9 +268,9 @@ class ModuleCatalogList extends ModuleCatalog
 	{
 		// pid
 		$params = array_merge(array($this->objCatalogType->id), $arrParams);
-		
+	  
 		$objTotalStmt = $this->Database->prepare(sprintf("SELECT COUNT(id) AS count FROM %s WHERE pid=? %s", 
-													$this->strTable,
+													$this->objCatalogType->tableName,
 													$strWhere?" AND " . $strWhere:''
 												));
 
@@ -349,7 +350,5 @@ class ModuleCatalogList extends ModuleCatalog
 		
 		return $filterurl;
 	}
-
 }
-
 ?>

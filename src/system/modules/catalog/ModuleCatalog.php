@@ -75,7 +75,7 @@ abstract class ModuleCatalog extends Module
 				break;
 				
 			case 'strPublishField':
-			case 'publishField': // TODO remove usages of publishField
+			case 'publishField':
 				return $this->objCatalogType->publishField;
 				break;
 				
@@ -107,66 +107,68 @@ abstract class ModuleCatalog extends Module
 		// get DCA
 		if ($this->objCatalogType)
 		{
+			$table = $this->objCatalogType->tableName;
+			
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');
-			if (!$GLOBALS['TL_DCA'][$this->strTable]['Cataloggenerated'])
+			if (!$GLOBALS['TL_DCA'][$table]['Cataloggenerated'])
 			{
 				// load language files and DC.
-				$this->loadLanguageFile($this->strTable);
-				$this->loadDataContainer($this->strTable);
+				$this->loadLanguageFile($table);
+				$this->loadDataContainer($table);
 
 				// load default language
-				if (is_array($GLOBALS['TL_LANG'][$this->strTable]))
+				if (is_array($GLOBALS['TL_LANG'][$table]))
 				{
-					$GLOBALS['TL_LANG'][$this->strTable] =
+					$GLOBALS['TL_LANG'][$table] =
 						Catalog::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'],
-														$GLOBALS['TL_LANG'][$this->strTable]);
+														$GLOBALS['TL_LANG'][$table]);
 				}
 				else
 				{
-					$GLOBALS['TL_LANG'][$this->strTable] = $GLOBALS['TL_LANG']['tl_catalog_items'];
+					$GLOBALS['TL_LANG'][$table] = $GLOBALS['TL_LANG']['tl_catalog_items'];
 				}
 
 				// load dca
-				if (is_array($GLOBALS['TL_DCA'][$this->strTable]))
+				if (is_array($GLOBALS['TL_DCA'][$table]))
 				{
-					$GLOBALS['TL_DCA'][$this->strTable] =
+					$GLOBALS['TL_DCA'][$table] =
 						Catalog::array_replace_recursive($this->Catalog->getCatalogDca($this->catalog),
-														$GLOBALS['TL_DCA'][$this->strTable]);
+														$GLOBALS['TL_DCA'][$table]);
 				}
 				else
 				{
-					$GLOBALS['TL_DCA'][$this->strTable] = $this->Catalog->getCatalogDca($this->catalog);
+					$GLOBALS['TL_DCA'][$table] = $this->Catalog->getCatalogDca($this->catalog);
 				}
 
-				$GLOBALS['TL_DCA'][$this->strTable]['Cataloggenerated'] = true;
+				$GLOBALS['TL_DCA'][$table]['Cataloggenerated'] = true;
 			}
-		}
-
-		// Send file to the browser (reading Modules only)
-		$blnDownload = ($this instanceof ModuleCatalogList
-						|| $this instanceof ModuleCatalogFeatured
-						|| $this instanceof ModuleCatalogRelated
-						|| $this instanceof ModuleCatalogReference
-						|| $this instanceof ModuleCatalogReader);
-
-		if ($blnDownload && strlen($this->Input->get('file')) && $this->catalog_visible)
-		{
-			foreach ($this->catalog_visible as $k)
+	
+			// Send file to the browser (reading Modules only)
+			$blnDownload = ($this instanceof ModuleCatalogList
+							|| $this instanceof ModuleCatalogFeatured
+							|| $this instanceof ModuleCatalogRelated
+							|| $this instanceof ModuleCatalogReference
+							|| $this instanceof ModuleCatalogReader);
+	
+			if ($blnDownload && strlen($this->Input->get('file')) && $this->catalog_visible)
 			{
-				$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$k];
-				if ($fieldConf['eval']['catalog']['type'] == 'file' && !$fieldConf['eval']['catalog']['showImage'])
+				foreach ($this->catalog_visible as $k)
 				{
-					// check file in Catalog
-					$objDownload = $this->Database->prepare('SELECT id FROM ' . $this->strTable .
-															' WHERE ' . (!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '') .
-															'(LOCATE(?,'.$k.')>0 OR LOCATE(?,'.$k.')>0)')
-							->limit(1)
-							->execute($this->Input->get('file'), dirname($this->Input->get('file')));
-
-					if ($objDownload->numRows)
+					$fieldConf = &$GLOBALS['TL_DCA'][$table]['fields'][$k];
+					if ($fieldConf['eval']['catalog']['type'] == 'file' && !$fieldConf['eval']['catalog']['showImage'])
 					{
-						$this->sendFileToBrowser($this->Input->get('file'));
+						// check file in Catalog
+						$objDownload = $this->Database->prepare('SELECT id FROM ' . $table .
+																' WHERE ' . (!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '') .
+																'(LOCATE(?,'.$k.')>0 OR LOCATE(?,'.$k.')>0)')
+								->limit(1)
+								->execute($this->Input->get('file'), dirname($this->Input->get('file')));
+						
+						if ($objDownload->numRows)
+						{
+							$this->sendFileToBrowser($this->Input->get('file'));
+						}
 					}
 				}
 			}
@@ -446,6 +448,7 @@ abstract class ModuleCatalog extends Module
 				// deleted field but still mentioned in module configuration?
 				if(!$fieldConf)
 					continue;
+				
 				$sqlFieldName = self::sqlFieldName($fieldName, $fieldConf['eval']['catalog']);
 				
 				switch ($fieldConf['eval']['catalog']['type'])
@@ -2692,7 +2695,9 @@ abstract class ModuleCatalog extends Module
 			foreach ($arrFields as $id => $field)
 			{
 				if (array_key_exists($field, $fieldConfigs))
+				{
 					$arrConverted[$id] = self::sqlFieldAlias($field, $fieldConfigs[$field]);
+				}
 			}
 			
 			// allow extension developers to prepare SQL data
