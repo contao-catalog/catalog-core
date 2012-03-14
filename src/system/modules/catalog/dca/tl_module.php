@@ -33,7 +33,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogreference']  = '{title_legen
 
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalognavigation'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_jumpTo,jumpTo,catalog_navigation,levelOffset,showLevel,hardLimit;catalog_show_items;{template_legend:hide},catalog_layout,navigationTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_recipients,catalog_recipient_fields,catalog_notify,catalog_useJumpTo;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['catalognotify'] = '{title_legend},name,headline,type;{config_legend},catalog,catalog_notify_fields,disableCaptcha;{catalog_notify_legend:hide},catalog_subject,catalog_sender_field,catalog_recipients,catalog_recipient_fields,catalog_notify,catalog_useJumpTo;{template_legend:hide},catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 // catalog edit AND modify list above ^^
 $GLOBALS['TL_DCA']['tl_module']['palettes']['catalogedit']  = '{title_legend},name,headline,type;{config_legend},catalog,catalog_edit,catalog_goback_disable,jumpTo,disableCaptcha;{template_legend:hide},catalog_template,catalog_layout;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space;{restrict_to_defaults_legend:hide},catalog_edit_use_default';
@@ -597,6 +597,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'eval'                    => array('mandatory'=> true, 'includeBlankOption'=>true, 'tl_class'=>'w50')
 	),
 
+// catalog_notify
 
 	'catalog_notify_fields' => array
 	(
@@ -631,9 +632,18 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'exclude'                 => true,
 		'inputType'               => 'text',
 		'default'               	=> (is_array($GLOBALS['TL_LANG']['tl_module']['catalogNotifyText']) ? $GLOBALS['TL_LANG']['tl_module']['catalogNotifyText'][0] : $GLOBALS['TL_LANG']['tl_module']['catalogNotifyText']),
-		'eval'                    => array('mandatory'=>true, 'maxlength'=>255)
+		'eval'                    => array('mandatory'=>true, 'maxlength'=>255, 'tl_class' => 'w50')
 	),
-
+	
+	'catalog_sender_field' => array
+	(
+	'label'                   => $GLOBALS['TL_LANG']['tl_module']['catalog_sender_field'],
+	'exclude'                 => true,
+	'inputType'               => 'text',
+	'default'               	=> 'E-mail', // default of notification fields 
+	'eval'                    => array('tl_class' => 'w50')
+	),
+	
 	'catalog_notify' => array
 	(
 		'label'         => &$GLOBALS['TL_LANG']['tl_module']['catalog_notify'],

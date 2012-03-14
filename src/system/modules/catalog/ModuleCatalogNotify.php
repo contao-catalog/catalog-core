@@ -124,7 +124,6 @@ class ModuleCatalogNotify extends ModuleCatalog
 		$arrFields = array();
 		$arrWidgets = array();
 		$i = 0;
-
 		
 		// Build form
 		foreach ($this->catalog_notify_fields as $field)
@@ -138,7 +137,14 @@ class ModuleCatalogNotify extends ModuleCatalog
 				'inputType'               => $inputType,
 				'eval'                    => array('mandatory'=>true)
 			);
-
+			
+			// make sure the one field used as email sender is valid!
+			if (strlen($this->catalog_sender_field)
+					&& $label == $this->catalog_sender_field)
+			{
+				$arrData['eval']['rgxp'] = 'email';
+			}
+			
 			$strClass = $GLOBALS['TL_FFL'][$inputType];
 			
 			// Continue if the class is not defined
@@ -178,48 +184,49 @@ class ModuleCatalogNotify extends ModuleCatalog
 		}
 
 		// add long message to form
-		$field = 'message';
+		$field = 'notifyMessage';
 		$inputType = 'textarea';
-
+		
 		$strClass = $GLOBALS['TL_FFL'][$inputType];
-		// Continue if the class is not defined
-		if ($this->classFileExists($strClass))
-		{
-		  // Long text message
-			$arrMessage = array
-			(
+
+		// Long text message
+		$arrMessage = array
+		(
 				'id'         => $field,
 				'label'      => $GLOBALS['TL_LANG']['MSC'][$field],
 				'mandatory'  => true,
 				'required'   => true,
 				'inputType'  => $inputType,
 				'eval'       => array('mandatory'=>true)
-			);
+		);
 		
-  		$objMessage = new $strClass($this->prepareForWidget($arrMessage, $field));
-  		$objMessage->rowClass = 'row_'.$i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
-  		if($this->Input->post('FORM_SUBMIT') == self::FORMID)
-  		{
-  			$objMessage->validate();
-  			
-  			if ($objMessage->hasErrors())
-  			{
-  				$doNotSubmit = true;
-  			} elseif ($objWidget->submitInput())
-  			{
-  			  $arrStore[$field]['label'] = $arrMessage['label'];
-          $arrStore[$field]['value'] = $objWidget->value;
-  			}
-  		}
-  		$strMessage = $objMessage->parse();
-      $arrStore[$field]['label'] = $arrMessage['label'];
-      $arrStore[$field]['value'] = $objMessage->value;
-  		$arrFields[$field] = $strMessage;
-  		$arrWidgets[$field] = $objMessage;
+		$objMessage = new $strClass($this->prepareForWidget($arrMessage, $field));
+		$objMessage->rowClass = 'row_'.$i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
+		
+		if($this->Input->post('FORM_SUBMIT') == self::FORMID)
+		{
+			$objMessage->validate();
 
-  		$this->Template->fields .= $strMessage;
-  		++$i;
+			if ($objMessage->hasErrors())
+			{
+				$doNotSubmit = true;
+			}
+			
+			elseif ($objWidget->submitInput())
+			{
+				$arrStore[$field]['label'] = $arrMessage['label'];
+				$arrStore[$field]['value'] = $objWidget->value;
+			}
 		}
+
+		$strMessage = $objMessage->parse();
+		$arrStore[$field]['label'] = $arrMessage['label'];
+		$arrStore[$field]['value'] = $objMessage->value;
+		$arrFields[$field] = $strMessage;
+		$arrWidgets[$field] = $objMessage;
+
+		$this->Template->fields .= $strMessage;
+		++$i;
 
 		// Captcha
 		if (!$this->disableCaptcha)
@@ -278,10 +285,23 @@ class ModuleCatalogNotify extends ModuleCatalog
 	protected function sendNotification(array $arrItem, array $arrNotification)
 	{
 		$objEmail = new Email();
-
-		$objEmail->from = $GLOBALS['TL_ADMIN_EMAIL'];
+		
+		// Set the sender to make answers to notification possible
+		if (strlen($this->catalog_sender_field)
+				&& in_array($this->catalog_sender_field, $this->catalog_notify_fields))
+		{
+				// validity is made sure by widget validation
+				$objEmail->from = $arrNotification[standardize($this->catalog_sender_field)]['value'];
+		}
+		
+		// default sender is the site's admin
+		else
+		{
+			$objEmail->from = $GLOBALS['TL_CONFIG']['adminEmail'];
+		}
+		
 		$objEmail->subject = $this->replaceCatalogTags($this->catalog_subject, $arrItem);
-			
+		
 		$text = ModuleCatalog::replaceCatalogTags($this->catalog_notify, $arrItem);
 		$text = $this->replaceInsertTags($text);
 		

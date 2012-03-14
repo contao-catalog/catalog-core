@@ -187,6 +187,7 @@ $GLOBALS['TL_LANG']['tl_module']['disableCaptcha'] = array('Disable the security
 $GLOBALS['TL_LANG']['tl_module']['catalog_notify_fields'] = array('Form Fields', 'Create a quick list of form fields using short 1-line text fields for the user to complete.');
 $GLOBALS['TL_LANG']['tl_module']['catalog_recipients'] = array('Recipients List', 'Create a list of recipients who will receive the catalog notification e-mail.');
 $GLOBALS['TL_LANG']['tl_module']['catalog_subject'] = array('Subject', 'Enter the subject for the notification e-mail. Example: <em>Catalog Notification: {{catalog::title}} - Price: {{catalog::price}}</em>');
+$GLOBALS['TL_LANG']['tl_module']['catalog_sender_field'] = array('Sender field', 'Form field to set the sender of the notification e-mail. If left empty the site\'s admin is used');
 $GLOBALS['TL_LANG']['tl_module']['catalog_notify'] = array('Body text', 'Enter the body text for the notification e-mail. You can also include specific fields from the catalog item being viewed - <em>{{catalog::title}} {{catalog::description}}</em>');
 
 $GLOBALS['TL_LANG']['tl_module']['catalogNotifyText'] = array('Catalog Notification: {{catalog::title}}', "A user has sent a notification for a catalog: ##catalog##.\n\nPlease click ##link## to view the catalog item.\n");

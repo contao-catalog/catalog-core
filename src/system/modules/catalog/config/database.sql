@@ -255,6 +255,7 @@ CREATE TABLE `tl_module` (
   `catalog_recipients` text NULL,
   `catalog_recipient_fields` text NULL,
   `catalog_subject` varchar(255) NOT NULL default '',
+  `catalog_sender_field` varchar(255) NULL default NULL,
   `catalog_notify` text NULL,
   `catalog_useJumpTo` char(1) NOT NULL default '',
 

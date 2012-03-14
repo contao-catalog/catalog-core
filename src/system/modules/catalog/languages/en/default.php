@@ -131,6 +131,7 @@ $GLOBALS['TL_LANG']['MSC']['editCatalog']     = 'Edit the item details';
 
 $GLOBALS['TL_LANG']['MSC']['notifySubmit']	= 'Send Notification';
 $GLOBALS['TL_LANG']['MSC']['notifyConfirm']	= 'Your notification has been sent.';
+$GLOBALS['TL_LANG']['MSC']['notifyMessage']	= 'Message';
 
 /**
  * Miscellaneous
