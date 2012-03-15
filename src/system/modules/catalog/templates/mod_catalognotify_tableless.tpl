@@ -13,7 +13,11 @@
 <div class="formbody">
 <input type="hidden" name="FORM_SUBMIT" value="<?php echo $this->formId; ?>" />
 
-<?php echo $this->fields; ?>
+<?php foreach($this->arrWidgets as $objWidget): ?>
+<div class="field_<?php echo $objWidget->name; ?> <?php echo $objWidget->type; ?> <?php echo $objWidget->rowClass; ?>">
+<?php echo $objWidget->parse(); ?>
+</div>
+<?php endforeach; ?>
 
 <div class="submit_container <?php echo $this->rowLast; ?>"><input type="submit" class="submit" value="<?php echo $this->slabel; ?>" /></div>
 

@@ -4258,5 +4258,23 @@ abstract class ModuleCatalog extends Module
 		
 		return $this->fetchCatalogItems($arrFields, $where, array($items));
 	}
+	
+	/**
+	 * Set the tableless property to true for widgets
+	 * @post foreach (result as $widget) $widget->tableless == true
+	 * @param array $arrWidgets (mixed $k => Widget $widget)
+	 * @return array (mixed $k => Widget $widget)
+	 */
+	protected static function tablelessWidgets(array $arrWidgets) {
+	  $result = array();
+	
+	  foreach ($arrWidgets as $k => $widget)
+	  {
+	    $widget->tableless = true;
+	    $result[$k] = $widget;
+	  }
+	
+	  return $result;
+	}
 }
 ?>

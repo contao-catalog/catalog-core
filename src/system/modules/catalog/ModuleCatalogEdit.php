@@ -523,7 +523,7 @@ class ModuleCatalogEdit extends ModuleCatalog
       return $this->compileInvalidCatalog();
     }
     $blnModeAdd = false;
-
+    
     // get catalog item as an array
     $objItem = $this->fetchCatalogItemFromRequest($this->catalog_edit);
     
@@ -532,7 +532,7 @@ class ModuleCatalogEdit extends ModuleCatalog
     
     else
       $arrValues = array();
-
+    
     // initialize value to restricted value as we might not be allowed to edit
     // this field but the field shall revert to some default setting
     // (published flag etc.)
@@ -570,9 +570,9 @@ class ModuleCatalogEdit extends ModuleCatalog
         $doNotSubmit = true;
       }
     }
-
+    
     $i = 0;
-
+    
     // we have to determine if we have upload fields for the form enctype.
     $hasUpload = false;
 
@@ -684,14 +684,12 @@ class ModuleCatalogEdit extends ModuleCatalog
     if ($objCaptcha)
     {
       $objCaptcha->rowClass = 'row_'.$i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
-      $strCaptcha = $objCaptcha->parse();
-      
-      $arrFields['captcha'] = $strCaptcha;
+      $arrFields['captcha'] = $objCaptcha->parse();;
       $arrWidgets['captcha'] = $objCaptcha;
     }
 
     $this->Template->rowLast = 'row_' . ++$i . ((($i % 2) == 0) ? ' even' : ' odd');
-
+    
     // Create new entry or update the old one if there are no errors
     if ($this->Input->post('FORM_SUBMIT') == self::FORMID && !$doNotSubmit)
     {
@@ -705,13 +703,11 @@ class ModuleCatalogEdit extends ModuleCatalog
       }
       $this->submitRedirect();
     }
-
+    
     // Set template form
     $this->Template->form = $this->parseFormTemplate($arrFields, $arrWidgets, $doNotSubmit, $hasUpload);
-    // also pass the widgets to the template
-    $this->Template->arrWidgets = $arrWidgets;
   }
-
+  
   /**
    * Creates and initializes the Captcha Widget
    * @return FormCaptcha
@@ -1190,7 +1186,7 @@ class ModuleCatalogEdit extends ModuleCatalog
     $objTemplate->enctype = $blnUseMultipart ? 'multipart/form-data' : 'application/x-www-form-urlencoded';
 
     $objTemplate->field = implode('',$arrInputFields);
-    $objTemplate->arrWidgets = $arrWidgets;
+    $objTemplate->arrWidgets = ModuleCatalog::tablelessWidgets($arrWidgets);
     $objTemplate->formId = self::FORMID;
     $objTemplate->action = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
 

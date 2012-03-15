@@ -91,7 +91,6 @@ class ModuleCatalogNotify extends ModuleCatalog
 		if (! $objCatalog)
 		  return $this->compileInvalidItem();
 
-		$this->Template->fields = '';
 		$this->Template->sent = false;
 		
 		$doNotSubmit = false;
@@ -174,11 +173,8 @@ class ModuleCatalogNotify extends ModuleCatalog
 					$arrStore[$field]['value'] = $varValue;
 				}
 			}
-
-			$temp = $objWidget->parse();
-
-			$this->Template->fields .= $temp;
-			$arrFields[$field] = $temp;
+			
+			$arrFields[$field] = $objWidget->parse();
 			$arrWidgets[$field] = $objWidget;
 			++$i;
 		}
@@ -218,30 +214,31 @@ class ModuleCatalogNotify extends ModuleCatalog
 				$arrStore[$field]['value'] = $objWidget->value;
 			}
 		}
-
-		$strMessage = $objMessage->parse();
+		
 		$arrStore[$field]['label'] = $arrMessage['label'];
 		$arrStore[$field]['value'] = $objMessage->value;
-		$arrFields[$field] = $strMessage;
+		
+		$arrFields[$field] = $objMessage->parse();
 		$arrWidgets[$field] = $objMessage;
-
-		$this->Template->fields .= $strMessage;
+		
 		++$i;
-
+		
 		// Captcha
 		if (!$this->disableCaptcha)
 		{
 			$objCaptcha->rowClass = 'row_'.$i . (($i == 0) ? ' row_first' : '') . ((($i % 2) == 0) ? ' even' : ' odd');
-			$strCaptcha = $objCaptcha->parse();
-
-			$this->Template->fields .= $strCaptcha;
-			$arrFields['captcha'] = $strCaptcha;
+			
+			$arrFields['captcha'] = $objCaptcha->parse();
 			$arrWidgets['captcha'] = $objCaptcha;
 		}
 
+		$this->Template->fields = implode('', $arrFields);
 		$this->Template->rowLast = 'row_' . ++$i . ((($i % 2) == 0) ? ' even' : ' odd');
 		$this->Template->enctype = 'application/x-www-form-urlencoded';
 		$this->Template->hasError = $doNotSubmit;
+		$this->Template->captcha = $arrFields['captcha'];
+		$this->Template->arrFields = $arrFields;
+		$this->Template->arrWidgets = ModuleCatalog::tablelessWidgets($arrWidgets);
 		
 		// Send catalog notification e-mail, if there are no errors
 		if ($this->Input->post('FORM_SUBMIT') == self::FORMID && !$doNotSubmit)
@@ -251,8 +248,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 			$this->sendNotification($arrCatalog, $arrStore);
 			
 			$this->Template->sent = true;
-			
-			
+						
 			if($this->catalog_useJumpTo)
 			{
 				$objJump = $this->Database->prepare("SELECT * FROM tl_page WHERE id=?")
@@ -267,9 +263,6 @@ class ModuleCatalogNotify extends ModuleCatalog
 		// initialize
 		$this->initializeSession(self::FORMID);
 
-		$this->Template->captcha = $arrFields['captcha'];
-		$this->Template->arrFields = $arrFields;
-		$this->Template->arrWidgets = $arrWidgets;
 		$this->Template->formId = self::FORMID;
 		$this->Template->slabel = specialchars($GLOBALS['TL_LANG']['MSC']['notifySubmit']);
 		$this->Template->action = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
