@@ -3435,7 +3435,7 @@ abstract class ModuleCatalog extends Module
 						{
 							// we have to supply the catalog id here as we might have more than one catalog with a field with the same name
 							// which will cause the lightbox to display the images for items with the same id in both.
-							if(version_compare(TL_VERSION, '2.11', '>='))
+							if(version_compare(VERSION, '2.11', '>='))
 							{
 								$tmpFile = '<a data-lightbox="lb' . $this->strTable . $strId . '" href="'.$file.'" title="'.$alt.'">'.$tmpFile.'</a>';
 							} else {
