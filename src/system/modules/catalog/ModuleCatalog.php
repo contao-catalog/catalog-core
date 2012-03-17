@@ -3525,7 +3525,7 @@ abstract class ModuleCatalog extends Module
 								if ($showLink)
 								{
 									// we have to supply the catalog id here as we might have more than one catalog with a field with the same name here.
-									if(version_compare(TL_VERSION, '2.11', '>='))
+									if(version_compare(VERSION, '2.11', '>='))
 									{
 										$tmpFile = '<a data-lightbox="lb' . $this->strTable . $strId . '" title="'.$alt.'" href="'.$file . '/' . $subfile.'">'.$tmpFile.'</a>';
 									} else {
