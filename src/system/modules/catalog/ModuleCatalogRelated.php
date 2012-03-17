@@ -69,12 +69,12 @@ class ModuleCatalogRelated extends ModuleCatalog
 	
 	protected function compile()
 	{
-		$objCatalogType = $this->Database->prepare("SELECT aliasField,titleField FROM tl_catalog_types WHERE id=?")
-										->execute($this->catalog);
-
-		$strAlias = $objCatalogType->aliasField ? " OR ".$objCatalogType->aliasField."=?" : '';		
+		$objCatalogType = $this->objCatalogType;
 		
-		$objCatalog = $this->Database->prepare('SELECT * FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '').'(id=?'.$strAlias.')')
+		$objCatalog = $this->Database->prepare(sprintf('SELECT * FROM %s WHERE %s id=? %s',
+																										$objCatalogType->tableName,
+																										(!BE_USER_LOGGED_IN && $objCatalogType->publishField ? $objCatalogType->publishField . '=1 AND ' : ''),
+																										$objCatalogType->aliasField ? " OR " . $objCatalogType->aliasField . "=?" : ''))
 										->limit(1)
 										->execute($this->Input->get('items'), $this->Input->get('items'));
 
@@ -88,7 +88,7 @@ class ModuleCatalogRelated extends ModuleCatalog
 			$strWhere = ModuleCatalog::replaceCatalogTags($this->catalog_where, $arrCatalog);
 			$strWhere = $this->replaceInsertTags($strWhere);
 			$strOrder = ($this->catalog_random_disable) ? trim($this->catalog_order) : "RAND()";
-	
+			
 			// Add Related Query
 			$fieldConf = &$GLOBALS['TL_DCA'][$this->strTable]['fields'];
 			$strRelated = array();
@@ -122,9 +122,11 @@ class ModuleCatalogRelated extends ModuleCatalog
 			$strRelated = implode(' AND ', $strRelated);
 
 
-			$arrQuery = $this->processFieldSQL($this->catalog_visible, $this->strTable);		
-			if($this->strAliasField)
-				$arrQuery[] = $this->strAliasField;
+			$arrQuery = $this->processFieldSQL($this->catalog_visible, $this->catalog, $objCatalogType->tableName);
+			
+			if($objCatalogType->aliasField)
+				$arrQuery[] = $objCatalogType->aliasField;
+			
 			// Run Query
 			$objCatalogStmt = $this->Database->prepare('SELECT '.implode(',',$this->systemColumns).','.implode(',',$arrQuery).', (SELECT name FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS catalog_name, (SELECT jumpTo FROM tl_catalog_types WHERE tl_catalog_types.id='.$this->strTable.'.pid) AS parentJumpTo FROM '.$this->strTable.' WHERE '.(!BE_USER_LOGGED_IN && $this->publishField ? $this->publishField.'=1 AND ' : '').'pid=? AND id!=?'.($strRelated ? ' AND '.$strRelated : '').($strWhere ? ' AND '.$strWhere : '').(strlen($strOrder) ? ' ORDER BY '.$strOrder : ''));
 			
@@ -137,7 +139,7 @@ class ModuleCatalogRelated extends ModuleCatalog
 	
 	
 			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);
-				
+			
 			// Template variables
 			$this->Template->visible = $this->catalog_visible;
 		}

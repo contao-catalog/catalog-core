@@ -86,7 +86,7 @@ class ModuleCatalogNotify extends ModuleCatalog
 		  return $this->compileInvalidCatalog();
 		
 		// all fields for catalog insert tags
-		$objCatalog = $this->fetchCatalogItemFromRequest(array_keys($this->getCatalogFields()));
+		$objCatalog = $this->fetchCatalogItemFromRequest(array_keys($this->getCatalogFields($this->catalog)));
 		
 		if (! $objCatalog)
 		  return $this->compileInvalidItem();

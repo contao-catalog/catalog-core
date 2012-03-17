@@ -237,13 +237,14 @@ abstract class ModuleCatalog extends Module
 
 		return $objLayout;
 	}
-
+	
 	/**
-	 * Gets the catalog's fields' labels and types from db
+	 * Gets the catalog's fields' labels, types and calc values from db
+	 * @param int $intCatalog id of the catalog
 	 * @param array $arrTypes optional
-	 * @return array with 'label' and 'type'
+	 * @return array (string field name => array('label' => string, 'type' => string, 'calcValue' => string))
 	 */
-	protected function getCatalogFields(array $arrTypes =array())
+	protected function getCatalogFields($intCatalog, array $arrTypes =array())
 	{
 		// fall back to all types
 		if (count($arrTypes) == 0)
@@ -254,15 +255,19 @@ abstract class ModuleCatalog extends Module
 
 		$fields = array();
 		
-		$objFields = $this->Database->prepare(sprintf("SELECT * FROM tl_catalog_fields WHERE pid=? AND type IN ('%s') ORDER BY sorting",
+		$objFields = $this->Database->prepare(sprintf("SELECT colName, name, type, calcValue
+																										FROM tl_catalog_fields
+																										WHERE pid=? AND type IN ('%s')
+																										ORDER BY sorting",
 																									implode("', '", $types)))
-									->execute($this->catalog);
+									->execute($intCatalog);
 		
 		while ($objFields->next())
 		{
 			$fields[$objFields->colName] = array (
 				'label' => $objFields->name,
 				'type' => $objFields->type,
+				'calc' => $objFields->calcValue
 			);
 		}
 		
@@ -319,7 +324,7 @@ abstract class ModuleCatalog extends Module
 		$searchFields = deserialize($strSearchFields, true);
 
 		// Setup Fields
-		$fields = $this->getCatalogFields();
+		$fields = $this->getCatalogFields($this->catalog);
 
 		// Process POST redirect() settings
 		$doPost = false;
@@ -2666,24 +2671,26 @@ abstract class ModuleCatalog extends Module
 		}
 		return ($blnRoot ? $this->Environment->base : '') . $this->generateFrontEndUrl($arrPage, $strParams);
 	}
-
+	
 	/**
 	 * Translate SQL if needed (needed for calculated fields)
 	 * @param array $arrFields : string fieldname
-	 * @param string $strTable
-	 * @return array : string fieldname or alias for sql
+	 * @param int $intCatalog id of the catalog
+	 * @param string $strTable of the catalog
+	 * @param boolean $blnNoAlias optional don't use aliases (f.e. for where statement)
+	 * @return array (string original fieldname => string fieldname to use)
 	 */
-	protected function processFieldSQL(array $arrFields, $strTable)
+	public function processFieldSQL(array $arrFields, $intCatalog,
+																			$strTable, $blnNoAlias =false)
 	{
 		$arrConverted = array();
 
 		// iterate all catalog fields
-		$objFields = $this->Database->prepare("SELECT *
+		$objFields = $this->Database->prepare(sprintf("SELECT *
 											FROM tl_catalog_fields f
-											WHERE f.pid=(SELECT c.id
-											FROM tl_catalog_types c
-											WHERE c.tableName=?)")
-									->execute($strTable);
+											WHERE f.pid=? AND colName IN ('%s')",
+											implode("','", $arrFields)))
+									->execute($intCatalog);
 		
 		$fieldConfigs = array();
 		
@@ -2692,18 +2699,28 @@ abstract class ModuleCatalog extends Module
 			while ($objFields->next())
 				$fieldConfigs[$objFields->colName] = $objFields->row();
 			
-			foreach ($arrFields as $id => $field)
+			foreach ($arrFields as $field)
 			{
 				if (array_key_exists($field, $fieldConfigs))
 				{
-					$arrConverted[$id] = self::sqlFieldAlias($field, $fieldConfigs[$field]);
+					if ($blnNoAlias)
+					{
+						$arrConverted[$field] = self::sqlFieldName($field, $fieldConfigs[$field]);
+					}
+					
+					else
+					{
+						$arrConverted[$field] = self::sqlFieldAlias($field, $fieldConfigs[$field]);
+					}
 				}
 			}
 			
 			// allow extension developers to prepare SQL data
-			foreach ($arrConverted as $id => $alias)
+			foreach ($arrConverted as $field => $alias)
 			{
-				$this->processFieldSQLHook($id, $arrFields[$id], $fieldConfigs, $arrConverted);
+				$this->processFieldSQLHook($intCatalog, array_search($field, $arrFields),
+																		$field, $fieldConfigs,
+																		$arrConverted, $strTable);
 			}
 		}
 		return $arrConverted;
@@ -2719,11 +2736,13 @@ abstract class ModuleCatalog extends Module
 	protected static function sqlFieldAlias($strFieldName, array $arrFieldConfigCatalog)
 	{
 		$result = $strFieldName;
+		
 		if ($arrFieldConfigCatalog['type'] == 'calc')
 		{
 			// set query value to formula
 			$result = '(' . $arrFieldConfigCatalog['calcValue'] . ') AS ' . $strFieldName;
 		}
+		
 		return $result;
 	}
 		/**
@@ -2741,25 +2760,32 @@ abstract class ModuleCatalog extends Module
 			// set query value to forumla
 			$result = '(' . $arrFieldConfigCatalog['calcValue'] . ')';
 		}
+		
 		return $result;
 	}
 
 	/**
 	 * HOOK: allow third party extension developers to prepare the SQL data
-	 * @param int $id
-	 * @param string $fieldName
+	 * @param intCatalogId
+	 * @param int $intFieldId
+	 * @param string $strFieldName
 	 * @param array $arrFields
 	 * @param array $arrConverted
+	 * @param string $strTable
 	 * @return void
 	 */
-	protected function processFieldSQLHook($id, $fieldName, array $arrFields, array $arrConverted)
+	protected function processFieldSQLHook($intCatalogId, $intFieldId, $strFieldName,
+																					array $arrFields, array $arrConverted,
+																					$strTable)
 	{
 		if(is_array($GLOBALS['TL_HOOKS']['processFieldSQL']) && count($GLOBALS['TL_HOOKS']['processFieldSQL']))
 		{
 			foreach($GLOBALS['TL_HOOKS']['processFieldSQL'] as $callback)
 			{
 				$this->import($callback[0]);
-				$this->$callback[0]->$callback[1]($this->catalog, $id, $fieldName, $arrFields, $arrConverted, $this->strTable);
+				$this->$callback[0]->$callback[1]($intCatalogId, $intFieldId,
+																					$strFieldName, $arrFields,
+																					$arrConverted, $strTable);
 			}
 		}
 	}
@@ -4196,7 +4222,7 @@ abstract class ModuleCatalog extends Module
 																				$intOffset =0, array $arrJoins=array())
 	{
 		$table = $this->objCatalogType->tableName;
-	  $arrFields = $this->processFieldSQL($arrFields, $table);
+	  $arrFields = $this->processFieldSQL($arrFields, $this->catalog, $table);
 	  
 	  // prepend columns to minimize the possibility of collisions when using JOINs
 	  foreach ($this->systemColumns as $sysField)

@@ -170,7 +170,9 @@ class ModuleCatalogReference extends ModuleCatalog
 			// if nothing hit in the reference, force 0=1
 			$strReference = $strReference?implode(' OR ', $strReference):'0=1';
 
-			$arrQuery = $this->processFieldSQL($this->catalog_visible, $this->strTable);		
+			$arrQuery = $this->processFieldSQL($this->catalog_visible, $this->catalog,
+																					$this->strTable);
+			
 			if($this->strAliasField)
 				$arrQuery[] = $this->strAliasField;
 

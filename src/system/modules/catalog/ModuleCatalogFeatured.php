@@ -93,7 +93,8 @@ class ModuleCatalogFeatured extends ModuleCatalog
 
 		$strOrder = ($this->catalog_random_disable) ? trim($this->catalog_order) : "RAND()";
 
-		$arrQuery = $this->processFieldSQL($this->catalog_visible, $this->strTable);
+		$arrQuery = $this->processFieldSQL($this->catalog_visible, $this->catalog,
+																				$this->objCatalogType->tableName);
 		if($this->strAliasField)
 			$arrQuery[] = $this->strAliasField;
 		// Run Query
