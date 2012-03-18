@@ -100,7 +100,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 	// Palettes
 	'palettes' => array
 	(
-		'__selector__' => array('type', 'insertBreak', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree', 'editGroups', 'rte', 'multiple'),
+		'__selector__' => array('type', 'insertBreak', 'sortingField', 'showImage', 'format', 'limitItems', 'customFiletree', 'rte', 'multiple'),
 		'default'      => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'text'         => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,defValue,uniqueItem;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
 		'alias'        => '{title_legend},name,description,colName,type,aliasTitle;{display_legend},titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{feedit_legend},editGroups',
@@ -114,7 +114,6 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'url'          => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,uniqueItem,allowedHosts;{format_legend:hide},formatPrePost,{feedit_legend},editGroups',
 		'file'         => '{title_legend},name,description,colName,type;{display_legend},parentCheckbox,titleField;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{advanced_legend:hide},mandatory,customFiletree,multiple;{format_legend},showImage,showLink;{feedit_legend},editGroups',
 		'calc'         => '{title_legend},name,description,colName,type,calcValue;{display_legend},parentCheckbox,titleField,width50;{legend_legend:hide},insertBreak;{filter_legend:hide},sortingField,filteredField,searchableField;{format_legend:hide},formatPrePost,format;{feedit_legend},editGroups',
-		
 	),
 
 	// Subpalettes
@@ -126,7 +125,6 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 		'format'					=> 'formatFunction,formatStr',
 		'limitItems'			=> 'items,childrenSelMode,parentFilter',
 		'customFiletree'	=> 'uploadFolder,validFileTypes,filesOnly',
-		'editGroups'			=> 'editGroups',
 		'rte'							=> 'rte_editor',
 		'multiple'				=> 'sortBy',
 	),

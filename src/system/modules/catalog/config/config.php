@@ -200,6 +200,9 @@ $GLOBALS['TL_HOOKS']['loadDataContainer'][] = array('CatalogExt', 'addCatalogsTo
 $GLOBALS['TL_HOOKS']['listComments'][] = array('CatalogExt', 'listComments');
 $GLOBALS['TL_HOOKS']['isAllowedToEditComment'][] = array('CatalogExt', 'isAllowedToEditComment');
 
+// additional regular expressions
+$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Catalog', 'catalogRgxp');
+
 /**
  * Cron jobs
  */
@@ -221,8 +224,6 @@ $GLOBALS['TL_CONFIG']['catalog']['safeCheck']		= array('/', '\'');
 $GLOBALS['TL_CONFIG']['catalog']['safeReplace']	= array('-slash-', '-apos-');
 $GLOBALS['TL_CONFIG']['catalog']['keywordsInvalid'] = array( ' ','.','?','!',';',':','-','/','&','"','\'','�');
 $GLOBALS['TL_CONFIG']['catalog']['keywordCount'] = 15;
-
-$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Catalog', 'catalogRgxp');
 
 array_insert($GLOBALS['BE_FFL'], 15, array
 (
