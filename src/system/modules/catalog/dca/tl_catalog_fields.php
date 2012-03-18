@@ -410,9 +410,15 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemSortCol'],
 			'inputType'               => 'select',
 			'options_callback'        => array('tl_catalog_fields', 'getTableFields'),
-			'eval'                    => array('includeBlankOption'=>true)
+			'eval'                    => array('includeBlankOption'=>true, 'tl_class' => 'w50')
 		),
-
+		
+		'itemFilter' => array
+		(
+		    'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemFilter'],
+		    'inputType'               => 'textarea',
+		    'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;', 'tl_class' => 'clr')
+		),
 		
 		'limitItems' => array
 		(
@@ -465,15 +471,6 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'default'                 => '0',
 			'eval'                    => array('rgxp'=>'digit', 'nospace'=>true, 'tl_class'=>'w50')
 		),
-
-
-		'itemFilter' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemFilter'],
-			'inputType'               => 'textarea',
-			'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;')
-		),
-
 		
 		'includeTime' => array
 		(
