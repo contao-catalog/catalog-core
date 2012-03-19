@@ -80,7 +80,13 @@ class CatalogExt extends Frontend
 			{
 				$where.=(strlen($where)? ' AND ':'').$objArchive->publishField.'=1';
 			}
-			$objCatalog = $this->fetchCatalogItems($objArchive, $where);
+			
+			$fields = array('id');
+			
+			if (strlen($objArchive->aliasField))
+				$fields[] = $objArchive->aliasField;
+			
+			$objCatalog = $this->fetchCatalogItems($objArchive, $fields, $where);
 
 			// Add items to the indexer
 			while ($objCatalog->next())
@@ -106,17 +112,23 @@ class CatalogExt extends Frontend
 	/**
 	 * Gets all Catalog items from a catalog
 	 * @param Database_Result $objCatalogType which owns the items
+	 * @param array $arrFields fields to fetch
 	 * @param string $strWhere
 	 * @param string $strOrderBy optional
 	 * @param int $intLimit optional
 	 * @return Database_Result with all published items
 	 */
-	protected function fetchCatalogItems(Database_Result $objCatalogType, $strWhere, $strOrderBy='tstamp DESC', $intLimit=0)
+	protected function fetchCatalogItems(Database_Result $objCatalogType,
+																				array $arrFields,
+																				$strWhere, $strOrderBy='tstamp DESC',
+																				$intLimit=0)
 	{
-		$stmt = $this->Database->prepare('SELECT *
-										FROM ' . $objCatalogType->tableName .
-										' WHERE pid=? ' . (strlen($strWhere) ? " AND " . $strWhere : "") .
-										(strlen($strOrderBy) ? " ORDER BY " . $strOrderBy : ""));
+		$stmt = $this->Database->prepare(sprintf('SELECT %s FROM %s WHERE pid=? AND %s %s',
+																							implode(',', $arrFields),
+																							$objCatalogType->tableName,
+																							(strlen($strWhere) ? $strWhere : "1"),
+																							(strlen($strOrderBy) ? " ORDER BY " . $strOrderBy : "")));
+		
 		if ($intLimit > 0)
 			$stmt->limit($intLimit);
 		return $stmt->execute($objCatalogType->id);
@@ -143,50 +155,63 @@ class CatalogExt extends Frontend
 	 * Generate a XML file and save it to the root directory
 	 * @param object
 	 */
-	protected function generateFiles(Database_Result $arrCatalog)
+	protected function generateFiles(Database_Result $objCatalog)
 	{
 		// If we do not have a table name, we can not work.
 		// This should not happen under normal circumstances but as issue #57 proves, it can happen
 		// when activating RSS before saving the catalog.
-		if(!strlen($arrCatalog->tableName))
+		if(!strlen($objCatalog->tableName))
 			return;
-
+		
 		$time = time();
-		$strType = ($arrCatalog->feedFormat == 'atom') ? 'generateAtom' : 'generateRss';
-		$strLink = strlen($arrCatalog->feedBase) ? $arrCatalog->feedBase : $this->Environment->base;
-		$strFile = $arrCatalog->feedName;
-
+		$strType = ($objCatalog->feedFormat == 'atom') ? 'generateAtom' : 'generateRss';
+		$strLink = strlen($objCatalog->feedBase) ? $objCatalog->feedBase : $this->Environment->base;
+		$strFile = $objCatalog->feedName;
+		
 		$objFeed = new Feed($strFile);
-
+		
 		$objFeed->link = $strLink;
-		$objFeed->title = $arrCatalog->feedTitle;
-		$objFeed->description = $arrCatalog->description;
-		$objFeed->language = $arrCatalog->language;
-		$objFeed->published = $arrCatalog->tstamp;
-
+		$objFeed->title = $objCatalog->feedTitle;
+		$objFeed->description = $objCatalog->description;
+		$objFeed->language = $objCatalog->language;
+		$objFeed->published = $objCatalog->tstamp;
+		
 		// Get default URL
 		$objParent = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
 									->limit(1)
-									->execute($arrCatalog->jumpTo);
-
+									->execute($objCatalog->jumpTo);
+		
 		$strUrl = $this->generateFrontendUrl($objParent->fetchAssoc(), '/items/%s');
-
+		
 		// Get items
 		$this->import('String');
 		$where = $this->String->decodeEntities($objArchive->searchCondition);
-		if(strlen($arrCatalog->publishField))
+		if(strlen($objCatalog->publishField))
 		{
-			$where.=(strlen($where)? ' AND ':'').$arrCatalog->publishField.'=1';
+			$where.=(strlen($where)? ' AND ':'').$objCatalog->publishField.'=1';
 		}
-		$datefield = (strlen($arrCatalog->datesource) ? $arrCatalog->datesource : 'tstamp');
-		$objArticle = $this->fetchCatalogItems($arrCatalog, $where, $datefield . ' DESC', $arrCatalog->maxItems);
+		
+		$datefield = (strlen($objCatalog->datesource) ? $objCatalog->datesource : 'tstamp');
+		
+		$fieldsToFetch = array('id', $datefield, $objCatalog->titleField);
+		
+		if (strlen($objCatalog->source))
+			$fieldsToFetch[] = $objCatalog->source;
+		
+		if (strlen($objCatalog->aliasField))
+			$fieldsToFetch[] = $objCatalog->aliasField;
+		
+		$objArticle = $this->fetchCatalogItems($objCatalog, $fieldsToFetch, $where,
+																						$datefield . ' DESC',
+																						$objCatalog->maxItems);
+		
 		// Parse items
 		while ($objArticle->next())
 		{
 			$objItem = new FeedItem();
-			$objItem->title = $objArticle->{$arrCatalog->titleField};
-			$objItem->description = (strlen($arrCatalog->source) ? $objArticle->{$arrCatalog->source} : '');
-			$objItem->link = $strLink . $this->getLink($arrCatalog->jumpTo, $objArticle, $strUrl, $arrCatalog->aliasField);
+			$objItem->title = $objArticle->{$objCatalog->titleField};
+			$objItem->description = (strlen($objCatalog->source) ? $objArticle->{$objCatalog->source} : '');
+			$objItem->link = $strLink . $this->getLink($objCatalog->jumpTo, $objArticle, $strUrl, $objCatalog->aliasField);
 			$objItem->published = $objArticle->$datefield;
 			$objFeed->addItem($objItem);
 		}

@@ -1288,7 +1288,7 @@ abstract class ModuleCatalog extends Module
 	 * @param string $strFieldname
 	 * @return boolean is the field used in the statement?
 	 */
-	protected static function fieldInSql($strSql, $strFieldname)
+	public static function fieldInSql($strSql, $strFieldname)
 	{
 	  return preg_match('/\b' . $strFieldname. '\b/i',
 	                        $strSql) > 0;
