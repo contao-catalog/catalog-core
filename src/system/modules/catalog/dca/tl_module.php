@@ -64,7 +64,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['subpalettes'], 1, array
 		'catalog_sort_enable' => 'catalog_sort_headline,catalog_sort,catalog_sort_type',
 		'catalog_link_override' => 'catalog_islink',
 		'catalog_condition_enable' => 'catalog_condition',
-		'catalog_thumbnails_override'	=> 'catalog_imagemain_field,catalog_imagemain_size,catalog_imagemain_fullsize,catalog_imagegallery_field,catalog_imagegallery_size,catalog_imagegallery_fullsize,sortBy',
+		'catalog_thumbnails_override'	=> 'catalog_imagemain_field,catalog_imagemain_size,catalog_imagemain_fullsize,catalog_imagegallery_field,sortBy,catalog_imagegallery_size,catalog_imagegallery_fullsize',
 		'catalog_random_disable' => 'catalog_order',
 		'catalog_edit_enable' => 'catalog_editJumpTo',
 		'catalog_show_items' => 'catalog_show_field',
@@ -356,7 +356,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'inputType'               => 'select',
 		'options'               	=> array('AND', 'OR'),
 		'reference'               => &$GLOBALS['TL_LANG']['tl_module'],
-		'eval'                    => array('tl_class'=>'w50')
+		'eval'                    => array('tl_class' => 'w50')
 	),
 	'catalog_tags_mode' => array
 	(
@@ -366,14 +366,17 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'inputType'               => 'select',
 		'options'               	=> array('AND', 'OR'),
 		'reference'               => &$GLOBALS['TL_LANG']['tl_module'],
+		'eval'										=> array('tl_class' => 'w50')
 	),
+	
 	'catalog_condition_enable' => array
 	(
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_condition_enable'],
 		'exclude'                 => true,
 		'inputType'               => 'checkbox',
-		'eval'										=> array('submitOnChange'=> true),
+		'eval'										=> array('submitOnChange'=> true, 'tl_class' => 'clr'),
 	),
+	
 	'catalog_condition' => array
 	(
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_condition'],
@@ -417,7 +420,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'exclude'                 => true,
 		'inputType'               => 'select',
 		'options_callback'        => array('tl_module_catalog', 'getImageFields'),
-		'eval'                    => array('includeBlankOption' => true, 'tl_class'=>'w50')
+		'eval'                    => array('includeBlankOption' => true)
 	),
 
 	'catalog_imagemain_size' => array
@@ -427,7 +430,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'inputType'               => 'imageSize',
 		'options'                 => array('crop', 'proportional', 'box'),
 		'reference'               => &$GLOBALS['TL_LANG']['MSC'],
-		'eval'                    => array('rgxp'=>'digit', 'nospace'=>true)
+		'eval'                    => array('rgxp'=>'digit', 'nospace'=>true, 'tl_class' => 'w50')
 	),
 
 	'catalog_imagemain_fullsize' => array
@@ -435,6 +438,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_imagemain_fullsize'],
 		'exclude'                 => true,
 		'inputType'               => 'checkbox',
+		'eval'										=> array('tl_class'=>'w50')
 	),
 
 	'catalog_imagegallery_field' => array
@@ -443,9 +447,19 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'exclude'                 => true,
 		'inputType'               => 'select',
 		'options_callback'        => array('tl_module_catalog', 'getImageFields'),
-		'eval'                    => array('includeBlankOption' => true, 'tl_class'=>'w50')
+		'eval'                    => array('includeBlankOption' => true, 'tl_class' => 'clr w50')
 	),
 
+	'sortBy' => array
+	(
+	    'label'                   => &$GLOBALS['TL_LANG']['tl_module']['sortBy'],
+	    'exclude'                 => true,
+	    'inputType'               => 'select',
+	    'options'                 => array('name_asc', 'name_desc', 'date_asc', 'date_desc', 'meta', 'random'),
+	    'reference'               => &$GLOBALS['TL_LANG']['tl_module'],
+	    'eval'                    => array('tl_class' => 'w50')
+	),
+	
 	'catalog_imagegallery_size' => array
 	(
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_imagegallery_size'],
@@ -453,7 +467,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'inputType'               => 'imageSize',
 		'options'                 => array('crop', 'proportional', 'box'),
 		'reference'               => &$GLOBALS['TL_LANG']['MSC'],
-		'eval'                    => array('rgxp'=>'digit', 'nospace'=>true)
+		'eval'                    => array('rgxp'=>'digit', 'nospace'=>true, 'tl_class' => 'clr w50')
 	),
 
 	'catalog_imagegallery_fullsize' => array
@@ -461,8 +475,9 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_imagegallery_fullsize'],
 		'exclude'                 => true,
 		'inputType'               => 'checkbox',
+		'eval'										=> array('tl_class' => 'w50')
 	),
-
+	
 	'catalog_edit' => array
 	(
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_edit'],
@@ -519,7 +534,7 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['catalog_where'],
 		'exclude'                 => true,
 		'inputType'               => 'textarea',
-		'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;', 'allowHtml'=>true, 'preserveTags'=>true)
+		'eval'                    => array('decodeEntities'=>true, 'style'=>'height:80px;', 'allowHtml'=>true, 'preserveTags'=>true, 'tl_class' => 'clr')
 	),	
 
 	'catalog_order' => array
@@ -695,16 +710,6 @@ array_insert($GLOBALS['TL_DCA']['tl_module']['fields'] , 1, array
 		'inputType'               => 'text',
 		'default'                 => '10',
 		'eval'                    => array('rgxp' => 'decimal', 'tl_class'=>'w50'),
-	),
-
-	'sortBy' => array
-	(
-		'label'                   => &$GLOBALS['TL_LANG']['tl_module']['sortBy'],
-		'exclude'                 => true,
-		'inputType'               => 'select',
-		'options'                 => array('name_asc', 'name_desc', 'date_asc', 'date_desc', 'meta', 'random'),
-		'reference'               => &$GLOBALS['TL_LANG']['tl_module'],
-		'eval'                    => array('tl_class'=>'w50')
 	),
 	'disableCaptcha' => array
 	(
