@@ -22,7 +22,6 @@
  * @package		Controller
  *
  */
-
 class ModuleCatalogList extends ModuleCatalog
 {
 	/**
@@ -63,7 +62,8 @@ class ModuleCatalogList extends ModuleCatalog
 		
 		return parent::generate();
 	}
-		/**
+	
+	/**
 	 * (non-PHPdoc)
 	 * @see Module::compile()
 	 */
@@ -72,21 +72,20 @@ class ModuleCatalogList extends ModuleCatalog
 		$filterurl = $this->parseFilterUrl($this->catalog_search);
 		
 		$arrCondition = deserialize($this->catalog_condition, true);
-		$blnCondition = false;
-
+		$arrConditionsNotMet = array();
+		
 		if ($this->catalog_condition_enable
 		    && count($arrCondition))
 		{
-			$blnCondition = count(array_intersect_key($filterurl['current'],
-			                      array_values($arrCondition))) == count($arrCondition);
+			$arrConditionsNotMet = array_diff($arrCondition, array_keys($filterurl['current']));
 		}
-
-		if (!$this->catalog_condition_enable
-			|| ($this->catalog_condition_enable && $blnCondition)
-			|| count($filterurl['procedure']['search']))
+		
+		if ((! $this->catalog_condition_enable)
+				|| count($arrConditionsNotMet) == 0
+				|| count($filterurl['procedure']['search']))
 		{
 			$this->catalog_search = deserialize($this->catalog_search, true);
-
+			
 			// Query Catalog
 			$filterurl = $this->addSearchFilter($filterurl);
 			$arrParams = $this->generateStmtParams($filterurl);
@@ -169,9 +168,10 @@ class ModuleCatalogList extends ModuleCatalog
 			
 			$this->Template->catalog = $this->parseCatalog($objCatalog, true, $this->catalog_template, $this->catalog_visible);
 		} // condition check
+		
 		else
 		{
-			$this->parseConditionsNotMet($arrCondition, $filterurl);
+			$this->parseConditionsNotMet($arrConditionsNotMet);
 		}
 
 		// Editing variables
@@ -193,23 +193,18 @@ class ModuleCatalogList extends ModuleCatalog
 	/**
 	 * Replaces the catalog var in the template with a message that the
 	 * conditions where not met.
-	 * @param array $arrCondition
-	 * @param array $filterurl
+	 * @param array $arrConditionsNotMet
 	 * @return void
 	 */
-	protected function parseConditionsNotMet(array $arrCondition, array $filterurl)
+	protected function parseConditionsNotMet(array $arrConditionsNotMet)
 	{
 		$labels = array();
-		foreach ($arrCondition as $condition)
+		
+		foreach ($arrConditionsNotMet as $condition)
 		{
-			if (array_key_exists($condition, $filterurl['current']))
-			{
-				continue;
-			}
-
 			$labels[] = &$GLOBALS['TL_DCA'][$this->strTable]['fields'][$condition]['label']['0'];
 		}
-
+		
 		// create template with no entries, but passing the condition instead
 		$objTemplate = new FrontendTemplate($this->catalog_template);
 		$objTemplate->entries = array();
