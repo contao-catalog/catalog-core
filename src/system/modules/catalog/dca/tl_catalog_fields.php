@@ -749,8 +749,9 @@ class tl_catalog_fields extends Backend
 	
 	/**
 	 * Extract the hosts from the given urls
-	 * @param string
-	 * @param DataContainer
+	 * @param string $varValue
+	 * @param DataContainer $dc
+	 * @return string $varValue but with urls replaced by hosts
 	 */
 	public function saveAllowedHosts($varValue, DataContainer $dc)
 	{
@@ -760,21 +761,21 @@ class tl_catalog_fields extends Backend
 		{
 			return $varValue;
 		}
-
+		
 		foreach ($arrData as $k => $strUrl)
-		{			
+		{
 			// the user doesn't know the host, extract it for him
-			if (strpos($strUrl, 'http://') !== false)
+			$arrUrl = @parse_url($strUrl);
+			
+			if ($arrUrl !== false && array_key_exists('host', $arrUrl))
 			{
-				$arrUrl = parse_url($strUrl);
-				
 				$arrData[$k] = $arrUrl['host'];
 			}
 		}
 		
 		// make unique entries
 		$arrData = array_values(array_unique($arrData));
-
+		
 		return serialize($arrData);
 	}
 

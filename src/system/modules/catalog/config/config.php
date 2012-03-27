@@ -121,7 +121,7 @@ $GLOBALS['BE_MOD']['content']['catalog'] = array
 							'inputType' => 'text',
 							'eval'      => array('rgxp' => 'url')
 						),
-					'sqlDefColumn' => "varchar(255) NOT NULL default ''",
+					'sqlDefColumn' => "varchar(400) NOT NULL default ''",
 				),
 			'file' => array
 				(
