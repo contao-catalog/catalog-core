@@ -357,7 +357,6 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'inputType'               => 'text',
 			'eval'                    => array('multiple'=>true, 'size'=>2, 'allowHtml'=>true),
 		),
-
 		
 		'rte' => array
 		(
@@ -365,6 +364,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'inputType'               => 'checkbox',
 			'eval'                    => array('submitOnChange'=>true)
 		),
+		
 		'rte_editor' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['rte_editor'],
@@ -392,7 +392,7 @@ $GLOBALS['TL_DCA']['tl_catalog_fields'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_catalog_fields']['itemTable'],
 			'inputType'               => 'select',
 			'options_callback'        => array('tl_catalog_fields', 'getTables'),
-			'eval'                    => array('submitOnChange'=>true)
+			'eval'                    => array('chosen' => true, 'submitOnChange' => true)
 		),
 		
 		'itemTableValueCol' => array
