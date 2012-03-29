@@ -111,39 +111,8 @@ abstract class ModuleCatalog extends Module
 			
 			// dynamically load dca for catalog operations
 			$this->Import('Catalog');
-			if (!$GLOBALS['TL_DCA'][$table]['Cataloggenerated'])
-			{
-				// load language files and DC.
-				$this->loadLanguageFile($table);
-				$this->loadDataContainer($table);
-
-				// load default language
-				if (is_array($GLOBALS['TL_LANG'][$table]))
-				{
-					$GLOBALS['TL_LANG'][$table] =
-						Catalog::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'],
-														$GLOBALS['TL_LANG'][$table]);
-				}
-				else
-				{
-					$GLOBALS['TL_LANG'][$table] = $GLOBALS['TL_LANG']['tl_catalog_items'];
-				}
-
-				// load dca
-				if (is_array($GLOBALS['TL_DCA'][$table]))
-				{
-					$GLOBALS['TL_DCA'][$table] =
-						Catalog::array_replace_recursive($this->Catalog->getCatalogDca($this->catalog),
-														$GLOBALS['TL_DCA'][$table]);
-				}
-				else
-				{
-					$GLOBALS['TL_DCA'][$table] = $this->Catalog->getCatalogDca($this->catalog);
-				}
-
-				$GLOBALS['TL_DCA'][$table]['Cataloggenerated'] = true;
-			}
-	
+			$this->Catalog->loadDcaAndLanguages($this->catalog, $table);
+			
 			// Send file to the browser (reading Modules only)
 			$blnDownload = ($this instanceof ModuleCatalogList
 							|| $this instanceof ModuleCatalogFeatured

@@ -77,11 +77,55 @@ class Catalog extends Backend
 		}
 		return $array;
 	}
+	
+	/**
+	 * Mixes DCA information from database and files and loads
+	 * languages for a catalog
+	 * @param int $intId
+	 * @param string $strTable
+	 * @return void
+	 */
+	public function loadDcaAndLanguages($intId, $strTable)
+	{
+		if (! $GLOBALS['TL_DCA'][$strTable]['Cataloggenerated'])
+		{
+		  // load language files and DC.
+		  $this->loadLanguageFile($strTable);
+		  $this->loadDataContainer($strTable);
+		  
+		  // load default language
+		  if (is_array($GLOBALS['TL_LANG'][$strTable]))
+		  {
+		    $GLOBALS['TL_LANG'][$strTable] =
+			    Catalog::array_replace_recursive($GLOBALS['TL_LANG']['tl_catalog_items'],
+			        $GLOBALS['TL_LANG'][$strTable]);
+		  }
+		  
+		  else
+		  {
+		    $GLOBALS['TL_LANG'][$strTable] = $GLOBALS['TL_LANG']['tl_catalog_items'];
+		  }
+		
+		  // load dca
+		  if (is_array($GLOBALS['TL_DCA'][$strTable]))
+		  {
+		    $GLOBALS['TL_DCA'][$strTable] =
+			    Catalog::array_replace_recursive($this->getCatalogDca($intId),
+			        $GLOBALS['TL_DCA'][$strTable]);
+		  }
+		  else
+		  {
+		    $GLOBALS['TL_DCA'][$strTable] = $this->Catalog->getCatalogDca($intId);
+		  }
+		
+		  $GLOBALS['TL_DCA'][$strTable]['Cataloggenerated'] = true;
+		}
+	}
 
 	/**
 	 * Callbacks: tl_catalog_items
 	 */
-
+	
 	public function initializeCatalogItems($strTable)
 	{
 		if ($strTable != 'tl_catalog_items')
