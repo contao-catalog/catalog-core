@@ -115,7 +115,7 @@ class Catalog extends Backend
 		  }
 		  else
 		  {
-		    $GLOBALS['TL_DCA'][$strTable] = $this->Catalog->getCatalogDca($intId);
+		    $GLOBALS['TL_DCA'][$strTable] = $this->getCatalogDca($intId);
 		  }
 		
 		  $GLOBALS['TL_DCA'][$strTable]['Cataloggenerated'] = true;
