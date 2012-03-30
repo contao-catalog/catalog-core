@@ -456,6 +456,13 @@ class ModuleCatalogEdit extends ModuleCatalog
   const FORMID = 'tl_catalog_items';
   
   /**
+   * some widgets are only present in the backend for now, like the timePeriod, but
+   * are safe to be called also in FE
+   * @var array (string input type)
+   */
+  protected $arrFeSaveBeWidgets = array('timePeriod');
+  
+  /**
    * (non-PHPdoc)
    * @see ModuleCatalogEdit::generate()
    */
@@ -875,30 +882,38 @@ class ModuleCatalogEdit extends ModuleCatalog
   /**
    * @param string $fieldName
    * @param array $fieldConfig
-   * @return null|Widget for the field if valid
+   * @return Widget for the field if valid | null
    */
   protected function constructFieldWidget($fieldName, array $fieldConfig)
   {
-    $strClass = $GLOBALS['TL_FFL'][$fieldConfig['inputType']];
+  	$inputType = $fieldConfig['inputType'];
+    $strClass = $GLOBALS['TL_FFL'][$inputType];
 
-    // some things are only present in the backend for now, like the timePeriod, but
-    // are safe to be called also in FE. So we do here.
-    // TODO: We should export this to some other location instead of hardcoding it here.
-    if((!$strClass) && in_array($fieldConfig['inputType'], array('timePeriod')))
+    // use backend class if save
+    if ((!$strClass) && in_array($inputType, $this->arrFeSaveBeWidgets))
     {
-      $strClass = $GLOBALS['BE_FFL'][$fieldConfig['inputType']];
+      $strClass = $GLOBALS['BE_FFL'][$inputType];
     }
+    
     // Continue if the class is not defined
     if (! $this->classFileExists($strClass))
     {
       return null;
     }
+    
     else
     {
       $objWidget = new $strClass($this->prepareForWidget($fieldConfig, $fieldName));
+      
       // add required if needed.
       $objWidget->required = $objWidget->mandatory;
-      $objWidget->tip = $fieldConfig['label'][1];
+      
+      // ['label'][1] is already used for checkbox-labels
+      if ($inputType != 'checkbox')
+      {
+      	$objWidget->tip = $fieldConfig['label'][1];
+      }
+      
       return $objWidget;
     }
   }
