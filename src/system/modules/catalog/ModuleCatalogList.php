@@ -241,14 +241,10 @@ class ModuleCatalogList extends ModuleCatalog
 	 */
 	protected function generateStmtOrderBy(array $arrFilterUrl)
 	{
-		$result = '';
+		$result = $arrFilterUrl['procedure']['orderby'];
 		
-		if (strlen($arrFilterUrl['procedure']['orderby']))
-		{
-			$result = 'ORDER BY ' . $arrFilterUrl['procedure']['orderby'];
-		} else {
+		if (strlen($result) == 0)
 			$result = trim($this->replaceInsertTags($this->catalog_order));
-		}
 		
 		return $result;
 	}

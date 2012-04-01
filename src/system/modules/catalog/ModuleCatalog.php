@@ -395,7 +395,7 @@ abstract class ModuleCatalog extends Module
 
 		// GET from here on
 
-		$procedure = array('search' => array(), 'where' => array(), 'tags' => array(), 'tree' => array());
+		$procedure = array('search' => array(), 'where' => array(), 'tags' => array(), 'tree' => array(), 'orderby' => '');
 		$values = array('search' => array(), 'where' => array(), 'tags' => array(), 'tree' => array());
 		
 		// return if no filter parameters in URL
